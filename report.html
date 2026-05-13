@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>COROS 运动报告 2025-2026</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js" async></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#faf6ef;--card:#ffffff;--border:#e8dfd3;--text:#5a5247;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--accent5:#c4a6d8;--gradient1:linear-gradient(135deg,#7ec882,#4db8a4);--gradient2:linear-gradient(135deg,#f4c542,#e89898)}
+body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:1400px;margin:0 auto;background-image:radial-gradient(circle at 20% 80%,rgba(126,200,130,.06) 0%,transparent 50%),radial-gradient(circle at 80% 20%,rgba(244,197,66,.06) 0%,transparent 50%)}
+h1{font-size:2.2rem;font-weight:800;color:#4db8a4;margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.95rem;margin-bottom:32px}
+.section{margin-bottom:40px}
+.section-title{font-size:1.15rem;font-weight:700;margin-bottom:16px;display:flex;align-items:center;gap:8px;color:#5a5247}
+.section-title::before{content:'';width:4px;height:20px;background:var(--gradient1);border-radius:2px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:14px;margin-bottom:32px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;position:relative;overflow:hidden;box-shadow:0 2px 8px rgba(90,82,71,.06)}
+.card .label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.card .value{font-size:1.8rem;font-weight:800;color:#4a4238}
+.card .sub{font-size:.78rem;color:var(--muted);margin-top:2px}
+.card::after{content:'';position:absolute;top:0;right:0;width:60px;height:60px;border-radius:0 16px 0 40px;opacity:.12}
+.card:nth-child(1)::after,.card:nth-child(5)::after{background:var(--accent)}
+.card:nth-child(2)::after,.card:nth-child(6)::after{background:var(--accent2)}
+.card:nth-child(3)::after,.card:nth-child(7)::after{background:var(--accent3)}
+.card:nth-child(4)::after{background:var(--accent4)}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 8px rgba(90,82,71,.06)}
+.chart-box h3{font-size:.9rem;font-weight:600;margin-bottom:12px;color:var(--muted)}
+.chart-box canvas{width:100%!important;max-height:280px}
+.full-width{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase;letter-spacing:.5px;padding:10px 12px;border-bottom:2px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border)}
+tr:hover td{background:rgba(126,200,130,.06)}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.72rem;font-weight:600}
+.badge-run{background:rgba(124,185,232,.2);color:#5a9ec7}
+.badge-indoor{background:rgba(196,166,216,.2);color:#9b7fb8}
+.badge-hike{background:rgba(126,200,130,.2);color:#5aa65e}
+.badge-climb{background:rgba(244,197,66,.2);color:#c9a030}
+.badge-strength{background:rgba(232,152,152,.2);color:#c07070}
+.pace-bar{height:6px;border-radius:3px;background:var(--border);position:relative;overflow:hidden}
+.pace-bar-fill{height:100%;border-radius:3px;background:var(--gradient1)}
+@media(max-width:768px){.charts-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}body{padding:12px}h1{font-size:1.6rem}.card .value{font-size:1.4rem}}
+</style>
+</head>
+<body>
+
+<h1>COROS 运动报告</h1>
+<p class="subtitle">2025年12月 - 2026年5月 | 数据来源：Coros MCP</p>
+
+<div class="section">
+  <div class="section-title">总览</div>
+  <div class="cards" id="summaryCards"></div>
+</div>
+
+<div class="section">
+  <div class="section-title">月度趋势</div>
+  <div class="charts-grid">
+    <div class="chart-box"><h3>月度跑量 (km)</h3><canvas id="monthlyDist"></canvas></div>
+    <div class="chart-box"><h3>月度平均配速 (min/km)</h3><canvas id="monthlyPace"></canvas></div>
+    <div class="chart-box"><h3>月度平均心率 (bpm)</h3><canvas id="monthlyHR"></canvas></div>
+    <div class="chart-box"><h3>月度训练次数</h3><canvas id="monthlyCount"></canvas></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">健康数据</div>
+  <div class="charts-grid">
+    <div class="chart-box"><h3>静息心率趋势 (bpm)</h3><canvas id="rhrChart"></canvas></div>
+    <div class="chart-box"><h3>HRV 趋势 (ms)</h3><canvas id="hrvChart"></canvas></div>
+    <div class="chart-box"><h3>睡眠评分趋势</h3><canvas id="sleepChart"></canvas></div>
+    <div class="chart-box"><h3>压力指数趋势</h3><canvas id="stressChart"></canvas></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">训练负荷</div>
+  <div class="charts-grid">
+    <div class="chart-box full-width"><h3>短期负荷 vs 长期负荷</h3><canvas id="loadChart"></canvas></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">配速分布</div>
+  <div class="charts-grid">
+    <div class="chart-box full-width"><h3>跑步配速分布</h3><canvas id="paceDist"></canvas></div>
+  </div>
+</div>
+
+<div class="section">
+  <div class="section-title">近期活动</div>
+  <div class="chart-box" style="overflow-x:auto">
+    <table>
+      <thead><tr><th>日期</th><th>类型</th><th>距离</th><th>时长</th><th>配速</th><th>心率</th><th>热量</th></tr></thead>
+      <tbody id="activityTable"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+
+function waitChart(cb) { if(typeof Chart!=='undefined') cb(); else setTimeout(function(){waitChart(cb)},100); }
+
+// ── Data ──
+const activities = [
+  {date:'2025-12-02',type:'Outdoor Run',dist:3.23,dur:'21:00',pace:'6:31',hr:124,cal:174},
+  {date:'2025-12-06',type:'Outdoor Run',dist:8.75,dur:'46:39',pace:'5:20',hr:147,cal:517},
+  {date:'2025-12-07',type:'Outdoor Run',dist:10.37,dur:'51:53',pace:'5:00',hr:161,cal:666},
+  {date:'2025-12-10',type:'Outdoor Run',dist:10.93,dur:'1:00:26',pace:'5:32',hr:150,cal:687},
+  {date:'2025-12-11',type:'Outdoor Run',dist:7.20,dur:'41:42',pace:'5:47',hr:141,cal:434},
+  {date:'2025-12-14',type:'Outdoor Run',dist:9.56,dur:'56:28',pace:'5:55',hr:142,cal:594},
+  {date:'2025-12-15',type:'Outdoor Run',dist:11.20,dur:'57:59',pace:'5:11',hr:155,cal:699},
+  {date:'2025-12-17',type:'Outdoor Run',dist:10.61,dur:'53:14',pace:'5:01',hr:155,cal:643},
+  {date:'2025-12-18',type:'Outdoor Run',dist:10.50,dur:'56:53',pace:'5:25',hr:151,cal:654},
+  {date:'2025-12-20',type:'Outdoor Run',dist:21.31,dur:'1:50:46',pace:'5:12',hr:154,cal:1324},
+  {date:'2025-12-21',type:'Outdoor Run',dist:11.04,dur:'1:02:04',pace:'5:37',hr:141,cal:647},
+  {date:'2025-12-23',type:'Outdoor Run',dist:8.07,dur:'41:53',pace:'5:12',hr:146,cal:458},
+  {date:'2025-12-25',type:'Outdoor Run',dist:11.49,dur:'1:00:00',pace:'5:13',hr:149,cal:547},
+  {date:'2025-12-26',type:'Outdoor Run',dist:8.09,dur:'43:47',pace:'5:25',hr:136,cal:458},
+  {date:'2025-12-28',type:'Outdoor Run',dist:10.41,dur:'49:46',pace:'4:47',hr:157,cal:663},
+  {date:'2025-12-30',type:'Outdoor Run',dist:10.18,dur:'58:14',pace:'5:43',hr:139,cal:651},
+  {date:'2025-12-31',type:'Outdoor Run',dist:10.99,dur:'1:01:26',pace:'5:35',hr:139,cal:679},
+  {date:'2026-01-03',type:'Outdoor Run',dist:15.73,dur:'1:28:49',pace:'5:39',hr:153,cal:1179},
+  {date:'2026-01-03',type:'Outdoor Run',dist:3.11,dur:'24:26',pace:'7:51',hr:127,cal:211},
+  {date:'2026-01-06',type:'Outdoor Run',dist:7.70,dur:'43:18',pace:'5:38',hr:132,cal:449},
+  {date:'2026-01-07',type:'Outdoor Run',dist:10.64,dur:'57:00',pace:'5:21',hr:148,cal:714},
+  {date:'2026-01-09',type:'Outdoor Run',dist:10.11,dur:'51:27',pace:'5:05',hr:149,cal:652},
+  {date:'2026-01-10',type:'Outdoor Run',dist:10.98,dur:'1:01:49',pace:'5:38',hr:142,cal:729},
+  {date:'2026-01-11',type:'Outdoor Run',dist:14.93,dur:'1:29:22',pace:'5:59',hr:141,cal:1024},
+  {date:'2026-01-13',type:'Outdoor Run',dist:8.67,dur:'47:47',pace:'5:31',hr:136,cal:527},
+  {date:'2026-01-14',type:'Outdoor Run',dist:11.28,dur:'1:01:25',pace:'5:27',hr:142,cal:715},
+  {date:'2026-01-17',type:'Outdoor Run',dist:21.21,dur:'1:51:17',pace:'5:15',hr:148,cal:1388},
+  {date:'2026-01-18',type:'Outdoor Run',dist:8.57,dur:'44:01',pace:'5:08',hr:146,cal:540},
+  {date:'2026-01-23',type:'Outdoor Run',dist:11.40,dur:'59:49',pace:'5:15',hr:152,cal:765},
+  {date:'2026-01-24',type:'Outdoor Run',dist:11.02,dur:'59:07',pace:'5:22',hr:145,cal:714},
+  {date:'2026-01-27',type:'Outdoor Run',dist:10.69,dur:'57:04',pace:'5:20',hr:137,cal:625},
+  {date:'2026-01-28',type:'Outdoor Run',dist:10.74,dur:'59:09',pace:'5:30',hr:146,cal:703},
+  {date:'2026-01-31',type:'Outdoor Run',dist:21.10,dur:'1:50:32',pace:'5:14',hr:154,cal:1475},
+  {date:'2026-02-01',type:'Outdoor Run',dist:10.17,dur:'57:07',pace:'5:37',hr:152,cal:742},
+  {date:'2026-02-02',type:'Outdoor Run',dist:10.16,dur:'52:17',pace:'5:09',hr:145,cal:627},
+  {date:'2026-02-03',type:'Outdoor Run',dist:12.10,dur:'1:02:49',pace:'5:12',hr:149,cal:792},
+  {date:'2026-02-05',type:'Outdoor Run',dist:10.57,dur:'54:59',pace:'5:12',hr:148,cal:690},
+  {date:'2026-02-07',type:'Mountain Climb',dist:4.06,dur:'2:43:13',pace:'',hr:86,cal:534},
+  {date:'2026-02-10',type:'Outdoor Run',dist:10.55,dur:'56:49',pace:'5:23',hr:143,cal:673},
+  {date:'2026-02-12',type:'Outdoor Run',dist:12.38,dur:'1:09:16',pace:'5:36',hr:148,cal:864},
+  {date:'2026-02-13',type:'Strength',dist:0,dur:'3:46',pace:'',hr:74,cal:27},
+  {date:'2026-02-14',type:'Outdoor Run',dist:8.64,dur:'53:45',pace:'6:13',hr:120,cal:476},
+  {date:'2026-02-14',type:'Strength',dist:0,dur:'6:36',pace:'',hr:88,cal:31},
+  {date:'2026-02-15',type:'Outdoor Run',dist:18.16,dur:'1:43:01',pace:'5:40',hr:143,cal:1211},
+  {date:'2026-02-17',type:'Outdoor Run',dist:10.64,dur:'1:00:48',pace:'5:43',hr:151,cal:790},
+  {date:'2026-02-18',type:'Strength',dist:0,dur:'7:43',pace:'',hr:104,cal:31},
+  {date:'2026-02-19',type:'Outdoor Run',dist:11.01,dur:'1:00:21',pace:'5:29',hr:154,cal:811},
+  {date:'2026-02-21',type:'Outdoor Run',dist:7.16,dur:'47:33',pace:'6:39',hr:121,cal:425},
+  {date:'2026-02-22',type:'Outdoor Run',dist:9.76,dur:'57:06',pace:'5:51',hr:130,cal:578},
+  {date:'2026-02-27',type:'Outdoor Run',dist:7.69,dur:'51:32',pace:'6:42',hr:130,cal:516},
+  {date:'2026-02-28',type:'Outdoor Run',dist:20.08,dur:'1:49:47',pace:'5:28',hr:146,cal:1350},
+  {date:'2026-03-03',type:'Outdoor Run',dist:7.39,dur:'45:43',pace:'6:11',hr:119,cal:397},
+  {date:'2026-03-04',type:'Outdoor Run',dist:11.49,dur:'59:32',pace:'5:11',hr:154,cal:796},
+  {date:'2026-03-06',type:'Outdoor Run',dist:8.23,dur:'46:25',pace:'5:39',hr:132,cal:480},
+  {date:'2026-03-08',type:'Outdoor Run',dist:19.00,dur:'1:47:08',pace:'5:38',hr:150,cal:1370},
+  {date:'2026-03-10',type:'Outdoor Run',dist:6.60,dur:'39:18',pace:'5:57',hr:127,cal:381},
+  {date:'2026-03-11',type:'Outdoor Run',dist:7.04,dur:'38:36',pace:'5:29',hr:140,cal:440},
+  {date:'2026-03-13',type:'Outdoor Run',dist:5.14,dur:'31:14',pace:'6:05',hr:126,cal:297},
+  {date:'2026-03-15',type:'Outdoor Run',dist:14.96,dur:'1:24:36',pace:'5:39',hr:152,cal:1107},
+  {date:'2026-03-17',type:'Outdoor Run',dist:5.02,dur:'34:16',pace:'6:50',hr:129,cal:343},
+  {date:'2026-03-19',type:'Outdoor Run',dist:8.97,dur:'51:55',pace:'5:47',hr:134,cal:553},
+  {date:'2026-03-21',type:'Hike',dist:9.64,dur:'4:45:55',pace:'',hr:91,cal:1089},
+  {date:'2026-03-22',type:'Outdoor Run',dist:10.02,dur:'48:40',pace:'4:51',hr:164,cal:724},
+  {date:'2026-03-25',type:'Outdoor Run',dist:5.12,dur:'34:06',pace:'6:39',hr:123,cal:325},
+  {date:'2026-03-28',type:'Outdoor Run',dist:21.35,dur:'1:43:12',pace:'4:50',hr:159,cal:1475},
+  {date:'2026-04-01',type:'Outdoor Run',dist:5.01,dur:'36:28',pace:'7:17',hr:117,cal:320},
+  {date:'2026-04-04',type:'Outdoor Run',dist:6.05,dur:'41:13',pace:'6:49',hr:120,cal:381},
+  {date:'2026-04-05',type:'Outdoor Run',dist:8.65,dur:'52:25',pace:'6:04',hr:134,cal:587},
+  {date:'2026-04-06',type:'Outdoor Run',dist:5.87,dur:'37:16',pace:'6:21',hr:127,cal:374},
+  {date:'2026-04-12',type:'Outdoor Run',dist:5.58,dur:'37:10',pace:'6:40',hr:134,cal:417},
+  {date:'2026-04-14',type:'Outdoor Run',dist:7.06,dur:'41:53',pace:'5:56',hr:136,cal:460},
+  {date:'2026-04-16',type:'Outdoor Run',dist:8.26,dur:'50:11',pace:'6:04',hr:138,cal:564},
+  {date:'2026-04-18',type:'Outdoor Run',dist:14.03,dur:'1:22:38',pace:'5:53',hr:144,cal:996},
+  {date:'2026-04-20',type:'Outdoor Run',dist:5.82,dur:'34:34',pace:'5:56',hr:131,cal:356},
+  {date:'2026-04-21',type:'Outdoor Run',dist:9.22,dur:'53:25',pace:'5:48',hr:151,cal:681},
+  {date:'2026-04-23',type:'Outdoor Run',dist:11.01,dur:'1:09:42',pace:'6:20',hr:133,cal:732},
+  {date:'2026-04-25',type:'Outdoor Run',dist:14.82,dur:'1:31:47',pace:'6:11',hr:141,cal:1065},
+  {date:'2026-04-27',type:'Outdoor Run',dist:10.56,dur:'1:04:34',pace:'6:07',hr:147,cal:796},
+  {date:'2026-04-29',type:'Indoor Run',dist:6.50,dur:'45:57',pace:'7:04',hr:109,cal:249},
+  {date:'2026-05-01',type:'Outdoor Run',dist:12.53,dur:'1:03:43',pace:'5:05',hr:150,cal:812},
+  {date:'2026-05-06',type:'Outdoor Run',dist:12.03,dur:'1:07:01',pace:'5:34',hr:145,cal:801},
+  {date:'2026-05-07',type:'Outdoor Run',dist:6.90,dur:'43:33',pace:'6:19',hr:130,cal:440},
+  {date:'2026-05-09',type:'Outdoor Run',dist:7.12,dur:'43:45',pace:'6:09',hr:125,cal:403},
+  {date:'2026-05-10',type:'Outdoor Run',dist:20.45,dur:'2:12:00',pace:'6:27',hr:145,cal:1578},
+  {date:'2026-01-01',type:'Strength',dist:0,dur:'4:51',pace:'',hr:82,cal:23},
+  {date:'2026-01-02',type:'Hike',dist:8.77,dur:'4:00:41',pace:'',hr:87,cal:819},
+];
+
+// Sort by date descending for table display
+activities.sort((a,b)=>b.date.localeCompare(a.date));
+
+const runs = activities.filter(a=>a.type.includes('Run'));
+
+// ── Summary Stats ──
+const totalDist = runs.reduce((s,a)=>s+a.dist,0);
+const totalCal = runs.reduce((s,a)=>s+a.cal,0);
+const runHRs = runs.filter(a=>a.hr).map(a=>a.hr);
+const avgHR = Math.round(runHRs.reduce((s,v)=>s+v,0)/runHRs.length);
+
+function parsePaceSec(p){if(!p)return null;const[m,s]=p.split(':').map(Number);return m*60+s}
+const paces=runs.map(a=>parsePaceSec(a.pace)).filter(Boolean);
+const avgPaceSec=Math.round(paces.reduce((s,v)=>s+v,0)/paces.length);
+const avgPaceStr=`${Math.floor(avgPaceSec/60)}:${String(avgPaceSec%60).padStart(2,'0')}`;
+
+function parseDurMin(d){const parts=d.split(':').map(Number);if(parts.length===3)return parts[0]*60+parts[1]+parts[2]/60;return parts[0]+parts[1]/60}
+const totalMin=runs.reduce((s,a)=>s+parseDurMin(a.dur),0);
+const totalHrs=Math.floor(totalMin/60);
+const remainMin=Math.round(totalMin%60);
+
+const longestRun=runs.reduce((m,a)=>a.dist>m.dist?a:m,{dist:0});
+const maxDist=longestRun.dist;
+const maxDistDate=longestRun.date;
+
+// Find fastest pace
+const fastestPaceSec=Math.min(...paces);
+const fastestPaceStr=`${Math.floor(fastestPaceSec/60)}:${String(fastestPaceSec%60).padStart(2,'0')}`;
+
+document.getElementById('summaryCards').innerHTML=`
+  <div class="card"><div class="label">总跑步次数</div><div class="value">${runs.length}</div><div class="sub">共 ${activities.length} 次训练</div></div>
+  <div class="card"><div class="label">总跑量</div><div class="value">${totalDist.toFixed(0)} km</div><div class="sub">周均 ${(totalDist/(totalMin/60/7||1)*7/5).toFixed(0)} km</div></div>
+  <div class="card"><div class="label">总时长</div><div class="value">${totalHrs}h ${remainMin}m</div><div class="sub">平均 ${Math.round(totalMin/runs.length)} min/次</div></div>
+  <div class="card"><div class="label">总消耗</div><div class="value">${(totalCal/1000).toFixed(1)}k</div><div class="sub">千卡</div></div>
+  <div class="card"><div class="label">平均配速</div><div class="value">${avgPaceStr}</div><div class="sub">/km</div></div>
+  <div class="card"><div class="label">平均心率</div><div class="value">${avgHR}</div><div class="sub">bpm</div></div>
+  <div class="card"><div class="label">最长距离</div><div class="value">${maxDist.toFixed(1)} km</div><div class="sub">${maxDistDate}</div></div>
+  <div class="card"><div class="label">最快配速</div><div class="value">${fastestPaceStr}</div><div class="sub">/km</div></div>
+`;
+
+// ── Monthly Aggregation ──
+const months={};
+runs.forEach(a=>{
+  const m=a.date.substring(0,7);
+  if(!months[m])months[m]={dist:0,count:0,hrSum:0,hrCount:0,paceSum:0,paceCount:0};
+  months[m].dist+=a.dist;
+  months[m].count++;
+  if(a.hr){months[m].hrSum+=a.hr;months[m].hrCount++}
+  const ps=parsePaceSec(a.pace);if(ps){months[m].paceSum+=ps;months[m].paceCount++}
+});
+const monthLabels=Object.keys(months).sort();
+const monthDist=monthLabels.map(m=>+months[m].dist.toFixed(1));
+const monthCount=monthLabels.map(m=>months[m].count);
+const monthAvgHR=monthLabels.map(m=>months[m].hrCount?Math.round(months[m].hrSum/months[m].hrCount):0);
+const monthAvgPace=monthLabels.map(m=>months[m].paceCount?Math.round(months[m].paceSum/months[m].paceCount):0);
+
+const chartDefaults={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{color:'#9e9484',font:{size:11}},grid:{color:'rgba(232,223,211,.6)'}},y:{ticks:{color:'#9e9484',font:{size:11}},grid:{color:'rgba(232,223,211,.6)'}}}};
+
+// ── Activity Table (no Chart.js dependency) ──
+const tbody=document.getElementById('activityTable');
+const recentActivities=activities.slice(0,25);
+recentActivities.forEach(a=>{
+  const typeClass=a.type.includes('Indoor')?'indoor':a.type.includes('Hike')?'hike':a.type.includes('Climb')?'climb':a.type.includes('Strength')?'strength':'run';
+  const badge=`<span class="badge badge-${typeClass}">${a.type}</span>`;
+  const distCell=a.dist>0?a.dist.toFixed(2)+' km':'-';
+  const paceCell=a.pace?a.pace+' /km':'-';
+  const hrCell=a.hr?a.hr+' bpm':'-';
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td>${a.date}</td><td>${badge}</td><td>${distCell}</td><td>${a.dur}</td><td>${paceCell}</td><td>${hrCell}</td><td>${a.cal} kcal</td>`;
+  tbody.appendChild(tr);
+});
+
+waitChart(function(){
+
+new Chart(document.getElementById('monthlyDist'),{type:'bar',data:{labels:monthLabels,datasets:[{data:monthDist,backgroundColor:'rgba(77,184,164,.55)',borderRadius:6,barThickness:28}]},options:{...chartDefaults}});
+
+function fmtPace(sec){const m=Math.floor(sec/60);const s=sec%60;return m+':'+String(s).padStart(2,'0')}
+new Chart(document.getElementById('monthlyPace'),{type:'line',data:{labels:monthLabels,datasets:[{data:monthAvgPace,borderColor:'#7ec882',backgroundColor:'rgba(126,200,130,.12)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#7ec882'}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,reverse:true,ticks:{color:'#9e9484',font:{size:11},callback:v=>fmtPace(v)}}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>fmtPace(ctx.parsed.y)+' /km'}}}}});
+
+new Chart(document.getElementById('monthlyHR'),{type:'line',data:{labels:monthLabels,datasets:[{data:monthAvgHR,borderColor:'#e89898',backgroundColor:'rgba(232,152,152,.12)',fill:true,tension:.4,pointRadius:4,pointBackgroundColor:'#e89898'}]},options:chartDefaults});
+
+new Chart(document.getElementById('monthlyCount'),{type:'bar',data:{labels:monthLabels,datasets:[{data:monthCount,backgroundColor:'rgba(196,166,216,.55)',borderRadius:6,barThickness:28}]},options:chartDefaults});
+
+// ── HRV Data ──
+const hrvData=[
+  ['2026-01-02',76],['2026-01-03',65],['2026-01-04',52],['2026-01-05',66],['2026-01-06',81],
+  ['2026-01-07',55],['2026-01-08',58],['2026-01-09',53],['2026-01-10',67],['2026-01-11',69],
+  ['2026-01-12',75],['2026-01-13',86],['2026-01-14',62],['2026-01-15',81],['2026-01-16',73],
+  ['2026-01-17',89],['2026-01-18',54],['2026-01-19',70],['2026-01-20',69],['2026-01-21',91],
+  ['2026-01-22',62],['2026-01-23',61],['2026-01-24',42],['2026-01-25',50],['2026-01-26',61],
+  ['2026-01-27',59],['2026-01-28',50],['2026-01-29',48],['2026-01-30',64],['2026-01-31',64],
+  ['2026-02-01',49],['2026-02-02',56],['2026-02-03',49],['2026-02-04',60],['2026-02-05',55],
+  ['2026-02-06',62],['2026-02-07',71],['2026-02-08',64],['2026-02-09',71],['2026-02-10',66],
+  ['2026-02-11',48],['2026-02-12',55],['2026-02-13',34],['2026-02-14',53],['2026-02-15',72],
+  ['2026-02-16',78],['2026-02-17',60],['2026-02-18',59],['2026-02-19',64],['2026-02-20',61],
+  ['2026-02-21',68],['2026-02-22',70],['2026-02-23',89],['2026-02-24',79],['2026-02-25',72],
+  ['2026-02-26',73],['2026-02-27',71],['2026-02-28',56],['2026-03-01',64],['2026-03-02',70],
+  ['2026-03-03',64],['2026-03-04',68],['2026-03-05',46],['2026-03-06',57],['2026-03-07',64],
+  ['2026-03-08',63],['2026-03-09',61],['2026-03-10',81],['2026-03-11',66],['2026-03-12',60],
+  ['2026-03-13',65],['2026-03-14',60],['2026-03-15',58],['2026-03-16',59],['2026-03-17',56],
+  ['2026-03-18',61],['2026-03-19',49],['2026-03-20',57],['2026-03-21',60],['2026-03-22',69],
+  ['2026-03-23',67],['2026-03-24',69],['2026-03-25',75],['2026-03-26',57],['2026-03-27',61],
+  ['2026-03-28',60],['2026-03-29',53],['2026-03-30',83],['2026-03-31',92],['2026-04-01',73],
+  ['2026-04-02',84],['2026-04-03',48],['2026-04-04',62],['2026-04-05',49],['2026-04-06',51],
+  ['2026-04-07',67],['2026-04-08',47],['2026-04-09',59],['2026-04-10',49],['2026-04-11',74],
+  ['2026-04-12',54],['2026-04-13',47],['2026-04-14',59],['2026-04-15',50],['2026-04-16',48],
+  ['2026-04-17',55],['2026-04-18',56],['2026-04-19',59],['2026-04-20',67],['2026-04-21',63],
+  ['2026-04-22',60],['2026-04-23',68],['2026-04-24',58],['2026-04-25',81],['2026-04-26',68],
+  ['2026-04-27',78],['2026-04-28',52],['2026-04-29',66],['2026-04-30',74],['2026-05-01',80],
+  ['2026-05-02',53],['2026-05-03',72],['2026-05-04',65],['2026-05-05',63],['2026-05-06',57],
+  ['2026-05-07',51],['2026-05-08',70],['2026-05-09',67],['2026-05-10',89],
+];
+
+// ── Resting HR Data (weekly samples for readability) ──
+const rhrData=[
+  ['2026-01-02',47],['2026-01-09',49],['2026-01-16',44],['2026-01-23',47],
+  ['2026-01-30',48],['2026-02-06',49],['2026-02-13',53],['2026-02-20',48],
+  ['2026-02-27',46],['2026-03-06',47],['2026-03-13',45],['2026-03-20',48],
+  ['2026-03-27',45],['2026-04-03',50],['2026-04-10',50],['2026-04-17',51],
+  ['2026-04-24',49],['2026-05-01',48],['2026-05-07',49],['2026-05-10',49],
+];
+
+// ── Sleep Score Data (weekly samples) ──
+const sleepData=[
+  ['2026-01-02',80],['2026-01-07',97],['2026-01-12',97],['2026-01-17',86],
+  ['2026-01-22',77],['2026-01-28',98],['2026-02-02',97],['2026-02-07',96],
+  ['2026-02-12',97],['2026-02-17',31],['2026-02-22',74],['2026-02-27',90],
+  ['2026-03-04',96],['2026-03-09',94],['2026-03-14',53],['2026-03-19',62],
+  ['2026-03-24',93],['2026-03-30',98],['2026-04-04',86],['2026-04-09',98],
+  ['2026-04-14',74],['2026-04-19',96],['2026-04-24',98],['2026-04-29',90],
+  ['2026-05-04',82],['2026-05-10',94],
+];
+
+// ── Stress Data (weekly samples) ──
+const stressData=[
+  ['2026-01-02',21],['2026-01-09',19],['2026-01-16',15],['2026-01-23',22],
+  ['2026-01-30',19],['2026-02-06',18],['2026-02-13',22],['2026-02-20',23],
+  ['2026-02-27',20],['2026-03-06',21],['2026-03-13',18],['2026-03-20',17],
+  ['2026-03-27',22],['2026-04-03',18],['2026-04-10',25],['2026-04-17',25],
+  ['2026-04-24',18],['2026-05-01',24],['2026-05-07',24],['2026-05-10',31],
+];
+
+// ── Training Load Data ──
+const loadData=[
+  ['2026-04-10',23,55],['2026-04-11',20,54],['2026-04-12',25,54],['2026-04-13',22,53],
+  ['2026-04-14',29,54],['2026-04-15',25,52],['2026-04-16',34,54],['2026-04-17',29,52],
+  ['2026-04-18',52,57],['2026-04-19',45,56],['2026-04-20',47,56],['2026-04-21',68,59],
+  ['2026-04-22',58,58],['2026-04-23',68,60],['2026-04-24',58,58],['2026-04-25',78,61],
+  ['2026-04-26',67,60],['2026-04-27',90,64],['2026-04-28',77,62],['2026-04-29',69,62],
+  ['2026-04-30',59,60],['2026-05-01',78,63],['2026-05-02',67,62],['2026-05-03',57,60],
+  ['2026-05-04',49,59],['2026-05-05',42,57],['2026-05-06',58,60],['2026-05-07',58,60],
+  ['2026-05-08',49,58],['2026-05-09',49,58],['2026-05-10',85,64],
+];
+
+// ── Health Charts ──
+const hrvLabels=hrvData.map(d=>d[0].substring(5));
+const hrvVals=hrvData.map(d=>d[1]);
+new Chart(document.getElementById('hrvChart'),{type:'line',data:{labels:hrvLabels,datasets:[
+  {data:hrvVals,borderColor:'#c4a6d8',backgroundColor:'rgba(196,166,216,.12)',fill:true,tension:.3,pointRadius:1.5,pointBackgroundColor:'#c4a6d8'},
+  {data:Array(hrvVals.length).fill(72),borderColor:'rgba(126,200,130,.5)',borderDash:[5,5],pointRadius:0,fill:false},
+  {data:Array(hrvVals.length).fill(52),borderColor:'rgba(244,197,66,.5)',borderDash:[5,5],pointRadius:0,fill:false},
+]},options:{...chartDefaults,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.data[ctx.dataIndex]+' ms'}}},scales:{...chartDefaults.scales,x:{...chartDefaults.scales.x,ticks:{...chartDefaults.scales.x.ticks,maxTicksLimit:12}}}}});
+
+const rhrLabels=rhrData.map(d=>d[0].substring(5));
+new Chart(document.getElementById('rhrChart'),{type:'line',data:{labels:rhrLabels,datasets:[{data:rhrData.map(d=>d[1]),borderColor:'#e89898',backgroundColor:'rgba(232,152,152,.12)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#e89898'}]},options:chartDefaults});
+
+const sleepLabels=sleepData.map(d=>d[0].substring(5));
+new Chart(document.getElementById('sleepChart'),{type:'line',data:{labels:sleepLabels,datasets:[{data:sleepData.map(d=>d[1]),borderColor:'#7cb9e8',backgroundColor:'rgba(124,185,232,.12)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#7cb9e8'}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,min:20,max:100}}}});
+
+const stressLabels=stressData.map(d=>d[0].substring(5));
+new Chart(document.getElementById('stressChart'),{type:'line',data:{labels:stressLabels,datasets:[{data:stressData.map(d=>d[1]),borderColor:'#f4c542',backgroundColor:'rgba(244,197,66,.12)',fill:true,tension:.4,pointRadius:3,pointBackgroundColor:'#f4c542'}]},options:chartDefaults});
+
+// ── Training Load Chart ──
+const loadLabels=loadData.map(d=>d[0].substring(5));
+new Chart(document.getElementById('loadChart'),{type:'line',data:{labels:loadLabels,datasets:[
+  {label:'短期负荷',data:loadData.map(d=>d[1]),borderColor:'#7cb9e8',backgroundColor:'rgba(124,185,232,.15)',fill:true,tension:.3,pointRadius:2},
+  {label:'长期负荷',data:loadData.map(d=>d[2]),borderColor:'#7ec882',backgroundColor:'rgba(126,200,130,.12)',fill:true,tension:.3,pointRadius:2},
+]},options:{...chartDefaults,plugins:{legend:{display:true,labels:{color:'#9e9484',font:{size:12}}}}}});
+
+// ── Pace Distribution ──
+const paceBuckets={'4:30-5:00':0,'5:00-5:30':0,'5:30-6:00':0,'6:00-6:30':0,'6:30-7:00':0,'7:00+':0};
+paces.forEach(p=>{
+  if(p<300)paceBuckets['4:30-5:00']++;
+  else if(p<330)paceBuckets['5:00-5:30']++;
+  else if(p<360)paceBuckets['5:30-6:00']++;
+  else if(p<390)paceBuckets['6:00-6:30']++;
+  else if(p<420)paceBuckets['6:30-7:00']++;
+  else paceBuckets['7:00+']++;
+});
+const paceDistLabels=Object.keys(paceBuckets);
+const paceDistVals=Object.values(paceBuckets);
+const paceColors=['#7ec882','#7cb9e8','#c4a6d8','#f4c542','#e89898','#d4796a'];
+new Chart(document.getElementById('paceDist'),{type:'bar',data:{labels:paceDistLabels,datasets:[{data:paceDistVals,backgroundColor:paceColors.map(c=>c+'99'),borderColor:paceColors,borderWidth:1,borderRadius:6,barThickness:40}]},options:{...chartDefaults,scales:{...chartDefaults.scales,y:{...chartDefaults.scales.y,ticks:{stepSize:1}}}}});
+
+}); // end waitChart
+}); // end DOMContentLoaded
+</body>
+</html>

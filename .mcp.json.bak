@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "coros": {
+      "command": "coros-mcp",
+      "args": ["--issuer", "https://mcpcn.coros.com"]
+    }
+  }
+}
