@@ -1,27 +1,14 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## Project Overview
 
-Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系统。
-
-用户目标：2026年12月初首马，目标 3:30 以内。
+This is a new project (Coros Data Analyst) with no code yet. Update this file as the codebase takes shape.
 
 ## Environment
 
 - MCP: Puppeteer server is enabled for browser automation tasks
-- MCP: Coros server is enabled for training data access
-
-## 训练复盘指令
-
-当用户要求复盘、训练分析、训练计划、恢复评估时，按以下步骤执行：
-
-1. `node scripts/fetch.js` — 采集最新数据
-2. `node scripts/analyze.js` — 生成 Markdown 分析报告，输出给用户
-3. 如用户需要可视化报告：`node scripts/report.js`，然后用 `open` 打开 HTML
-
-脚本支持 `--date YYYYMMDD` 参数指定日期。
 
 
 ## 1. Think Before Coding
