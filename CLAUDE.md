@@ -18,10 +18,21 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 当用户要求复盘、训练分析、训练计划、恢复评估时，按以下步骤执行：
 
 1. `node scripts/fetch.js` — 采集最新数据
-2. `node scripts/analyze.js` — 生成 Markdown 分析报告，输出给用户
-3. 如用户需要可视化报告：`node scripts/report.js`，然后用 `open` 打开 HTML
+2. `node scripts/download-tcx.js` — 下载 TCX 运动文件（高级分析用）
+3. `node scripts/analyze.js` — TCX 高级分析 + LLM 深度复盘，生成 `YYYYMMDD-analysis.json`
+4. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
 
 脚本支持 `--date YYYYMMDD` 参数指定日期。
+
+**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic` 和 `openai` 两个 provider。需要设置对应的环境变量（`ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY`）。
+
+## 数据存储
+
+- `data/daily/YYYYMMDD.json` — 每日概览（活动摘要 + 健康数据）
+- `data/daily/YYYYMMDD-analysis.json` — LLM 分析结果（复盘 + 训练计划）
+- `data/tcx/{labelId}.tcx` — TCX 运动文件（GPS 轨迹 + 逐点心率）
+- `data/.crs-token/` — crs-connect 认证令牌（自动管理）
+- `coros.config.json` — crs-connect 凭据 + LLM 配置（不提交到 git）
 
 
 ## 1. Think Before Coding

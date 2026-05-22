@@ -1,0 +1,407 @@
+{
+  "fetchDate": "20260522",
+  "generatedAt": "2026-05-22T01:02:54.867Z",
+  "context": {
+    "profile": {
+      "age": 38,
+      "height": 176,
+      "weight": 65.8,
+      "gender": "Male",
+      "birthday": "1987-08-10",
+      "vo2max": 52,
+      "thresholdPace": "4:37",
+      "maxHR": 182,
+      "racePredictions": {
+        "5k": "22:08",
+        "10k": "45:58",
+        "halfMarathon": "1:43:08",
+        "marathon": "3:38:16"
+      }
+    },
+    "goal": {
+      "targetTime": "3:30:00",
+      "targetPace": "4:58",
+      "marathonDate": "2026-12-05",
+      "weeksLeft": 29,
+      "currentPhase": "准备期",
+      "currentWeek": 0,
+      "phaseFocus": "建立基础跑量、维持有氧",
+      "targetWeeklyKm": [
+        45,
+        60
+      ]
+    },
+    "bodyStatus": {
+      "recovery": {
+        "percentage": 100,
+        "level": "Heavy training allowed",
+        "estimatedFullRecovery": "0h"
+      },
+      "hrv": {
+        "baseline": 65,
+        "normalRange": [
+          56,
+          74
+        ],
+        "latestValue": 57,
+        "latestEval": "Normal",
+        "trend7d": [
+          {
+            "date": "2026-05-22",
+            "hrv": 57,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-21",
+            "hrv": 56,
+            "eval": "Below normal"
+          },
+          {
+            "date": "2026-05-20",
+            "hrv": 54,
+            "eval": "Below normal"
+          },
+          {
+            "date": "2026-05-19",
+            "hrv": 62,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-18",
+            "hrv": 64,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-17",
+            "hrv": 66,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-16",
+            "hrv": 52,
+            "eval": "Below normal"
+          }
+        ],
+        "consecutiveBelow": 0
+      },
+      "sleep": {
+        "latestScore": 88,
+        "deepRatio": 16,
+        "trend7d": [
+          {
+            "date": "2026-05-19",
+            "score": 88,
+            "deepRatio": 16
+          },
+          {
+            "date": "2026-05-20",
+            "score": 80,
+            "deepRatio": 23
+          },
+          {
+            "date": "2026-05-21",
+            "score": 92,
+            "deepRatio": 21
+          },
+          {
+            "date": "2026-05-22",
+            "score": 98,
+            "deepRatio": 20
+          }
+        ]
+      },
+      "stress": {
+        "avg7d": 18.714285714285715,
+        "trend": [
+          {
+            "date": "20260516",
+            "stress": 18
+          },
+          {
+            "date": "20260517",
+            "stress": 17
+          },
+          {
+            "date": "20260518",
+            "stress": 22
+          },
+          {
+            "date": "20260519",
+            "stress": 23
+          },
+          {
+            "date": "20260520",
+            "stress": 22
+          },
+          {
+            "date": "20260521",
+            "stress": 17
+          },
+          {
+            "date": "20260522",
+            "stress": 12
+          }
+        ]
+      },
+      "trainingLoad": {
+        "shortTerm": 54,
+        "longTerm": 60,
+        "ratio": 0.9,
+        "comment": "Maintaining"
+      }
+    },
+    "workouts": [
+      {
+        "date": "2026-05-20",
+        "distance": 12.78,
+        "duration": "1:06:53",
+        "avgPace": "5:14",
+        "movingAvgPace": "5:14",
+        "adjustedPace": "5:14",
+        "bestKm": "4:53",
+        "avgHR": 150,
+        "avgCadence": 177,
+        "avgStrideLength": 1.08,
+        "elevationGain": 3,
+        "elevationLoss": 4,
+        "calories": 854,
+        "trainingLoad": 190,
+        "performance": "Good"
+      },
+      {
+        "date": "2026-05-18",
+        "distance": 7.42,
+        "duration": "48:12",
+        "avgPace": "6:30",
+        "movingAvgPace": "6:06",
+        "adjustedPace": "6:28",
+        "bestKm": "5:38",
+        "avgHR": 130,
+        "avgCadence": 164,
+        "avgStrideLength": 0.94,
+        "elevationGain": 14,
+        "elevationLoss": 16,
+        "calories": 486,
+        "trainingLoad": 65,
+        "performance": "Normal"
+      },
+      {
+        "date": "2026-05-16",
+        "distance": 10.08,
+        "duration": "53:26",
+        "avgPace": "5:18",
+        "movingAvgPace": "5:19",
+        "adjustedPace": "5:16",
+        "bestKm": "4:47",
+        "avgHR": 149,
+        "avgCadence": 182,
+        "avgStrideLength": 1.04,
+        "elevationGain": 15,
+        "elevationLoss": 18,
+        "calories": 649,
+        "trainingLoad": 128,
+        "performance": "Good"
+      }
+    ],
+    "weeklySummary": {
+      "totalKm": 30.3,
+      "runCount": 3,
+      "totalTL": 383,
+      "intensityDistribution": {
+        "easyKm": 30.3,
+        "moderateKm": 0,
+        "hardKm": 0
+      },
+      "loadRatio": 0.9,
+      "shortTermLoad": 54,
+      "longTermLoad": 60
+    }
+  },
+  "analysis": {
+    "workoutReviews": [
+      {
+        "date": "2026-05-20",
+        "summary": "周三长距离跑，12.78km平均配速5:14/km，心率150bpm，整体表现稳定，但强度略超出轻松跑区间。",
+        "positives": [
+          "有氧耐力表现良好，全程配速波动小",
+          "步频177spm处于合理范围，步幅1.08m经济性尚可"
+        ],
+        "improvements": [
+          "长距离跑建议将配速控制在5:30-5:45/km以保持纯有氧，心率目标<140bpm",
+          "步频可进一步提升至180+，降低触地时间与受伤风险"
+        ],
+        "detailedAnalysis": "本次训练以中等有氧强度完成12.78km，平均配速5:14/km，对应心率150bpm（最大心率82%），已接近有氧阈值上限。准备期核心目标是建立跑量并夯实有氧基础，此类强度长期执行可能累积疲劳，影响恢复质量与基础耐力发展。步频177spm略显偏低，若结合更积极的步频（180-185spm）并适当缩小步幅，可优化跑步经济性并减少关节冲击。建议下次同等距离训练将配速放慢至5:45/km左右，心率维持在140bpm以下，以确保训练刺激落在真正的有氧区域。同时可以在跑后加入4-6组100m跨步跑，培养高步频的神经肌肉记忆。"
+      },
+      {
+        "date": "2026-05-18",
+        "summary": "周一恢复跑7.42km，平均配速6:30/km，心率130bpm，严格控制强度，恢复效果极佳。",
+        "positives": [
+          "心率控制出色，始终处于深度恢复区间",
+          "配速完全符合轻松跑要求，训练目的明确"
+        ],
+        "improvements": [
+          "平均步频仅164spm，需通过专门练习提升至180spm左右",
+          "移动配速与平均配速差异大，表明有较多停顿，建议选择连续性好、信号灯少的路线"
+        ],
+        "detailedAnalysis": "本次轻松跑平均心率130bpm（最大心率71%），属于典型的恢复跑或低强度有氧跑，对促进血液循环和疲劳消除十分理想。但步频164spm明显偏慢，将增加触地时间和垂直振幅，降低跑步效率并提高受伤风险。移动配速6:06/km与平均配速6:30/km差距接近24秒/km，说明至少有一次较长时间的停顿（如等红绿灯），打断了持续有氧刺激的连续性。未来进行轻松跑时，可规划沿河或无信号灯的环形路线；在技术层面，通过节拍器或音乐将步频设定在180spm，初期可稍微缩短步幅，逐渐适应高步频节奏。"
+      },
+      {
+        "date": "2026-05-16",
+        "summary": "周六10.08km中距离跑，配速5:18/km，心率149bpm，状态良好，步频表现优秀。",
+        "positives": [
+          "步频182spm达到理想区间，节奏感出色",
+          "完成10km节奏稳定，训练负荷适中"
+        ],
+        "improvements": [
+          "配速偏快导致心率接近150，对轻松跑来说强度偏高，应严格控制在6:00-6:20/km",
+          "若目标为纯有氧跑，需进一步压低心率至140以下"
+        ],
+        "detailedAnalysis": "本次10km跑以5:18/km的配速完成，步频182spm相当理想，步幅1.04m经济合理，表明跑者具备较好的技术基础。然而平均心率149bpm（最大心率82%）表明实际强度已接近混氧区，对于准备期的有氧基础建设而言强度稍高。当前阶段应遵循80/20法则，保证80%跑量为真正的轻松跑（心率<75% HRmax，约<136bpm）。建议将类似距离的轻松跑配速调整至6:00-6:20/km，维持心率在135-140bpm以下。可参考跑后体感：若跑后仍觉轻松且次日无疲劳感，可适当提升长距离跑的距离，而非增加强度。"
+      }
+    ],
+    "bodyAssessment": {
+      "overallLevel": "green",
+      "summary": "身体状态良好，完全恢复，各项指标均在正常范围，可以承受正常训练负荷。",
+      "details": [
+        "HRV最新值57，回归正常区间，且连续低于正常的趋势已中断，显示自主神经系统恢复良好；",
+        "睡眠评分98分，深睡比例20%，质量优秀，对训练恢复极其有利；",
+        "训练负荷短/长期比值0.9，整体维持状态，无过度训练风险，可逐步提升跑量。"
+      ],
+      "recommendations": [
+        "本周可适量增加跑量至40km左右，并引入一次低强度速度刺激（如跨步跑或法特莱克）",
+        "继续保持高质量睡眠和低生活压力，关注晨起HRV变化"
+      ]
+    },
+    "trainingPatternAnalysis": {
+      "summary": "上周训练模式单一，全部为轻松跑，总量30.3km，配速整体偏快，缺乏强度变化和专门的速度训练。",
+      "strengths": [
+        "具备中等有氧下稳定跑10-13km的能力，步频在刻意控制时能达到180+",
+        "身体恢复能力良好，高强度训练后恢复迅速"
+      ],
+      "risks": [
+        "持续用偏快配速进行轻松跑，可能导致疲劳累积与有氧基础构建不扎实",
+        "缺乏速度刺激可能使后期提速困难，跑步经济性提升缓慢"
+      ],
+      "suggestions": [
+        "引入每周1次短距离法特莱克或跨步跑，激活神经肌肉，改善跑步效率",
+        "所有轻松跑严格按心率（<140bpm）执行，配速参考值约6:00-6:20/km",
+        "逐步增加周跑量至40-45km，为下一阶段增加距离和强度做好准备"
+      ]
+    },
+    "weeklyPlan": [
+      {
+        "dayIndex": 1,
+        "dayName": "周一",
+        "date": "2026-05-25",
+        "type": "轻松跑",
+        "totalDistance": 8,
+        "hrZone": "<135bpm",
+        "paceZone": "6:00-6:20/km",
+        "description": "有氧基础恢复跑，维持轻快节奏",
+        "prescription": {
+          "warmup": "2km 慢跑热身 @6:30-6:40/km",
+          "main": "4km 轻松跑 @6:00-6:20/km，保持心率<135bpm",
+          "cooldown": "2km 慢跑冷身 + 4×100m 加速跑 (ST)",
+          "notes": "关注步频180+spm，保持呼吸平稳，加速跑时放松、快速，不冲刺"
+        }
+      },
+      {
+        "dayIndex": 2,
+        "dayName": "周二",
+        "date": "2026-05-26",
+        "type": "休息",
+        "totalDistance": 0,
+        "hrZone": "",
+        "paceZone": "",
+        "description": "完全休息或轻量交叉训练（如散步、拉伸）",
+        "prescription": {
+          "warmup": "",
+          "main": "",
+          "cooldown": "",
+          "notes": "保证充足睡眠，可进行20分钟泡沫轴放松"
+        }
+      },
+      {
+        "dayIndex": 3,
+        "dayName": "周三",
+        "date": "2026-05-27",
+        "type": "法特莱克跑",
+        "totalDistance": 7,
+        "hrZone": "主课较快部分 80-90% HRmax",
+        "paceZone": "较快段 4:20-4:30/km，慢跑段 6:30-6:40/km",
+        "description": "轻度速度刺激，提升跑步经济性和步频",
+        "prescription": {
+          "warmup": "2km 慢跑热身 @6:30-6:40/km + 动态拉伸（高抬腿、开合跳等）",
+          "main": "6 × 30秒 快速跑 @4:20-4:30/km，间歇2分钟轻松慢跑 @6:30-6:40/km",
+          "cooldown": "1.5km 慢跑冷身",
+          "notes": "快速跑时保持高步频（185+），身体保持直立，不要过度后仰或前倾；速度控制即可，切勿全力冲刺"
+        }
+      },
+      {
+        "dayIndex": 4,
+        "dayName": "周四",
+        "date": "2026-05-28",
+        "type": "休息",
+        "totalDistance": 0,
+        "hrZone": "",
+        "paceZone": "",
+        "description": "充分休息，促进适应性恢复",
+        "prescription": {
+          "warmup": "",
+          "main": "",
+          "cooldown": "",
+          "notes": "关注HRV和晨起静息心率，若数值向好说明恢复良好"
+        }
+      },
+      {
+        "dayIndex": 5,
+        "dayName": "周五",
+        "date": "2026-05-29",
+        "type": "轻松跑",
+        "totalDistance": 8,
+        "hrZone": "<135bpm",
+        "paceZone": "6:00-6:20/km",
+        "description": "有氧基础跑，维持轻松体感",
+        "prescription": {
+          "warmup": "2km 慢跑热身 @6:30-6:40/km",
+          "main": "4km 轻松跑 @6:00-6:20/km，心率<135bpm",
+          "cooldown": "2km 慢跑冷身 + 4×100m 加速跑",
+          "notes": "步频目标180spm，跑后做5分钟静态拉伸"
+        }
+      },
+      {
+        "dayIndex": 6,
+        "dayName": "周六",
+        "date": "2026-05-30",
+        "type": "长距离慢跑",
+        "totalDistance": 13,
+        "hrZone": "<140bpm",
+        "paceZone": "6:10-6:30/km",
+        "description": "LSD有氧耐力跑，累积基础耐力",
+        "prescription": {
+          "warmup": "2km 慢跑热身 @6:30-6:40/km",
+          "main": "9km 稳定配速跑 @6:10-6:30/km，保持心率始终<140bpm；最后1km可略微加速至6:00-6:10/km以体会流畅感",
+          "cooldown": "2km 慢跑冷身",
+          "notes": "全程关注呼吸节奏：三步一吸、三步一呼，如天热注意补水，每隔4km适当补少量水"
+        }
+      },
+      {
+        "dayIndex": 7,
+        "dayName": "周日",
+        "date": "2026-05-31",
+        "type": "休息",
+        "totalDistance": 0,
+        "hrZone": "",
+        "paceZone": "",
+        "description": "积极恢复日，可进行散步或轻量瑜伽",
+        "prescription": {
+          "warmup": "",
+          "main": "",
+          "cooldown": "",
+          "notes": "总结本周训练感受，检查双脚有无异常，为下周做好准备"
+        }
+      }
+    ],
+    "coachAdvice": "本周是准备期的第二周，重点在于稳固有氧基础，同时通过一次轻度速度刺激来唤醒神经肌肉系统。上周30.3km全部为轻松跑，身体已完全恢复，因此本周计划将跑量提升至约36km，新增一次法特莱克跑（共7km）以提高跑步经济性和步频。请严格执行轻松跑的心率控制（<135-140bpm），配速可参照6:00-6:20/km，切勿因感觉轻松而不断加速。步频方面，近期数据反映出部分训练步频偏低，请利用每次跑后的跨步跑刻意练习180-185spm的高频轻快动作，逐渐将其内化为常态。恢复方面，睡眠质量优秀，继续维持；HRV已恢复正常，表明身体适应良好。距离比赛尚有29周，现在的耐心和基础积累将决定后期速度训练的质量。未来几周可根据身体反馈逐步将周跑量推进至45km左右，但仍需保持80%以上为真正的有氧跑，切莫冒进。"
+  }
+}

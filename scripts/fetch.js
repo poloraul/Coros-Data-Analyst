@@ -7,7 +7,7 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data", "daily");
-const ISSUER = "https://mcpus.coros.com";
+const ISSUER = "https://mcpcn.coros.com";
 const TIMEZONE = "Asia/Shanghai";
 
 function parseArgs() {

@@ -28,7 +28,6 @@ table{width:100%;border-collapse:collapse;font-size:.82rem}
 th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:2px solid var(--border)}
 td{padding:8px 10px;border-bottom:1px solid var(--border)}
 tr:hover td{background:var(--row-hover)}
-.recovery-indicator{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px}
 .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.7rem;font-weight:600;margin:2px}
 .badge-green{background:rgba(126,200,130,.2);color:#5aa65e}
 .badge-yellow{background:rgba(244,197,66,.2);color:#c9a030}
@@ -39,8 +38,34 @@ tr:hover td{background:var(--row-hover)}
 .review-box h4{font-size:.85rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
 .finding-item{font-size:.82rem;padding:4px 0;border-bottom:1px solid var(--finding-border)}
 .finding-item:last-child{border-bottom:none}
-.plan-today{background:rgba(77,184,164,.06)!important}
-[data-theme="dark"] .plan-today{background:rgba(158,206,106,.08)!important}
+.coach-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 2px 6px var(--shadow);margin-bottom:24px}
+.coach-box .advice{font-size:.9rem;line-height:1.8;white-space:pre-line}
+.plan-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);margin-bottom:12px;transition:background .3s,border-color .3s}
+.plan-card.today{border-left:4px solid var(--accent)}
+.plan-card.completed{opacity:.75}
+.plan-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.plan-header .day{font-weight:700;font-size:.95rem;color:var(--text-strong)}
+.plan-header .type{font-size:.82rem;padding:2px 10px;border-radius:8px;background:rgba(126,200,130,.15);color:var(--accent)}
+.plan-metrics{display:flex;gap:16px;font-size:.8rem;color:var(--muted);margin-bottom:10px}
+.plan-metrics span{display:flex;align-items:center;gap:4px}
+.plan-prescription{font-size:.82rem;line-height:1.7}
+.plan-prescription .phase{margin-bottom:6px;padding-left:12px;border-left:2px solid var(--border)}
+.plan-prescription .phase-label{font-weight:600;color:var(--text-strong);font-size:.75rem;text-transform:uppercase;letter-spacing:.3px}
+.plan-prescription .phase-content{color:var(--text)}
+.plan-prescription .notes{margin-top:8px;padding:8px 12px;background:rgba(126,200,130,.06);border-radius:8px;font-size:.78rem;color:var(--muted)}
+.zone-bar{display:flex;height:24px;border-radius:12px;overflow:hidden;margin:8px 0;font-size:.65rem;font-weight:700;color:#fff;text-align:center;line-height:24px}
+.zone-segment{transition:width .3s;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.metric-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.metric-chip{padding:4px 10px;border-radius:8px;font-size:.75rem;font-weight:600;background:var(--card);border:1px solid var(--border)}
+.workout-detail{margin-bottom:0}
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:16px;overflow-x:auto}
+.tab-btn{padding:8px 16px;font-size:.82rem;font-weight:600;color:var(--muted);background:none;border:none;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-2px;white-space:nowrap;transition:color .2s,border-color .2s}
+.tab-btn:hover{color:var(--text-strong)}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab-panel{display:none}
+.tab-panel.active{display:block}
+.splits-table td{text-align:center;font-variant-numeric:tabular-nums;padding:4px 8px}
+.splits-table tr:nth-child(even) td{background:var(--row-hover)}
 .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
 .theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
@@ -52,181 +77,666 @@ tr:hover td{background:var(--row-hover)}
 <div class="header-row">
   <div>
     <h1>COROS 训练复盘</h1>
-    <p class="subtitle">20260521 | Jarvis | 距首马 29 周 (准备期) | 目标 3:30:00</p>
+    <p class="subtitle">20260521 | 38岁 男 176cm/65.8kg | 距首马 29 周 (准备期) | 目标 3:30:00</p>
   </div>
   <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
 </div>
 
 <!-- Key Metrics -->
 <div class="cards">
-  <div class="card"><div class="label">本周跑量</div><div class="value">43.3<span style="font-size:.9rem">km</span></div><div class="sub">目标 45-60km</div></div>
-  <div class="card"><div class="label">训练负荷</div><div class="value">572<span style="font-size:.9rem">TL</span></div><div class="sub">Optimized</div></div>
-  <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#f4c542">92%</div><div class="sub"><span class="recovery-indicator" style="background:#f4c542"></span>注意</div></div>
-  <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#f4c542">56<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#f4c542"></span>偏低 | 基线 66ms</div></div>
+  <div class="card"><div class="label">本周跑量</div><div class="value">43.3<span style="font-size:.9rem">km</span></div><div class="sub">目标 45-60km | 4次</div></div>
+  <div class="card"><div class="label">训练负荷</div><div class="value">572<span style="font-size:.9rem">TL</span></div><div class="sub">短/长 63/61 | 比 1.03</div></div>
+  <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">96%</div><div class="sub"><span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#7ec882;vertical-align:middle;margin-right:3px"></span>良好</div></div>
+  <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#f4c542">56<span style="font-size:.9rem">ms</span></div><div class="sub">基线 66ms | 正常 57-75ms</div></div>
   <div class="card"><div class="label">VO2max</div><div class="value">52</div><div class="sub">阈值配速 4:37/km</div></div>
   <div class="card"><div class="label">全马预测</div><div class="value">3:38:16</div><div class="sub">目标 3:30:00</div></div>
 </div>
 
+<!-- AI Coach Advice -->
 
-<!-- Latest Workout Deep Review -->
 <div class="section">
-  <div class="section-title">最近训练深度复盘 — 2026-05-20 12.78km</div>
-  <div class="cards" style="margin-bottom:16px">
-    <div class="card"><div class="label">配速</div><div class="value">5:14<span style="font-size:.9rem">/km</span></div><div class="sub">最快 4:53 | 有氧耐力 (E-M区)</div></div>
-    <div class="card"><div class="label">心率</div><div class="value">150<span style="font-size:.9rem">bpm</span></div><div class="sub">82% HRmax</div></div>
-    <div class="card"><div class="label">步频</div><div class="value">177<span style="font-size:.9rem">spm</span></div><div class="sub">低于180目标3spm</div></div>
-    <div class="card"><div class="label">训练负荷</div><div class="value">190<span style="font-size:.9rem">TL</span></div><div class="sub">Good</div></div>
-  </div>
-  <div class="review-grid">
-    <div class="review-box">
-      <h4>📋 训练分析</h4>
-      <div class="finding-item">配速 5:14/km，为阈值配速的 113%，处于中高强度有氧区间</div><div class="finding-item">平均心率 150bpm（82% HRmax）</div><div class="finding-item">训练负荷 190TL，属于高负荷训练</div>
-    </div>
-    <div class="review-box">
-      <h4>✅ 亮点</h4>
-      <div class="finding-item" style="color:#5aa65e">心率区间合理</div>
-      <h4 style="margin-top:12px">🔧 改进方向</h4>
-      <div class="finding-item" style="color:#c9a030">配速波动较大（最快4:53vs平均5:14），建议关注匀速跑能力</div>
-    </div>
+  <div class="section-title">AI 教练总评</div>
+  <div class="coach-box">
+    <div class="advice">本周处于准备期，训练重点是建立有氧基础。上周跑量43.3km，略低于目标上限，整体节奏合理。
+
+建议本周保持4次跑步频率，LSD是重点课表，注意控制心率在Z2以内。步频方面，部分训练低于170spm，建议在轻松跑中加入加速跑(ST)练习，逐步提升步频至180+spm。
+
+恢复方面，HRV和睡眠指标正常，可以正常按计划执行。如果感觉疲劳累积，可将周三的中长距离降级为轻松跑。</div>
   </div>
 </div>
 
 
-<!-- Charts -->
+<!-- Body Assessment -->
 <div class="section">
-  <div class="charts-grid">
-    <div class="chart-box">
-      <h3>HRV 7日趋势</h3>
+  <div class="section-title">身体状态评估 <span class="badge badge-green">良好</span></div>
+  <div class="review-grid">
+    <div class="review-box">
+      <h4>综合评估</h4>
+      <div class="finding-item" style="font-weight:600;color:#7ec882">恢复状态良好，HRV正常，可以按计划训练</div>
+      <div class="finding-item">HRV在正常范围内</div><div class="finding-item">恢复度充足</div><div class="finding-item">训练负荷适中</div>
+      <h4 style="margin-top:12px">恢复建议</h4><div class="finding-item" style="color:#5a9ec7">保持当前训练节奏</div><div class="finding-item" style="color:#5a9ec7">注意睡眠质量</div>
+    </div>
+    <div class="review-box">
+      <h4>HRV 7日趋势</h4>
       <canvas id="hrvChart"></canvas>
     </div>
-    <div class="chart-box">
-      <h3>训练负荷趋势</h3>
-      <canvas id="loadChart"></canvas>
+  </div>
+</div>
+
+<!-- Workout Deep Reviews -->
+<div class="section">
+  <div class="section-title">训练深度复盘</div>
+  <div class="tab-bar" id="workoutTabs">
+    <button class="tab-btn active" data-tab="workout0">05-20 12.78km 5:14/km</button><button class="tab-btn" data-tab="workout1">05-18 7.42km 6:30/km</button><button class="tab-btn" data-tab="workout2">05-16 10.08km 5:18/km</button><button class="tab-btn" data-tab="workout3">05-14 13.01km 5:09/km</button>
+  </div>
+  
+  <div class="tab-panel active" id="workout0">
+    <div class="cards" style="margin-bottom:14px">
+      <div class="card"><div class="label">配速</div><div class="value">5:14<span style="font-size:.9rem">/km</span></div><div class="sub">最快 4:53 | 移动平均 5:14</div></div>
+      <div class="card"><div class="label">心率</div><div class="value">150<span style="font-size:.9rem">bpm</span></div><div class="sub">82% HRmax</div></div>
+      <div class="card"><div class="label">步频</div><div class="value">177<span style="font-size:.9rem">spm</span></div><div class="sub">106-184 spm</div></div>
+      <div class="card"><div class="label">训练负荷</div><div class="value">190<span style="font-size:.9rem">TL</span></div><div class="sub">Good</div></div>
     </div>
-    <div class="chart-box full-width">
-      <h3>最近训练配速 vs 阈值</h3>
+
+    
+    <div style="margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px;">心率区间分布</div>
+      <div class="zone-bar">
+        <div class="zone-segment" style="width:0%;background:#7ec882">Z1 0%</div>
+        <div class="zone-segment" style="width:4%;background:#4db8a4">Z2 4%</div>
+        <div class="zone-segment" style="width:10%;background:#f4c542">Z3 10%</div>
+        <div class="zone-segment" style="width:29%;background:#e89898">Z4 29%</div>
+        <div class="zone-segment" style="width:57%;background:#c07070">Z5 57%</div>
+      </div>
+    </div>
+    
+
+    <div class="metric-row">
+      <div class="metric-chip">配速漂移 <span style="color:#c07070">-8.4%</span></div>
+      <div class="metric-chip">有氧脱钩 <span style="color:#c9a030">-19.4%</span></div>
+      <div class="metric-chip">配速变异CV <span style="color:#c07070">7.6%</span></div>
+      <div class="metric-chip">跑步效率 <span style="color:#c9a030">-7.1%</span></div>
+      <div class="metric-chip">HR恢复率 <span style="color:#c9a030">0bpm/60s</span></div>
+    </div>
+
+    
+    <div class="charts-grid" style="margin-bottom:14px">
+      <div class="chart-box">
+        <h3>逐公里配速 + 心率</h3>
+        <canvas id="splitChart0"></canvas>
+      </div>
+      <div class="chart-box">
+        <div style="max-height:300px;overflow-y:auto">
+        <table class="splits-table">
+          <tr><th>公里</th><th>配速</th><th>心率</th><th>累计</th></tr>
+          <tr><td>1</td><td style="color:#e89898">6:19</td><td>129</td><td>6:19</td></tr><tr><td>2</td><td style="color:#e89898">5:56</td><td>141</td><td>12:14</td></tr><tr><td>3</td><td style="color:inherit">5:13</td><td>144</td><td>17:27</td></tr><tr><td>4</td><td style="color:inherit">5:15</td><td>149</td><td>22:42</td></tr><tr><td>5</td><td style="color:inherit">5:08</td><td>153</td><td>27:50</td></tr><tr><td>6</td><td style="color:inherit">5:10</td><td>152</td><td>32:59</td></tr><tr><td>7</td><td style="color:#7ec882">5:05</td><td>152</td><td>38:04</td></tr><tr><td>8</td><td style="color:#7ec882">5:02</td><td>155</td><td>43:06</td></tr><tr><td>9</td><td style="color:inherit">5:07</td><td>159</td><td>48:12</td></tr><tr><td>10</td><td style="color:#7ec882">5:02</td><td>160</td><td>53:14</td></tr><tr><td>11</td><td style="color:#7ec882">4:58</td><td>164</td><td>58:11</td></tr><tr><td>12</td><td style="color:#7ec882">4:59</td><td>166</td><td>1:03:11</td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+    
+
+    
+    <div class="review-grid">
+      <div class="review-box">
+        <h4>AI 复盘总结</h4>
+        <div class="finding-item" style="font-weight:500">2026-05-20 训练 12.78km，配速 5:14/km，Good</div>
+        <div style="margin-top:8px;font-size:.82rem;line-height:1.7;white-space:pre-line">这是一次 12.78km 的训练，平均配速 5:14/km，平均心率 150bpm。有氧脱钩率 -19.4%。配速变异系数 7.6%。</div>
+      </div>
+      <div class="review-box">
+        <h4 style="color:#5aa65e">亮点</h4><div class="finding-item" style="color:#5aa65e">完成训练目标</div>
+        <h4 style="margin-top:10px;color:#c9a030">改进方向</h4><div class="finding-item" style="color:#c9a030">配速波动较大，建议加强匀速控制</div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="tab-panel" id="workout1">
+    <div class="cards" style="margin-bottom:14px">
+      <div class="card"><div class="label">配速</div><div class="value">6:30<span style="font-size:.9rem">/km</span></div><div class="sub">最快 5:38 | 移动平均 6:06</div></div>
+      <div class="card"><div class="label">心率</div><div class="value">130<span style="font-size:.9rem">bpm</span></div><div class="sub">71% HRmax</div></div>
+      <div class="card"><div class="label">步频</div><div class="value">164<span style="font-size:.9rem">spm</span></div><div class="sub">66-178 spm</div></div>
+      <div class="card"><div class="label">训练负荷</div><div class="value">65<span style="font-size:.9rem">TL</span></div><div class="sub">Normal</div></div>
+    </div>
+
+    
+    <div style="margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px;">心率区间分布</div>
+      <div class="zone-bar">
+        <div class="zone-segment" style="width:5%;background:#7ec882">Z1 5%</div>
+        <div class="zone-segment" style="width:1%;background:#4db8a4">Z2 1%</div>
+        <div class="zone-segment" style="width:11%;background:#f4c542">Z3 11%</div>
+        <div class="zone-segment" style="width:37%;background:#e89898">Z4 37%</div>
+        <div class="zone-segment" style="width:46%;background:#c07070">Z5 46%</div>
+      </div>
+    </div>
+    
+
+    <div class="metric-row">
+      <div class="metric-chip">配速漂移 <span style="color:#c9a030">-4.2%</span></div>
+      <div class="metric-chip">有氧脱钩 <span style="color:#c9a030">-11.2%</span></div>
+      <div class="metric-chip">配速变异CV <span style="color:#c07070">10.9%</span></div>
+      <div class="metric-chip">跑步效率 <span style="color:#c9a030">-8.5%</span></div>
+      <div class="metric-chip">HR恢复率 <span style="color:#c9a030">3bpm/60s</span></div>
+    </div>
+
+    
+    <div class="charts-grid" style="margin-bottom:14px">
+      <div class="chart-box">
+        <h3>逐公里配速 + 心率</h3>
+        <canvas id="splitChart1"></canvas>
+      </div>
+      <div class="chart-box">
+        <div style="max-height:300px;overflow-y:auto">
+        <table class="splits-table">
+          <tr><th>公里</th><th>配速</th><th>心率</th><th>累计</th></tr>
+          <tr><td>1</td><td style="color:#e89898">7:28</td><td>125</td><td>7:28</td></tr><tr><td>2</td><td style="color:#7ec882">6:10</td><td>143</td><td>13:38</td></tr><tr><td>3</td><td style="color:#e89898">6:48</td><td>147</td><td>20:26</td></tr><tr><td>4</td><td style="color:#7ec882">5:50</td><td>138</td><td>26:16</td></tr><tr><td>5</td><td style="color:#7ec882">5:40</td><td>142</td><td>31:57</td></tr><tr><td>6</td><td style="color:#e89898">7:33</td><td>132</td><td>39:30</td></tr><tr><td>7</td><td style="color:#7ec882">6:06</td><td>141</td><td>45:36</td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+    
+
+    
+    <div class="review-grid">
+      <div class="review-box">
+        <h4>AI 复盘总结</h4>
+        <div class="finding-item" style="font-weight:500">2026-05-18 训练 7.42km，配速 6:30/km，Normal</div>
+        <div style="margin-top:8px;font-size:.82rem;line-height:1.7;white-space:pre-line">这是一次 7.42km 的训练，平均配速 6:30/km，平均心率 130bpm。有氧脱钩率 -11.2%。配速变异系数 10.9%。</div>
+      </div>
+      <div class="review-box">
+        <h4 style="color:#5aa65e">亮点</h4><div class="finding-item" style="color:#5aa65e">完成训练目标</div>
+        <h4 style="margin-top:10px;color:#c9a030">改进方向</h4><div class="finding-item" style="color:#c9a030">配速波动较大，建议加强匀速控制</div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="tab-panel" id="workout2">
+    <div class="cards" style="margin-bottom:14px">
+      <div class="card"><div class="label">配速</div><div class="value">5:18<span style="font-size:.9rem">/km</span></div><div class="sub">最快 4:47 | 移动平均 5:19</div></div>
+      <div class="card"><div class="label">心率</div><div class="value">149<span style="font-size:.9rem">bpm</span></div><div class="sub">82% HRmax</div></div>
+      <div class="card"><div class="label">步频</div><div class="value">182<span style="font-size:.9rem">spm</span></div><div class="sub">134-194 spm</div></div>
+      <div class="card"><div class="label">训练负荷</div><div class="value">128<span style="font-size:.9rem">TL</span></div><div class="sub">Good</div></div>
+    </div>
+
+    
+    <div style="margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px;">心率区间分布</div>
+      <div class="zone-bar">
+        <div class="zone-segment" style="width:1%;background:#7ec882">Z1 1%</div>
+        <div class="zone-segment" style="width:5%;background:#4db8a4">Z2 5%</div>
+        <div class="zone-segment" style="width:10%;background:#f4c542">Z3 10%</div>
+        <div class="zone-segment" style="width:37%;background:#e89898">Z4 37%</div>
+        <div class="zone-segment" style="width:47%;background:#c07070">Z5 47%</div>
+      </div>
+    </div>
+    
+
+    <div class="metric-row">
+      <div class="metric-chip">配速漂移 <span style="color:#c07070">-9.3%</span></div>
+      <div class="metric-chip">有氧脱钩 <span style="color:#c9a030">-22.6%</span></div>
+      <div class="metric-chip">配速变异CV <span style="color:#c07070">6.6%</span></div>
+      <div class="metric-chip">跑步效率 <span style="color:#c9a030">-8.4%</span></div>
+      <div class="metric-chip">HR恢复率 <span style="color:#c9a030">0bpm/60s</span></div>
+    </div>
+
+    
+    <div class="charts-grid" style="margin-bottom:14px">
+      <div class="chart-box">
+        <h3>逐公里配速 + 心率</h3>
+        <canvas id="splitChart2"></canvas>
+      </div>
+      <div class="chart-box">
+        <div style="max-height:300px;overflow-y:auto">
+        <table class="splits-table">
+          <tr><th>公里</th><th>配速</th><th>心率</th><th>累计</th></tr>
+          <tr><td>1</td><td style="color:#e89898">6:04</td><td>130</td><td>6:04</td></tr><tr><td>2</td><td style="color:#e89898">5:37</td><td>141</td><td>11:41</td></tr><tr><td>3</td><td style="color:#e89898">5:30</td><td>142</td><td>17:11</td></tr><tr><td>4</td><td style="color:inherit">5:24</td><td>147</td><td>22:35</td></tr><tr><td>5</td><td style="color:inherit">5:12</td><td>154</td><td>27:47</td></tr><tr><td>6</td><td style="color:inherit">5:17</td><td>156</td><td>33:04</td></tr><tr><td>7</td><td style="color:inherit">5:10</td><td>161</td><td>38:14</td></tr><tr><td>8</td><td style="color:#7ec882">5:08</td><td>159</td><td>43:22</td></tr><tr><td>9</td><td style="color:#7ec882">4:52</td><td>166</td><td>48:14</td></tr><tr><td>10</td><td style="color:#7ec882">4:48</td><td>169</td><td>53:02</td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+    
+
+    
+    <div class="review-grid">
+      <div class="review-box">
+        <h4>AI 复盘总结</h4>
+        <div class="finding-item" style="font-weight:500">2026-05-16 训练 10.08km，配速 5:18/km，Good</div>
+        <div style="margin-top:8px;font-size:.82rem;line-height:1.7;white-space:pre-line">这是一次 10.08km 的训练，平均配速 5:18/km，平均心率 149bpm。有氧脱钩率 -22.6%。配速变异系数 6.6%。</div>
+      </div>
+      <div class="review-box">
+        <h4 style="color:#5aa65e">亮点</h4><div class="finding-item" style="color:#5aa65e">完成训练目标</div>
+        <h4 style="margin-top:10px;color:#c9a030">改进方向</h4><div class="finding-item" style="color:#c9a030">配速波动较大，建议加强匀速控制</div>
+      </div>
+    </div>
+    
+  </div>
+  
+  <div class="tab-panel" id="workout3">
+    <div class="cards" style="margin-bottom:14px">
+      <div class="card"><div class="label">配速</div><div class="value">5:09<span style="font-size:.9rem">/km</span></div><div class="sub">最快 4:26 | 移动平均 5:11</div></div>
+      <div class="card"><div class="label">心率</div><div class="value">147<span style="font-size:.9rem">bpm</span></div><div class="sub">81% HRmax</div></div>
+      <div class="card"><div class="label">步频</div><div class="value">177<span style="font-size:.9rem">spm</span></div><div class="sub">112-208 spm</div></div>
+      <div class="card"><div class="label">训练负荷</div><div class="value">189<span style="font-size:.9rem">TL</span></div><div class="sub">Best</div></div>
+    </div>
+
+    
+    <div style="margin-bottom:14px;background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 18px">
+      <div style="font-size:.72rem;color:var(--muted);margin-bottom:4px;">心率区间分布</div>
+      <div class="zone-bar">
+        <div class="zone-segment" style="width:1%;background:#7ec882">Z1 1%</div>
+        <div class="zone-segment" style="width:10%;background:#4db8a4">Z2 10%</div>
+        <div class="zone-segment" style="width:13%;background:#f4c542">Z3 13%</div>
+        <div class="zone-segment" style="width:29%;background:#e89898">Z4 29%</div>
+        <div class="zone-segment" style="width:47%;background:#c07070">Z5 47%</div>
+      </div>
+    </div>
+    
+
+    <div class="metric-row">
+      <div class="metric-chip">配速漂移 <span style="color:#5aa65e">-1%</span></div>
+      <div class="metric-chip">有氧脱钩 <span style="color:#c9a030">-13.5%</span></div>
+      <div class="metric-chip">配速变异CV <span style="color:#c07070">7.9%</span></div>
+      <div class="metric-chip">跑步效率 <span style="color:#c9a030">-41.5%</span></div>
+      <div class="metric-chip">HR恢复率 <span style="color:#c9a030">2bpm/60s</span></div>
+    </div>
+
+    
+    <div class="charts-grid" style="margin-bottom:14px">
+      <div class="chart-box">
+        <h3>逐公里配速 + 心率</h3>
+        <canvas id="splitChart3"></canvas>
+      </div>
+      <div class="chart-box">
+        <div style="max-height:300px;overflow-y:auto">
+        <table class="splits-table">
+          <tr><th>公里</th><th>配速</th><th>心率</th><th>累计</th></tr>
+          <tr><td>1</td><td style="color:#e89898">5:40</td><td>121</td><td>5:40</td></tr><tr><td>2</td><td style="color:#e89898">5:52</td><td>125</td><td>11:32</td></tr><tr><td>3</td><td style="color:#7ec882">4:59</td><td>142</td><td>16:31</td></tr><tr><td>4</td><td style="color:inherit">5:05</td><td>143</td><td>21:35</td></tr><tr><td>5</td><td style="color:#7ec882">4:55</td><td>151</td><td>26:30</td></tr><tr><td>6</td><td style="color:#7ec882">4:53</td><td>158</td><td>31:23</td></tr><tr><td>7</td><td style="color:#7ec882">4:34</td><td>167</td><td>35:57</td></tr><tr><td>8</td><td style="color:#7ec882">4:30</td><td>166</td><td>40:27</td></tr><tr><td>9</td><td style="color:#7ec882">4:47</td><td>167</td><td>45:14</td></tr><tr><td>10</td><td style="color:#7ec882">4:42</td><td>164</td><td>49:56</td></tr><tr><td>11</td><td style="color:#7ec882">4:50</td><td>163</td><td>54:46</td></tr><tr><td>12</td><td style="color:#7ec882">4:50</td><td>162</td><td>59:36</td></tr>
+        </table>
+        </div>
+      </div>
+    </div>
+    
+
+    
+    <div class="review-grid">
+      <div class="review-box">
+        <h4>AI 复盘总结</h4>
+        <div class="finding-item" style="font-weight:500">2026-05-14 训练 13.01km，配速 5:09/km，Best</div>
+        <div style="margin-top:8px;font-size:.82rem;line-height:1.7;white-space:pre-line">这是一次 13.01km 的训练，平均配速 5:09/km，平均心率 147bpm。有氧脱钩率 -13.5%。配速变异系数 7.9%。</div>
+      </div>
+      <div class="review-box">
+        <h4 style="color:#5aa65e">亮点</h4><div class="finding-item" style="color:#5aa65e">完成训练目标</div>
+        <h4 style="margin-top:10px;color:#c9a030">改进方向</h4><div class="finding-item" style="color:#c9a030">配速波动较大，建议加强匀速控制</div>
+      </div>
+    </div>
+    
+  </div>
+  
+</div>
+
+<!-- Training Pattern Analysis -->
+<div class="section">
+  <div class="section-title">训练模式分析</div>
+  <div class="review-grid">
+    <div class="review-box">
+      <h4>综合分析</h4>
+      <div class="finding-item" style="font-weight:500">近一周以轻松跑为主，训练负荷适中，强度分布合理</div>
+    </div>
+    <div class="chart-box">
+      <h3>训练配速 vs 阈值</h3>
       <canvas id="paceChart"></canvas>
     </div>
   </div>
-</div>
-
-<!-- All Workouts -->
-<div class="section">
-  <div class="section-title">近期训练一览</div>
-  <table>
-    <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
-    <tr>
-      <td>2026-05-20</td>
-      <td>12.78km</td>
-      <td>5:14/km</td>
-      <td>150bpm (82%)</td>
-      <td>177spm</td>
-      <td>190TL</td>
-      <td>Good</td>
-    </tr><tr>
-      <td>2026-05-18</td>
-      <td>7.42km</td>
-      <td>6:30/km</td>
-      <td>130bpm (71%)</td>
-      <td>164spm</td>
-      <td>65TL</td>
-      <td>Normal</td>
-    </tr><tr>
-      <td>2026-05-16</td>
-      <td>10.08km</td>
-      <td>5:18/km</td>
-      <td>149bpm (82%)</td>
-      <td>182spm</td>
-      <td>128TL</td>
-      <td>Good</td>
-    </tr><tr>
-      <td>2026-05-14</td>
-      <td>13.01km</td>
-      <td>5:09/km</td>
-      <td>147bpm (81%)</td>
-      <td>177spm</td>
-      <td>189TL</td>
-      <td>Best</td>
-    </tr>
-  </table>
-</div>
-
-<!-- Recovery Detail -->
-<div class="section">
-  <div class="section-title">恢复评估</div>
-  <div class="cards">
-    <div class="card"><div class="label">HRV连续偏低</div><div class="value">2<span style="font-size:.9rem">天</span></div><div class="sub">⚠️ 需关注</div></div>
-    <div class="card"><div class="label">睡眠(最新)</div><div class="value">56</div><div class="sub">22:33 - 07:43</div></div>
-    <div class="card"><div class="label">负荷比</div><div class="value">1.03</div><div class="sub">Optimized</div></div>
-    <div class="card"><div class="label">预计完全恢复</div><div class="value">18h</div><div class="sub">Heavy training allowed</div></div>
+  <div class="review-grid" style="margin-top:12px">
+    <div class="review-box">
+      <h4 style="color:#5aa65e">优势</h4>
+      <div class="finding-item" style="color:#5aa65e">跑量稳定</div><div class="finding-item" style="color:#5aa65e">恢复良好</div>
+    </div>
+    <div class="review-box">
+      <h4 style="color:#c9a030">风险与建议</h4>
+      <div class="finding-item" style="color:#c07070">步频偏低</div>
+      <div class="finding-item" style="color:#5a9ec7">加强步频训练</div><div class="finding-item" style="color:#5a9ec7">逐步引入节奏跑</div>
+    </div>
   </div>
 </div>
 
-<!-- Weekly Training Plan -->
+<!-- Weekly Plan -->
 <div class="section">
-  <div class="section-title">本周训练计划 — 准备期</div>
-  <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">
-    已完成 43.3km | 计划剩余 17km | 预计周总 60.3km（目标 45-60km）
-     | 恢复调整系数 ×0.8
+  <div class="section-title">7天训练计划 — 准备期</div>
+  <p style="font-size:.85rem;color:var(--muted);margin-bottom:14px">
+    本周已完成 43.3km | 目标 45-60km | 目标配速 4:58/km
   </p>
-  <table>
-    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速</th><th>心率</th><th>说明</th></tr>
-    <tr class="">
-      <td>周一 05-18</td>
-      <td>✅ 7.42km 6:30/km</td>
-      <td>7.42km</td>
-      <td>6:30</td>
-      <td>130bpm</td>
-      <td>已完成</td>
-    </tr><tr class="">
-      <td>周二 05-19</td>
-      <td>休息</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>恢复</td>
-    </tr><tr class="">
-      <td>周三 05-20</td>
-      <td>✅ 12.78km 5:14/km</td>
-      <td>12.78km</td>
-      <td>5:14</td>
-      <td>150bpm</td>
-      <td>已完成</td>
-    </tr><tr class="plan-today">
-      <td>周四 05-21 📍</td>
-      <td>休息/交叉</td>
-      <td>-</td>
-      <td>降低一档</td>
-      <td>-</td>
-      <td>恢复或力量</td>
-    </tr><tr class="">
-      <td>周五 05-22</td>
-      <td>轻松跑+ST</td>
-      <td>6km</td>
-      <td>降低一档</td>
-      <td><140</td>
-      <td>有氧+加速跑</td>
-    </tr><tr class="">
-      <td>周六 05-23</td>
-      <td>LSD</td>
-      <td>11km</td>
-      <td>降低一档</td>
-      <td><140</td>
-      <td>长距离慢跑</td>
-    </tr><tr class="">
-      <td>周日 05-24</td>
-      <td>休息</td>
-      <td>-</td>
-      <td>-</td>
-      <td>-</td>
-      <td>完全休息</td>
-    </tr>
-  </table>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周一 05-25</span>
+      <span class="type">轻松跑</span>
+    </div>
+    <div class="plan-metrics">
+      <span>8km</span>
+      <span>6:00-6:20/km</span>
+      <span><135bpm</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">有氧基础恢复跑</div>
+    
+    <div class="plan-prescription">
+      <div class="phase"><div class="phase-label">热身</div><div class="phase-content">2km 慢跑热身 @6:30-6:40/km</div></div>
+      <div class="phase" style="border-left-color:var(--accent)"><div class="phase-label">主课表</div><div class="phase-content">4km 轻松跑 @6:00-6:20/km，保持心率&lt;135bpm</div></div>
+      <div class="phase"><div class="phase-label">冷身</div><div class="phase-content">2km 慢跑冷身 + 4×100m 加速跑 (ST)</div></div>
+      <div class="notes">关注步频180+spm</div>
+    </div>
+    
+  </div>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周二 05-26</span>
+      <span class="type">休息</span>
+    </div>
+    <div class="plan-metrics">
+      <span>休息</span>
+      <span>-</span>
+      <span>-</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">完全休息</div>
+    
+  </div>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周三 05-27</span>
+      <span class="type">中长距离</span>
+    </div>
+    <div class="plan-metrics">
+      <span>10km</span>
+      <span>5:40-6:00/km</span>
+      <span><145bpm</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">有氧耐力</div>
+    
+    <div class="plan-prescription">
+      <div class="phase"><div class="phase-label">热身</div><div class="phase-content">2km 热身 @6:20/km</div></div>
+      <div class="phase" style="border-left-color:var(--accent)"><div class="phase-label">主课表</div><div class="phase-content">6km 中长距离 @5:40-6:00/km</div></div>
+      <div class="phase"><div class="phase-label">冷身</div><div class="phase-content">2km 冷身</div></div>
+      <div class="notes">注意呼吸节奏</div>
+    </div>
+    
+  </div>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周四 05-28</span>
+      <span class="type">休息</span>
+    </div>
+    <div class="plan-metrics">
+      <span>休息</span>
+      <span>-</span>
+      <span>-</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">恢复或力量训练</div>
+    
+  </div>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周五 05-29</span>
+      <span class="type">轻松跑+ST</span>
+    </div>
+    <div class="plan-metrics">
+      <span>8km</span>
+      <span>5:50-6:10/km</span>
+      <span><140bpm</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">有氧+加速跑</div>
+    
+    <div class="plan-prescription">
+      <div class="phase"><div class="phase-label">热身</div><div class="phase-content">2km 热身</div></div>
+      <div class="phase" style="border-left-color:var(--accent)"><div class="phase-label">主课表</div><div class="phase-content">4km 轻松跑 + 6×100m ST</div></div>
+      <div class="phase"><div class="phase-label">冷身</div><div class="phase-content">2km 冷身</div></div>
+      <div class="notes">ST注意动作幅度</div>
+    </div>
+    
+  </div>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周六 05-30</span>
+      <span class="type">LSD</span>
+    </div>
+    <div class="plan-metrics">
+      <span>14km</span>
+      <span>6:00-6:30/km</span>
+      <span><140bpm</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">长距离慢跑</div>
+    
+    <div class="plan-prescription">
+      <div class="phase"><div class="phase-label">热身</div><div class="phase-content">2km 热身 @6:30/km</div></div>
+      <div class="phase" style="border-left-color:var(--accent)"><div class="phase-label">主课表</div><div class="phase-content">10km LSD @6:00-6:30/km，心率&lt;140</div></div>
+      <div class="phase"><div class="phase-label">冷身</div><div class="phase-content">2km 冷身</div></div>
+      <div class="notes">控制心率，不追求速度</div>
+    </div>
+    
+  </div>
+  
+  <div class="plan-card">
+    <div class="plan-header">
+      <span class="day">周日 05-31</span>
+      <span class="type">休息</span>
+    </div>
+    <div class="plan-metrics">
+      <span>休息</span>
+      <span>-</span>
+      <span>-</span>
+    </div>
+    <div style="font-size:.82rem;color:var(--muted);margin-bottom:8px">完全休息</div>
+    
+  </div>
+  
 </div>
 
 <script>
+// Per-workout split charts — lazy init
+const splitChartConfigs = {};
+const splitChartInstances = {};
+function secondsToPace(s) { const m = Math.floor(s / 60); const sec = Math.round(s % 60); return m + ':' + String(sec).padStart(2, '0'); }
+
+splitChartConfigs['splitChart0'] = {
+  type: 'bar',
+  data: {
+    labels: ["1km","2km","3km","4km","5km","6km","7km","8km","9km","10km","11km","12km"],
+    datasets: [{
+      label: '配速(s/km)',
+      data: [379,356,313,315,308,310,305,302,307,302,298,299],
+      backgroundColor: ["rgba(232,152,152,.7)","rgba(232,152,152,.7)","rgba(77,184,164,.7)","rgba(77,184,164,.7)","rgba(77,184,164,.7)","rgba(77,184,164,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(77,184,164,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)"],
+      yAxisID: 'yPace',
+    }, {
+      label: '心率(bpm)',
+      data: [129,141,144,149,153,152,152,155,159,160,164,166],
+      type: 'line',
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: .3, pointRadius: 3,
+      yAxisID: 'yHR',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.dataset.label.includes('配速')) {
+          const s = ctx.parsed.y;
+          return secondsToPace(s) + '/km';
+        }
+        return ctx.parsed.y + ' bpm';
+      }}}
+    },
+    scales: {
+      yPace: { position: 'left', title: { display: true, text: '配速(s/km)' },
+        ticks: { callback: function(v) { return secondsToPace(v); } }
+      },
+      yHR: { position: 'right', title: { display: true, text: '心率(bpm)' }, grid: { drawOnChartArea: false } },
+    }
+  }
+};
+
+
+splitChartConfigs['splitChart1'] = {
+  type: 'bar',
+  data: {
+    labels: ["1km","2km","3km","4km","5km","6km","7km"],
+    datasets: [{
+      label: '配速(s/km)',
+      data: [448,370,408,350,340,453,366],
+      backgroundColor: ["rgba(232,152,152,.7)","rgba(126,200,130,.7)","rgba(232,152,152,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(232,152,152,.7)","rgba(126,200,130,.7)"],
+      yAxisID: 'yPace',
+    }, {
+      label: '心率(bpm)',
+      data: [125,143,147,138,142,132,141],
+      type: 'line',
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: .3, pointRadius: 3,
+      yAxisID: 'yHR',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.dataset.label.includes('配速')) {
+          const s = ctx.parsed.y;
+          return secondsToPace(s) + '/km';
+        }
+        return ctx.parsed.y + ' bpm';
+      }}}
+    },
+    scales: {
+      yPace: { position: 'left', title: { display: true, text: '配速(s/km)' },
+        ticks: { callback: function(v) { return secondsToPace(v); } }
+      },
+      yHR: { position: 'right', title: { display: true, text: '心率(bpm)' }, grid: { drawOnChartArea: false } },
+    }
+  }
+};
+
+
+splitChartConfigs['splitChart2'] = {
+  type: 'bar',
+  data: {
+    labels: ["1km","2km","3km","4km","5km","6km","7km","8km","9km","10km"],
+    datasets: [{
+      label: '配速(s/km)',
+      data: [364,337,330,324,312,317,310,308,292,288],
+      backgroundColor: ["rgba(232,152,152,.7)","rgba(232,152,152,.7)","rgba(232,152,152,.7)","rgba(77,184,164,.7)","rgba(77,184,164,.7)","rgba(77,184,164,.7)","rgba(77,184,164,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)"],
+      yAxisID: 'yPace',
+    }, {
+      label: '心率(bpm)',
+      data: [130,141,142,147,154,156,161,159,166,169],
+      type: 'line',
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: .3, pointRadius: 3,
+      yAxisID: 'yHR',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.dataset.label.includes('配速')) {
+          const s = ctx.parsed.y;
+          return secondsToPace(s) + '/km';
+        }
+        return ctx.parsed.y + ' bpm';
+      }}}
+    },
+    scales: {
+      yPace: { position: 'left', title: { display: true, text: '配速(s/km)' },
+        ticks: { callback: function(v) { return secondsToPace(v); } }
+      },
+      yHR: { position: 'right', title: { display: true, text: '心率(bpm)' }, grid: { drawOnChartArea: false } },
+    }
+  }
+};
+
+
+splitChartConfigs['splitChart3'] = {
+  type: 'bar',
+  data: {
+    labels: ["1km","2km","3km","4km","5km","6km","7km","8km","9km","10km","11km","12km"],
+    datasets: [{
+      label: '配速(s/km)',
+      data: [340,352,299,305,295,293,274,270,287,282,290,290],
+      backgroundColor: ["rgba(232,152,152,.7)","rgba(232,152,152,.7)","rgba(126,200,130,.7)","rgba(77,184,164,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)","rgba(126,200,130,.7)"],
+      yAxisID: 'yPace',
+    }, {
+      label: '心率(bpm)',
+      data: [121,125,142,143,151,158,167,166,167,164,163,162],
+      type: 'line',
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: .3, pointRadius: 3,
+      yAxisID: 'yHR',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.dataset.label.includes('配速')) {
+          const s = ctx.parsed.y;
+          return secondsToPace(s) + '/km';
+        }
+        return ctx.parsed.y + ' bpm';
+      }}}
+    },
+    scales: {
+      yPace: { position: 'left', title: { display: true, text: '配速(s/km)' },
+        ticks: { callback: function(v) { return secondsToPace(v); } }
+      },
+      yHR: { position: 'right', title: { display: true, text: '心率(bpm)' }, grid: { drawOnChartArea: false } },
+    }
+  }
+};
+
+function initChartForTab(tabId) {
+  const canvasId = 'splitChart' + tabId.replace('workout', '');
+  if (splitChartInstances[canvasId] || !splitChartConfigs[canvasId]) return;
+  const el = document.getElementById(canvasId);
+  if (!el) return;
+  // Use rAF so layout is computed after panel becomes visible
+  requestAnimationFrame(function() {
+    try { splitChartInstances[canvasId] = new Chart(el, splitChartConfigs[canvasId]); } catch(e) {}
+  });
+}
+
+// Workout tab switching — runs independently of Chart.js
+(function(){
+  const tabBar = document.getElementById('workoutTabs');
+  if (!tabBar) return;
+  tabBar.addEventListener('click', function(e) {
+    const btn = e.target.closest('.tab-btn');
+    if (!btn) return;
+    const tabId = btn.dataset.tab;
+    tabBar.querySelectorAll('.tab-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    document.querySelectorAll('.tab-panel').forEach(function(p) { p.classList.remove('active'); });
+    const panel = document.getElementById(tabId);
+    if (panel) {
+      panel.classList.add('active');
+      initChartForTab(tabId);
+    }
+  });
+})();
+</script>
+
+<!-- Chart.js dependent code -->
+<script>
 // HRV Chart
-new Chart(document.getElementById('hrvChart'), {
+try { new Chart(document.getElementById('hrvChart'), {
   type: 'line',
   data: {
     labels: ["05-15","05-16","05-17","05-18","05-19","05-20","05-21"],
@@ -247,29 +757,14 @@ new Chart(document.getElementById('hrvChart'), {
     }]
   },
   options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: false } } }
-});
+}); } catch(e) {}
 
-// Training Load Chart
-new Chart(document.getElementById('loadChart'), {
-  type: 'bar',
-  data: {
-    labels: ["05-15","05-16","05-17","05-18","05-19","05-20","05-21"],
-    datasets: [{
-      label: '短期负荷',
-      data: [63,72,62,62,54,73,63],
-      backgroundColor: 'rgba(124,185,232,.7)',
-    }, {
-      label: '长期负荷',
-      data: [61,63,61,61,60,63,61],
-      backgroundColor: 'rgba(196,166,216,.7)',
-    }]
-  },
-  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true } } }
-});
+// Init first tab's split chart
+try { initChartForTab('workout0'); } catch(e) {}
 
-// Pace Chart — single bar per workout, colored by zone, threshold line
+// Pace comparison chart
 function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
-new Chart(document.getElementById('paceChart'), {
+try { new Chart(document.getElementById('paceChart'), {
   type: 'bar',
   data: {
     labels: ["05-14","05-16","05-18","05-20"],
@@ -277,8 +772,7 @@ new Chart(document.getElementById('paceChart'), {
       label: '平均配速',
       data: [5.15,5.3,6.5,5.233333333333333],
       backgroundColor: ["rgba(77,184,164,.75)","rgba(77,184,164,.75)","rgba(124,185,232,.75)","rgba(77,184,164,.75)"],
-      borderColor: ["rgba(60,150,130,1)","rgba(60,150,130,1)","rgba(90,158,199,1)","rgba(60,150,130,1)"],
-      borderWidth: 1.5, borderRadius: 6, barPercentage: 0.6,
+      borderRadius: 6, barPercentage: 0.6,
     }, {
       label: '阈值 ' + fmtPace(4.617) + '/km',
       data: Array(4).fill(4.617),
@@ -288,21 +782,10 @@ new Chart(document.getElementById('paceChart'), {
   },
   options: {
     responsive: true,
-    plugins: {
-      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
-      tooltip: { callbacks: { label: function(ctx) {
-        if (ctx.dataset.type === 'line') return ctx.dataset.label;
-        const v = ctx.parsed.y;
-        const ratio = v / 4.617;
-        let zone = ratio > 1.15 ? 'E区' : ratio > 1.05 ? 'E-M区' : ratio > 0.98 ? 'T区' : 'I区';
-        return fmtPace(v) + '/km (' + zone + ', ' + Math.round(ratio * 100) + '%阈值)';
-      } } }
-    },
-    scales: { y: { reverse: true, title: { display: true, text: '配速 (越低越快)' },
-      ticks: { callback: function(v) { return fmtPace(v); } }
-    } }
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } } },
+    scales: { y: { reverse: true, title: { display: true, text: '配速 (越低越快)' }, ticks: { callback: function(v) { return fmtPace(v); } } } }
   }
-});
+}); } catch(e) {}
 
 // Theme toggle
 (function(){
@@ -318,29 +801,25 @@ new Chart(document.getElementById('paceChart'), {
     localStorage.setItem('coros-theme', next);
     updateChartColors();
   });
-  function getThemeColor(varName) {
-    return getComputedStyle(root).getPropertyValue(varName).trim();
-  }
+  function getThemeColor(varName) { return getComputedStyle(root).getPropertyValue(varName).trim(); }
   function updateChartColors() {
-    const gridColor = getThemeColor('--border');
-    const tickColor = getThemeColor('--muted');
+    var gridColor = getThemeColor('--border');
+    var tickColor = getThemeColor('--muted');
+    if (typeof Chart === 'undefined') return;
     Chart.defaults.color = tickColor;
     Chart.defaults.borderColor = gridColor;
     Chart.helpers.each(Chart.instances, function(chart){
       if (chart.options.scales) {
         Object.values(chart.options.scales).forEach(function(s){
-          s.grid = s.grid || {};
-          s.grid.color = gridColor;
-          s.ticks = s.ticks || {};
-          s.ticks.color = tickColor;
+          s.grid = s.grid || {}; s.grid.color = gridColor;
+          s.ticks = s.ticks || {}; s.ticks.color = tickColor;
         });
       }
       if (chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = tickColor;
       chart.update();
     });
   }
-  // Apply on load if dark
-  updateChartColors();
+  if (typeof Chart !== 'undefined') updateChartColors();
 })();
 </script>
 

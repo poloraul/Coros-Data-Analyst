@@ -1,6 +1,6 @@
 {
   "fetchDate": "20260521",
-  "fetchedAt": "2026-05-21T03:05:07.553Z",
+  "fetchedAt": "2026-05-21T12:59:12.901Z",
   "userInfo": {
     "height": 176,
     "weight": 65.8,
@@ -152,6 +152,28 @@
       "date": "2026-05-14"
     }
   ],
+  "activityAnalyses": [
+    {
+      "labelId": "477620968731213926",
+      "date": "2026-05-20",
+      "analysis": "Conclusion: This running looks steady overall, with average pace around 5:14 /km.\n\nKey findings:\n- The session covered 12.78 km in 1:06:53.\n- For pace stability, the baseline pace was 5:14 /km, which is a useful anchor for checking whether the effort stayed even.\n- Heart rate: Heart rate averaged 150 bpm, peaking at 168 bpm.\n- Elevation gain was 3 m, so terrain likely added extra load.\n- Average cadence was 177 spm.\n- Estimated energy cost was 854 kcal.\n\nRecommendation: Compare the first and second half splits next time and try to keep pace drift small while holding similar effort."
+    },
+    {
+      "labelId": "477574834878972009",
+      "date": "2026-05-18",
+      "analysis": "Conclusion: This running looks steady overall, with average pace around 6:30 /km.\n\nKey findings:\n- The session covered 7.42 km in 48:12.\n- For pace stability, the baseline pace was 6:30 /km, which is a useful anchor for checking whether the effort stayed even.\n- Heart rate: Heart rate averaged 130 bpm, peaking at 151 bpm.\n- Elevation gain was 14 m, so terrain likely added extra load.\n- Average cadence was 164 spm.\n- Estimated energy cost was 486 kcal.\n\nRecommendation: Compare the first and second half splits next time and try to keep pace drift small while holding similar effort."
+    },
+    {
+      "labelId": "477529796776067174",
+      "date": "2026-05-16",
+      "analysis": "Conclusion: This running looks steady overall, with average pace around 5:18 /km.\n\nKey findings:\n- The session covered 10.08 km in 53:26.\n- For pace stability, the baseline pace was 5:18 /km, which is a useful anchor for checking whether the effort stayed even.\n- Heart rate: Heart rate averaged 149 bpm, peaking at 171 bpm.\n- Elevation gain was 15 m, so terrain likely added extra load.\n- Average cadence was 182 spm.\n- Estimated energy cost was 649 kcal.\n\nRecommendation: Compare the first and second half splits next time and try to keep pace drift small while holding similar effort."
+    },
+    {
+      "labelId": "477483440120299920",
+      "date": "2026-05-14",
+      "analysis": "Conclusion: This running looks steady overall, with average pace around 5:09 /km.\n\nKey findings:\n- The session covered 13.01 km in 1:07:01.\n- For pace stability, the baseline pace was 5:09 /km, which is a useful anchor for checking whether the effort stayed even.\n- Heart rate: Heart rate averaged 147 bpm, peaking at 171 bpm.\n- Elevation gain was 3 m, so terrain likely added extra load.\n- Average cadence was 177 spm.\n- Estimated energy cost was 833 kcal.\n\nRecommendation: Compare the first and second half splits next time and try to keep pace drift small while holding similar effort."
+    }
+  ],
   "dailyHealth": [
     {
       "date": "20260515",
@@ -231,10 +253,10 @@
     },
     {
       "date": "20260521",
-      "steps": 3000,
-      "calories": 79,
+      "steps": 9772,
+      "calories": 279,
       "exerciseMin": 1,
-      "avgStress": 15,
+      "avgStress": 18,
       "sleepScore": 92,
       "sleepTotal": "7h 51min",
       "deepSleep": "1h 42min",
@@ -385,9 +407,9 @@
     }
   ],
   "recovery": {
-    "percentage": 92,
+    "percentage": 98,
     "level": "Heavy training allowed",
-    "estimatedFullRecovery": "18h"
+    "estimatedFullRecovery": "8h"
   },
   "fitness": {
     "vo2max": 52,

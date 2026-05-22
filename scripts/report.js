@@ -66,6 +66,8 @@ function getCurrentPhase(weeksLeft) {
   return { ...PHASES[PHASES.length - 1], currentWeek: weekNum };
 }
 
+// --- Rule-engine analysis (fallback when no AI analysis available) ---
+
 function assessRecovery(data) {
   const hrvDays = data.hrv?.days || [];
   const normalLow = data.hrv?.normalRange?.[0] || 50;
@@ -103,7 +105,6 @@ function reviewLatestWorkout(activity, thresholdPace, maxHR) {
   const positives = [];
   const improvements = [];
 
-  // Pace analysis
   if (paceRatio > 1.05 && paceRatio <= 1.15) {
     findings.push(`配速 ${activity.avgPace}/km，为阈值配速的 ${(paceRatio * 100).toFixed(0)}%，处于中高强度有氧区间`);
     if (bp && ap - bp < 20) positives.push("配速控制稳定，最快/平均公里差仅" + secondsToPace(ap - bp));
@@ -114,34 +115,27 @@ function reviewLatestWorkout(activity, thresholdPace, maxHR) {
     findings.push(`配速 ${activity.avgPace}/km，接近或达到阈值强度（${(paceRatio * 100).toFixed(0)}%阈值），高强度训练`);
   }
 
-  // HR analysis
   findings.push(`平均心率 ${activity.avgHR}bpm（${Math.round(hrPct)}% HRmax）`);
   if (hrPct > 85) improvements.push("心率偏高，注意控制强度避免过度训练");
   else positives.push("心率区间合理");
 
-  // Cadence
   if (cadenceGap && cadenceGap > 5) improvements.push(`步频${activity.avgCadence}spm偏低，建议提升至180+spm（差${cadenceGap}spm）`);
   else if (activity.avgCadence >= 180) positives.push(`步频${activity.avgCadence}spm达标`);
 
-  // Training load
   if (activity.trainingLoad > 150) findings.push(`训练负荷 ${activity.trainingLoad}TL，属于高负荷训练`);
   else findings.push(`训练负荷 ${activity.trainingLoad}TL`);
 
   return { activity, intensityZone, zoneColor, paceRatio, hrPct, cadenceGap, findings, positives, improvements };
 }
 
-function generateWeeklyPlan(data, recovery) {
+function generateRuleBasedPlan(data, recovery) {
   const weeksLeft = weeksUntilMarathon();
   const phase = getCurrentPhase(weeksLeft);
   const records = data.sportRecords || [];
-  const details = data.activityDetails || [];
   const recoveryMultiplier = recovery.level === "red" ? 0.6 : recovery.level === "yellow" ? 0.8 : 1.0;
-
   const completedKm = records.reduce((s, r) => s + (r.distance || 0), 0);
-
   const now = new Date();
-  const todayDow = now.getDay() === 0 ? 7 : now.getDay(); // 1=Mon
-
+  const todayDow = now.getDay() === 0 ? 7 : now.getDay();
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
 
   const templates = {
@@ -204,28 +198,25 @@ function generateWeeklyPlan(data, recovery) {
   const template = templates[phase.name] || templates["准备期"];
   const days = [];
 
-  // Generate all 7 days of the week (Mon-Sun), marking past days as completed
   for (let d = 1; d <= 7; d++) {
     const dayDate = new Date(now);
     dayDate.setDate(dayDate.getDate() + (d - todayDow));
     const dayStr = dayDate.toISOString().slice(0, 10);
-
     const t = template[d - 1];
     const isPast = d < todayDow;
     const isToday = d === todayDow;
-
     const completedRecord = records.find(r => r.date === dayStr);
 
     if (completedRecord) {
       days.push({
-        dayName: weekDays[d - 1], date: dayStr, isPast: true,
+        dayName: weekDays[d - 1], date: dayStr, isPast: true, isToday,
         type: `✅ ${completedRecord.distance}km ${completedRecord.avgPace}/km`,
         distance: completedRecord.distance, pace: completedRecord.avgPace,
         hrZone: `${completedRecord.avgHR}bpm`, desc: "已完成",
       });
     } else if (isPast) {
       days.push({
-        dayName: weekDays[d - 1], date: dayStr, isPast: true,
+        dayName: weekDays[d - 1], date: dayStr, isPast: true, isToday: false,
         type: t.type, distance: t.dist, pace: t.pace, hrZone: t.hr, desc: t.desc,
       });
     } else {
@@ -247,7 +238,7 @@ function generateWeeklyPlan(data, recovery) {
 
 // --- HTML Generation ---
 
-function generateHTML(data) {
+function generateHTML(data, aiAnalysis) {
   const user = data.userInfo || {};
   const fitness = data.fitness || {};
   const records = data.sportRecords || [];
@@ -259,6 +250,13 @@ function generateHTML(data) {
   const weeksLeft = weeksUntilMarathon();
   const phase = getCurrentPhase(weeksLeft);
   const recovery = assessRecovery(data);
+
+  const hasAI = !!aiAnalysis;
+  const aiWorkoutReviews = aiAnalysis?.workoutReviews || [];
+  const aiBodyAssessment = aiAnalysis?.bodyAssessment || null;
+  const aiTrainingPattern = aiAnalysis?.trainingPatternAnalysis || null;
+  const aiWeeklyPlan = aiAnalysis?.weeklyPlan || [];
+  const aiCoachAdvice = aiAnalysis?.coachAdvice || null;
 
   const totalKm = records.reduce((s, r) => s + (r.distance || 0), 0);
   const totalTL = details.reduce((s, d) => s + (d.trainingLoad || 0), 0);
@@ -275,27 +273,17 @@ function generateHTML(data) {
   const shortLoads = loadEntries.map(e => e.shortTermLoad).reverse();
   const longLoads = loadEntries.map(e => e.longTermLoad).reverse();
 
-  // Warning thresholds
-  const kmTargetMax = (phase.weeklyKm || [60, 60])[1];
-  const kmWarning = totalKm > kmTargetMax;
-  const loadRatio = loadEntries[0]?.loadRatio;
-  const loadWarning = loadRatio && loadRatio > 1.3;
-  const hrvNormalLow = data.hrv?.normalRange?.[0] || 50;
-  const latestHRV = hrvDays[0]?.hrv;
-  const hrvWarning = latestHRV && latestHRV < hrvNormalLow;
-
-  // Pre-compute pace chart data — min/km format (e.g. 5.23 = 5:14)
+  // Pace chart data
   const paceLabels = details.map(d => d.date.slice(5)).reverse();
   const tpSeconds = paceToSeconds(tp);
-  const tpMinPerKm = tpSeconds / 60; // e.g. 277/60 = 4.617
+  const tpMinPerKm = tpSeconds / 60;
   const avgPaceMinPerKm = details.map(d => paceToSeconds(d.avgPace) / 60).reverse();
-  // Color by intensity zone: ratio = avgPace / thresholdPace (higher = easier)
   const paceColors = avgPaceMinPerKm.map(p => {
     const ratio = p / tpMinPerKm;
-    if (ratio > 1.15) return "rgba(124,185,232,.75)";   // E区 - blue
-    if (ratio > 1.05) return "rgba(77,184,164,.75)";     // EM区 - teal
-    if (ratio > 0.98) return "rgba(244,197,66,.75)";     // T区 - yellow
-    return "rgba(232,152,152,.75)";                       // I区 - red
+    if (ratio > 1.15) return "rgba(124,185,232,.75)";
+    if (ratio > 1.05) return "rgba(77,184,164,.75)";
+    if (ratio > 0.98) return "rgba(244,197,66,.75)";
+    return "rgba(232,152,152,.75)";
   });
   const paceBorders = avgPaceMinPerKm.map(p => {
     const ratio = p / tpMinPerKm;
@@ -305,11 +293,48 @@ function generateHTML(data) {
     return "rgba(192,112,112,1)";
   });
 
-  // Latest workout review
-  const latestReview = reviewLatestWorkout(details[0], tp, maxHR);
+  // Sleep chart data — use dailyHealth for 7-day coverage (data.sleep only has 3 days)
+  const healthDays7 = (data.dailyHealth || []).slice(0, 7);
+  const sleepLabels = healthDays7.map(s => {
+    const d = s.date || "";
+    return d.length === 8 ? d.slice(4, 6) + "/" + d.slice(6, 8) : d.slice(5);
+  }).reverse();
+  const sleepScores = healthDays7.map(s => s.sleepScore).reverse();
+  const sleepDeepRatios = healthDays7.map(s => {
+    if (s.deepRatio != null) return s.deepRatio;
+    // Compute from deepSleep + sleepTotal text
+    const parseTime = (str) => {
+      if (!str) return 0;
+      const h = str.match(/(\d+)\s*h/); const m = str.match(/(\d+)\s*min/);
+      return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0);
+    };
+    const deep = parseTime(s.deepSleep);
+    const total = parseTime(s.sleepTotal);
+    return total > 0 ? Math.round((deep / total) * 100) : null;
+  }).reverse();
 
-  // Weekly plan
-  const plan = generateWeeklyPlan(data, recovery);
+  // Rule-engine fallback for workout review
+  const ruleReview = !hasAI || !aiWorkoutReviews.length ? reviewLatestWorkout(details[0], tp, maxHR) : null;
+
+  // Rule-engine fallback for weekly plan
+  const rulePlan = !hasAI || !aiWeeklyPlan.length ? generateRuleBasedPlan(data, recovery) : null;
+
+  // Weekly km progress
+  const kmTargetMax = (phase.weeklyKm || [60, 60])[1];
+  const kmTargetMin = (phase.weeklyKm || [45, 45])[0];
+  const kmPct = kmTargetMax > 0 ? Math.min(100, Math.round((totalKm / kmTargetMax) * 100)) : 0;
+
+  const latestHRV = hrvDays[0]?.hrv;
+  const hrvNormalLow = data.hrv?.normalRange?.[0] || 50;
+  const hrvWarning = latestHRV && latestHRV < hrvNormalLow;
+  const loadRatio = loadEntries[0]?.loadRatio;
+  const loadWarning = loadRatio && loadRatio > 1.3;
+  const kmWarning = totalKm > kmTargetMax;
+
+  // Source badge helper
+  const sourceBadge = hasAI
+    ? `<span class="source-badge badge-ai">AI 大语言模型分析</span>`
+    : `<span class="source-badge badge-rule">规则引擎分析</span>`;
 
   return `<!DOCTYPE html>
 <html lang="zh-CN">
@@ -325,10 +350,12 @@ function generateHTML(data) {
 body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:1200px;margin:0 auto;transition:background .3s,color .3s}
 h1{font-size:1.8rem;font-weight:800;color:var(--accent);margin-bottom:4px}
 .subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px}
-.section{margin-bottom:32px}
+.section{margin-bottom:36px}
 .section-title{font-size:1.1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .section-title::before{content:'';width:4px;height:18px;background:linear-gradient(135deg,var(--accent),#4db8a4);border-radius:2px}
-.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:24px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title-row{display:flex;align-items:center;gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
 .card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
 .card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
 .card .value{font-size:1.6rem;font-weight:800;color:var(--text-strong)}
@@ -357,7 +384,48 @@ tr:hover td{background:var(--row-hover)}
 .header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
 .theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
 .theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
-@media(max-width:768px){.charts-grid,.review-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+/* New styles */
+.source-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;letter-spacing:.3px}
+.badge-ai{background:rgba(126,200,130,.15);color:#5aa65e;border:1px solid rgba(126,200,130,.3)}
+[data-theme="dark"] .badge-ai{background:rgba(158,206,106,.12);color:#9ece6a;border-color:rgba(158,206,106,.3)}
+.badge-rule{background:rgba(158,148,132,.15);color:#9e9484;border:1px solid rgba(158,148,132,.3)}
+[data-theme="dark"] .badge-rule{background:rgba(86,95,137,.15);color:#565f89;border-color:rgba(86,95,137,.3)}
+.ai-insight{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.ai-insight h4{font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--accent)}
+.ai-insight p{font-size:.85rem;line-height:1.7;margin-bottom:6px}
+.ai-insight .detail-text{font-size:.82rem;color:var(--text);line-height:1.8;white-space:pre-line}
+.coach-advice{background:linear-gradient(135deg,rgba(126,200,130,.08),rgba(77,184,164,.08));border:1px solid rgba(126,200,130,.2);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:20px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+[data-theme="dark"] .coach-advice{background:linear-gradient(135deg,rgba(158,206,106,.06),rgba(77,184,164,.06));border-color:rgba(158,206,106,.2)}
+.coach-advice h4{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--accent);display:flex;align-items:center;gap:6px}
+.coach-advice p{font-size:.88rem;line-height:1.8}
+.progress-bar-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);margin-bottom:14px;transition:background .3s,border-color .3s}
+.progress-bar-track{width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.progress-bar-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.prescription-toggle{cursor:pointer;color:var(--accent);font-size:.75rem;text-decoration:underline;user-select:none}
+.prescription-detail{display:none;margin-top:8px;padding:10px 12px;background:rgba(126,200,130,.04);border-radius:8px;font-size:.78rem;line-height:1.7}
+.prescription-detail.open{display:block}
+[data-theme="dark"] .prescription-detail{background:rgba(158,206,106,.06)}
+.prescription-detail dt{font-weight:600;color:var(--muted);margin-top:4px}
+.prescription-detail dt:first-child{margin-top:0}
+.prescription-detail dd{margin-left:0;margin-bottom:4px}
+.body-assessment-level{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;margin-bottom:8px}
+.body-assessment-level.green{background:rgba(126,200,130,.15);color:#5aa65e}
+.body-assessment-level.yellow{background:rgba(244,197,66,.15);color:#c9a030}
+.body-assessment-level.red{background:rgba(232,152,152,.15);color:#c07070}
+[data-theme="dark"] .body-assessment-level.green{background:rgba(158,206,106,.12);color:#9ece6a}
+[data-theme="dark"] .body-assessment-level.yellow{background:rgba(224,175,104,.12);color:#e0af68}
+[data-theme="dark"] .body-assessment-level.red{background:rgba(247,118,142,.12);color:#f7768e}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:500}
+.tag-strength{background:rgba(126,200,130,.12);color:#5aa65e}
+.tag-risk{background:rgba(232,152,152,.12);color:#c07070}
+.tag-suggestion{background:rgba(124,185,232,.12);color:#5a9ec7}
+[data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
+[data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
+[data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
 </style>
 </head>
 <body>
@@ -370,43 +438,142 @@ tr:hover td{background:var(--row-hover)}
   <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
 </div>
 
-<!-- Key Metrics -->
-<div class="cards">
-  <div class="card${kmWarning ? "" : ""}"><div class="label">本周跑量</div><div class="value"${kmWarning ? ' style="color:#c9a030"' : ""}>${totalKm.toFixed(1)}<span style="font-size:.9rem">km</span></div><div class="sub">${kmWarning ? "⚠️ 超出目标上限" : `目标 ${plan.targetKm}km`}</div></div>
-  <div class="card${loadWarning ? "" : ""}"><div class="label">训练负荷</div><div class="value"${loadWarning ? ' style="color:#c9a030"' : ""}>${totalTL}<span style="font-size:.9rem">TL</span></div><div class="sub">${loadWarning ? `⚠️ 负荷比${loadRatio}偏高` : (loadEntries[0]?.comment || "-")}</div></div>
-  <div class="card"><div class="label">恢复状态</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub"><span class="recovery-indicator" style="background:${levelColors[recovery.level]}"></span>${levelLabels[recovery.level]}</div></div>
-  <div class="card${hrvWarning ? "" : ""}"><div class="label">最新HRV</div><div class="value" style="color:${hrvWarning ? levelColors.yellow : levelColors.green}">${latestHRV || "-"}<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:${hrvWarning ? levelColors.yellow : levelColors.green}"></span>${hrvWarning ? "偏低" : "正常"} | 基线 ${recovery.baseline || "-"}ms</div></div>
-  <div class="card"><div class="label">VO2max</div><div class="value">${fitness.vo2max || "-"}</div><div class="sub">阈值配速 ${tp}/km</div></div>
-  <div class="card"><div class="label">全马预测</div><div class="value">${fitness.predMarathon || "-"}</div><div class="sub">目标 3:30:00</div></div>
+<!-- ==================== Section 1: 个人训练关键指标 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">个人训练关键指标</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">VO2max</div><div class="value">${fitness.vo2max || "-"}</div><div class="sub">阈值配速 ${tp}/km</div></div>
+    <div class="card"><div class="label">全马预测</div><div class="value">${fitness.predMarathon || "-"}</div><div class="sub">目标 3:30:00</div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">${weeksLeft}<span style="font-size:.9rem">周</span></div><div class="sub">${phase.name}${phase.currentWeek > 0 ? " W" + phase.currentWeek : ""} | ${phase.focus}</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value"${kmWarning ? ' style="color:#c9a030"' : ""}>${totalKm.toFixed(1)}<span style="font-size:.9rem">km</span></div><div class="sub">${kmWarning ? "⚠️ 超出目标上限" : `目标 ${kmTargetMin}-${kmTargetMax}km`}</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value"${loadWarning ? ' style="color:#c9a030"' : ""}>${totalTL}<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 ${loadRatio || "-"}（目标 0.8-1.3）${loadWarning ? " ⚠️偏高" : ""} | ${loadEntries[0]?.comment || "-"}</div></div>
+    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub"><span class="recovery-indicator" style="background:${levelColors[recovery.level]}"></span>${levelLabels[recovery.level]}</div></div>
+    <div class="card"><div class="label">最新HRV</div><div class="value" style="color:${hrvWarning ? levelColors.yellow : levelColors.green}">${latestHRV || "-"}<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:${hrvWarning ? levelColors.yellow : levelColors.green}"></span>${hrvWarning ? "偏低" : "正常"} | 基线 ${recovery.baseline || "-"}ms</div></div>
+  </div>
 </div>
 
-${latestReview ? `
-<!-- Latest Workout Deep Review -->
+<!-- ==================== Section 2: 最近一次训练分析 ==================== -->
 <div class="section">
-  <div class="section-title">最近训练深度复盘 — ${latestReview.activity.date} ${latestReview.activity.distance}km</div>
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近一次训练分析</div>
+      ${sourceBadge}
+    </div>
+  </div>
+
+${(() => {
+  // AI-based review
+  if (hasAI && aiWorkoutReviews.length > 0) {
+    const r = aiWorkoutReviews[0];
+    const a = details[0];
+    if (!a) return '<p style="color:var(--muted)">暂无训练数据</p>';
+    const paceRatio = paceToSeconds(a.avgPace) / paceToSeconds(tp);
+    let intensityZone = "未知";
+    if (paceRatio > 1.15) intensityZone = "轻松跑 (E区)";
+    else if (paceRatio > 1.05) intensityZone = "有氧耐力 (E-M区)";
+    else if (paceRatio > 0.98) intensityZone = "节奏跑 (T区)";
+    else if (paceRatio > 0.92) intensityZone = "阈值跑 (T-I区)";
+    else intensityZone = "间歇区 (I区)";
+    const hrPct = maxHR > 0 ? Math.round((a.avgHR / maxHR) * 100) : 0;
+    const cadenceGap = a.avgCadence ? Math.max(0, 180 - a.avgCadence) : null;
+
+    return `
   <div class="cards" style="margin-bottom:16px">
-    <div class="card"><div class="label">配速</div><div class="value">${latestReview.activity.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${latestReview.activity.bestKm || "-"} | ${latestReview.intensityZone}</div></div>
-    <div class="card"><div class="label">心率</div><div class="value">${latestReview.activity.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${Math.round(latestReview.hrPct)}% HRmax</div></div>
-    <div class="card"><div class="label">步频</div><div class="value">${latestReview.activity.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${latestReview.cadenceGap ? `低于180目标${latestReview.cadenceGap}spm` : "达标"}</div></div>
-    <div class="card"><div class="label">训练负荷</div><div class="value">${latestReview.activity.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${latestReview.activity.performance || "-"}</div></div>
+    <div class="card"><div class="label">日期</div><div class="value" style="font-size:1.2rem">${a.date}</div><div class="sub">${a.distance}km | ${a.workoutTime}</div></div>
+    <div class="card"><div class="label">配速</div><div class="value">${a.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${a.bestKm || "-"} | ${intensityZone}</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${hrPct}% HRmax</div></div>
+    <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${cadenceGap ? `低于180目标${cadenceGap}spm` : "达标"}</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
+  </div>
+  <div class="review-grid">
+    <div class="ai-insight">
+      <h4>训练概要</h4>
+      <p>${r.summary || ""}</p>
+      ${r.detailedAnalysis ? `<div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">${r.detailedAnalysis}</div>` : ""}
+    </div>
+    <div class="review-box">
+      <h4>亮点</h4>
+      ${(r.positives || []).length ? r.positives.map(p => `<div class="finding-item" style="color:#5aa65e">${p}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
+      <h4 style="margin-top:12px">改进方向</h4>
+      ${(r.improvements || []).length ? r.improvements.map(i => `<div class="finding-item" style="color:#c9a030">${i}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
+    </div>
+  </div>`;
+  }
+
+  // Rule-engine fallback
+  if (ruleReview) {
+    const a = ruleReview.activity;
+    return `
+  <div class="cards" style="margin-bottom:16px">
+    <div class="card"><div class="label">日期</div><div class="value" style="font-size:1.2rem">${a.date}</div><div class="sub">${a.distance}km | ${a.workoutTime}</div></div>
+    <div class="card"><div class="label">配速</div><div class="value">${a.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${a.bestKm || "-"} | ${ruleReview.intensityZone}</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${Math.round(ruleReview.hrPct)}% HRmax</div></div>
+    <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${ruleReview.cadenceGap ? `低于180目标${ruleReview.cadenceGap}spm` : "达标"}</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
   </div>
   <div class="review-grid">
     <div class="review-box">
-      <h4>📋 训练分析</h4>
-      ${latestReview.findings.map(f => `<div class="finding-item">${f}</div>`).join("")}
+      <h4>训练分析</h4>
+      ${ruleReview.findings.map(f => `<div class="finding-item">${f}</div>`).join("")}
     </div>
     <div class="review-box">
-      <h4>✅ 亮点</h4>
-      ${latestReview.positives.length ? latestReview.positives.map(p => `<div class="finding-item" style="color:#5aa65e">${p}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">无特别亮点</div>'}
-      <h4 style="margin-top:12px">🔧 改进方向</h4>
-      ${latestReview.improvements.length ? latestReview.improvements.map(i => `<div class="finding-item" style="color:#c9a030">${i}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
+      <h4>亮点</h4>
+      ${ruleReview.positives.length ? ruleReview.positives.map(p => `<div class="finding-item" style="color:#5aa65e">${p}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
+      <h4 style="margin-top:12px">改进方向</h4>
+      ${ruleReview.improvements.length ? ruleReview.improvements.map(i => `<div class="finding-item" style="color:#c9a030">${i}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
+    </div>
+  </div>`;
+  }
+
+  return '<p style="color:var(--muted)">暂无训练数据</p>';
+})()}
+
+${aiWorkoutReviews.length > 1 ? `
+  <div style="margin-top:16px">
+    <div class="section-title" style="font-size:.95rem">其他近期训练</div>
+    <table>
+      <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
+      ${aiWorkoutReviews.slice(1).map(r => `<tr>
+        <td>${r.date || "-"}</td>
+        <td style="max-width:300px">${r.summary || "-"}</td>
+        <td>${(r.positives || []).map(p => `<span class="badge badge-green">${p}</span>`).join("") || "-"}</td>
+        <td>${(r.improvements || []).map(i => `<span class="badge badge-yellow">${i}</span>`).join("") || "-"}</td>
+      </tr>`).join("")}
+    </table>
+  </div>
+` : (details.length > 1 ? `
+  <div style="margin-top:16px">
+    <div class="section-title" style="font-size:.95rem">其他近期训练</div>
+    <table>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
+      ${details.slice(1).map(d => `<tr>
+        <td>${d.date}</td>
+        <td>${d.distance}km</td>
+        <td>${d.avgPace}/km</td>
+        <td>${d.avgHR}bpm (${Math.round((d.avgHR / maxHR) * 100)}%)</td>
+        <td>${d.avgCadence || "-"}spm</td>
+        <td>${d.trainingLoad || "-"}TL</td>
+        <td>${d.performance || "-"}</td>
+      </tr>`).join("")}
+    </table>
+  </div>
+` : "")}
+</div>
+
+<!-- ==================== Section 3: 最近7天训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近7天训练分析</div>
+      ${hasAI ? sourceBadge : ""}
     </div>
   </div>
-</div>
-` : ""}
 
-<!-- Charts -->
-<div class="section">
+  <!-- Charts -->
   <div class="charts-grid">
     <div class="chart-box">
       <h3>HRV 7日趋势</h3>
@@ -416,51 +583,136 @@ ${latestReview ? `
       <h3>训练负荷趋势</h3>
       <canvas id="loadChart"></canvas>
     </div>
-    <div class="chart-box full-width">
+    <div class="chart-box">
       <h3>最近训练配速 vs 阈值</h3>
       <canvas id="paceChart"></canvas>
     </div>
+    ${sleepScores.some(s => s != null) ? `
+    <div class="chart-box">
+      <h3>睡眠质量趋势（近7天）</h3>
+      <canvas id="sleepChart"></canvas>
+    </div>
+    ` : ""}
   </div>
+
+  <!-- Workouts Table -->
+  ${details.length > 0 ? `
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">近期训练一览</div>
+    <table>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
+      ${details.map(d => `<tr>
+        <td>${d.date}</td>
+        <td>${d.distance}km</td>
+        <td>${d.avgPace}/km</td>
+        <td>${d.avgHR}bpm (${Math.round((d.avgHR / maxHR) * 100)}%)</td>
+        <td>${d.avgCadence || "-"}spm</td>
+        <td>${d.trainingLoad || "-"}TL</td>
+        <td>${d.performance || "-"}</td>
+      </tr>`).join("")}
+    </table>
+  </div>
+  ` : ""}
+
+  <!-- Recovery Detail Cards -->
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">恢复指标</div>
+    <div class="cards">
+      <div class="card"><div class="label">恢复度</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub">${data.recovery?.level || "-"}</div></div>
+      <div class="card"><div class="label">HRV连续偏低</div><div class="value">${recovery.consecutiveBelow}<span style="font-size:.9rem">天</span></div><div class="sub">${recovery.consecutiveBelow >= 2 ? "⚠️ 需关注" : "正常"}</div></div>
+      <div class="card"><div class="label">睡眠(最新)</div><div class="value">${data.sleep?.[0]?.sleepScore || "-"}</div><div class="sub">${data.sleep?.[0]?.sleepWindow || "-"}</div></div>
+      <div class="card"><div class="label">负荷比</div><div class="value">${loadEntries[0]?.loadRatio || "-"}</div><div class="sub">${loadEntries[0]?.comment || "-"}</div></div>
+      <div class="card"><div class="label">预计完全恢复</div><div class="value">${data.recovery?.estimatedFullRecovery || "-"}</div><div class="sub">${data.recovery?.level || "-"}</div></div>
+    </div>
+  </div>
+
+  <!-- AI Body Assessment & Training Pattern -->
+  ${hasAI && (aiBodyAssessment || aiTrainingPattern) ? `
+  <div style="margin-top:14px">
+    <div class="analysis-grid">
+      ${aiBodyAssessment ? `
+      <div class="ai-insight">
+        <h4>身体状态评估</h4>
+        <div class="body-assessment-level ${aiBodyAssessment.overallLevel || "green"}">${{green: "状态良好", yellow: "需要关注", red: "警告"}[aiBodyAssessment.overallLevel] || "状态良好"}</div>
+        <p>${aiBodyAssessment.summary || ""}</p>
+        ${(aiBodyAssessment.details || []).length ? `<ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7">${aiBodyAssessment.details.map(d => `<li>${d}</li>`).join("")}</ul>` : ""}
+        ${(aiBodyAssessment.recommendations || []).length ? `<div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：${aiBodyAssessment.recommendations.join("；")}</div>` : ""}
+      </div>
+      ` : '<div class="review-box"><p style="color:var(--muted)">暂无身体状态评估数据</p></div>'}
+
+      ${aiTrainingPattern ? `
+      <div class="ai-insight">
+        <h4>训练模式分析</h4>
+        <p>${aiTrainingPattern.summary || ""}</p>
+        ${(aiTrainingPattern.strengths || []).length ? `<div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list">${aiTrainingPattern.strengths.map(s => `<span class="tag tag-strength">${s}</span>`).join("")}</div></div>` : ""}
+        ${(aiTrainingPattern.risks || []).length ? `<div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list">${aiTrainingPattern.risks.map(r => `<span class="tag tag-risk">${r}</span>`).join("")}</div></div>` : ""}
+        ${(aiTrainingPattern.suggestions || []).length ? `<div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list">${aiTrainingPattern.suggestions.map(s => `<span class="tag tag-suggestion">${s}</span>`).join("")}</div></div>` : ""}
+      </div>
+      ` : '<div class="review-box"><p style="color:var(--muted)">暂无训练模式分析数据</p></div>'}
+    </div>
+  </div>
+  ` : ""}
 </div>
 
-<!-- All Workouts -->
+<!-- ==================== Section 4: 下一阶段训练计划 ==================== -->
 <div class="section">
-  <div class="section-title">近期训练一览</div>
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">下一阶段训练计划</div>
+      ${sourceBadge}
+    </div>
+  </div>
+
+  <!-- Phase info + Progress bar -->
+  <div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span style="font-size:.85rem;font-weight:600">${phase.name}${phase.currentWeek > 0 ? " (W" + phase.currentWeek + ")" : ""} — ${phase.focus}</span>
+      <span style="font-size:.8rem;color:var(--muted)">目标 ${kmTargetMin}-${kmTargetMax}km/周</span>
+    </div>
+    <div class="progress-bar-container" style="margin-bottom:0">
+      <div class="progress-bar-labels">
+        <span>已完成 ${totalKm.toFixed(1)}km</span>
+        <span>${kmPct}%</span>
+        <span>目标 ${kmTargetMax}km</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:${kmPct}%;background:${kmPct > 100 ? levelColors.yellow : kmPct > 80 ? levelColors.green : levelColors.red}"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Plan Table -->
+  ${(() => {
+    if (hasAI && aiWeeklyPlan.length > 0) {
+      return `
   <table>
-    <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
-    ${details.map(d => `<tr>
-      <td>${d.date}</td>
-      <td>${d.distance}km</td>
-      <td>${d.avgPace}/km</td>
-      <td>${d.avgHR}bpm (${Math.round((d.avgHR / maxHR) * 100)}%)</td>
-      <td>${d.avgCadence || "-"}spm</td>
-      <td>${d.trainingLoad || "-"}TL</td>
-      <td>${d.performance || "-"}</td>
-    </tr>`).join("")}
-  </table>
-</div>
+    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>处方</th></tr>
+    ${aiWeeklyPlan.map(d => {
+      const hasPrescription = d.prescription && (d.prescription.warmup || d.prescription.main || d.prescription.cooldown || d.prescription.notes);
+      const pId = "p-" + d.dayIndex;
+      return `<tr class="${d.type === "休息" ? "" : ""}">
+        <td>${d.dayName || ""} ${(d.date || "").slice(5)}</td>
+        <td>${d.type}</td>
+        <td>${d.totalDistance > 0 ? d.totalDistance + "km" : "-"}</td>
+        <td>${d.paceZone || "-"}</td>
+        <td>${d.hrZone || "-"}</td>
+        <td>${d.description || "-"}</td>
+        <td>${hasPrescription ? `<span class="prescription-toggle" onclick="document.getElementById('${pId}').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="${pId}">${d.prescription.warmup ? `<dt>热身</dt><dd>${d.prescription.warmup}</dd>` : ""}${d.prescription.main ? `<dt>主课</dt><dd>${d.prescription.main}</dd>` : ""}${d.prescription.cooldown ? `<dt>冷身</dt><dd>${d.prescription.cooldown}</dd>` : ""}${d.prescription.notes ? `<dt>备注</dt><dd>${d.prescription.notes}</dd>` : ""}</div>` : "-"}</td>
+      </tr>`;
+    }).join("")}
+  </table>`;
+    }
 
-<!-- Recovery Detail -->
-<div class="section">
-  <div class="section-title">恢复评估</div>
-  <div class="cards">
-    <div class="card"><div class="label">HRV连续偏低</div><div class="value">${recovery.consecutiveBelow}<span style="font-size:.9rem">天</span></div><div class="sub">${recovery.consecutiveBelow >= 2 ? "⚠️ 需关注" : "正常"}</div></div>
-    <div class="card"><div class="label">睡眠(最新)</div><div class="value">${data.sleep?.[0]?.sleepScore || "-"}</div><div class="sub">${data.sleep?.[0]?.sleepWindow || "-"}</div></div>
-    <div class="card"><div class="label">负荷比</div><div class="value">${loadEntries[0]?.loadRatio || "-"}</div><div class="sub">${loadEntries[0]?.comment || "-"}</div></div>
-    <div class="card"><div class="label">预计完全恢复</div><div class="value">${data.recovery?.estimatedFullRecovery || "-"}</div><div class="sub">${data.recovery?.level || "-"}</div></div>
-  </div>
-</div>
-
-<!-- Weekly Training Plan -->
-<div class="section">
-  <div class="section-title">本周训练计划 — ${plan.phase.name}${plan.phase.currentWeek > 0 ? " W" + plan.phase.currentWeek : ""}</div>
+    // Rule-engine fallback
+    if (rulePlan) {
+      return `
   <p style="font-size:.85rem;color:var(--muted);margin-bottom:12px">
-    已完成 ${plan.completedKm.toFixed(1)}km | 计划剩余 ${plan.plannedKm}km | 预计周总 ${plan.projectedTotal}km（目标 ${plan.targetKm}km）
-    ${recovery.level !== "green" ? ` | 恢复调整系数 ×${plan.recoveryMultiplier}` : ""}
+    已完成 ${rulePlan.completedKm.toFixed(1)}km | 计划剩余 ${rulePlan.plannedKm}km | 预计周总 ${rulePlan.projectedTotal}km（目标 ${rulePlan.targetKm}km）
+    ${recovery.level !== "green" ? ` | 恢复调整系数 ×${rulePlan.recoveryMultiplier}` : ""}
   </p>
   <table>
     <tr><th>日期</th><th>类型</th><th>距离</th><th>配速</th><th>心率</th><th>说明</th></tr>
-    ${plan.days.map(d => `<tr class="${d.isToday ? "plan-today" : ""}">
+    ${rulePlan.days.map(d => `<tr class="${d.isToday ? "plan-today" : ""}">
       <td>${d.dayName} ${d.date.slice(5)}${d.isToday ? " 📍" : ""}</td>
       <td>${d.type}</td>
       <td>${d.distance > 0 ? d.distance + "km" : "-"}</td>
@@ -468,7 +720,19 @@ ${latestReview ? `
       <td>${d.hrZone}</td>
       <td>${d.desc}</td>
     </tr>`).join("")}
-  </table>
+  </table>`;
+    }
+
+    return '<p style="color:var(--muted)">暂无训练计划</p>';
+  })()}
+
+  <!-- Coach Advice -->
+  ${aiCoachAdvice ? `
+  <div class="coach-advice" style="margin-top:20px">
+    <h4>AI 教练建议</h4>
+    <p>${aiCoachAdvice}</p>
+  </div>
+  ` : ""}
 </div>
 
 <script>
@@ -514,7 +778,7 @@ new Chart(document.getElementById('loadChart'), {
   options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true } } }
 });
 
-// Pace Chart — single bar per workout, colored by zone, threshold line
+// Pace Chart
 function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
 new Chart(document.getElementById('paceChart'), {
   type: 'bar',
@@ -551,6 +815,38 @@ new Chart(document.getElementById('paceChart'), {
   }
 });
 
+${sleepLabels.length > 0 ? `
+// Sleep Chart
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: ${JSON.stringify(sleepLabels)},
+    datasets: [{
+      label: '睡眠评分',
+      data: ${JSON.stringify(sleepScores)},
+      backgroundColor: 'rgba(126,200,130,.6)',
+      borderColor: 'rgba(90,158,100,1)',
+      borderWidth: 1, borderRadius: 6, yAxisID: 'y',
+    }, {
+      label: '深睡比例(%)',
+      data: ${JSON.stringify(sleepDeepRatios)},
+      type: 'line',
+      borderColor: '#7cb9e8',
+      backgroundColor: 'rgba(124,185,232,.1)',
+      fill: false, tension: .3, pointRadius: 4, yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } } },
+    scales: {
+      y: { beginAtZero: true, max: 100, title: { display: true, text: '睡眠评分' }, position: 'left' },
+      y1: { beginAtZero: true, max: 50, title: { display: true, text: '深睡比例(%)' }, position: 'right', grid: { drawOnChartArea: false } }
+    }
+  }
+});
+` : ""}
+
 // Theme toggle
 (function(){
   const btn = document.getElementById('themeToggle');
@@ -586,7 +882,6 @@ new Chart(document.getElementById('paceChart'), {
       chart.update();
     });
   }
-  // Apply on load if dark
   updateChartColors();
 })();
 </script>
@@ -607,7 +902,22 @@ if (!existsSync(dataPath)) {
 }
 
 const data = JSON.parse(readFileSync(dataPath, "utf-8"));
-const html = generateHTML(data);
+
+// Try to load AI analysis
+const analysisPath = path.join(DATA_DIR, `${dateFile}-analysis.json`);
+let aiAnalysis = null;
+if (existsSync(analysisPath)) {
+  try {
+    aiAnalysis = JSON.parse(readFileSync(analysisPath, "utf-8"))?.analysis || null;
+    console.log(`AI analysis loaded from ${dateFile}-analysis.json`);
+  } catch (e) {
+    console.error(`Failed to parse AI analysis: ${e.message}`);
+  }
+} else {
+  console.log(`No AI analysis file found (${dateFile}-analysis.json), using rule-engine fallback`);
+}
+
+const html = generateHTML(data, aiAnalysis);
 
 mkdirSync(REPORT_DIR, { recursive: true });
 const outPath = path.join(REPORT_DIR, `${dateFile}-report.html`);

@@ -40,7 +40,7 @@
 
 ```bash
 # 确认 coros-mcp 可用
-coros-mcp --issuer https://mcpus.coros.com list-tools
+coros-mcp list-tools
 ```
 
 ### 运行
@@ -135,17 +135,15 @@ node scripts/fetch.js && node scripts/analyze.js
 
 ## 配置
 
-`.mcp.json` 中配置了 Coros MCP 服务器（US 区域）：
+`.mcp.json` 中配置了 Coros MCP 服务器：
 
 ```json
 {
   "mcpServers": {
     "coros": {
       "command": "coros-mcp",
-      "args": ["--issuer", "https://mcpus.coros.com"]
+      "args": []
     }
   }
 }
 ```
-
-如使用中国区账号，将 issuer 改为 `https://mcpcn.coros.com`。

@@ -1,0 +1,1252 @@
+{
+  "fetchDate": "20260521",
+  "generatedAt": "2026-05-21T12:34:42.553Z",
+  "context": {
+    "profile": {
+      "age": 38,
+      "height": 176,
+      "weight": 65.8,
+      "gender": "Male",
+      "birthday": "1987-08-10",
+      "vo2max": 52,
+      "thresholdPace": "4:37",
+      "maxHR": 182,
+      "racePredictions": {
+        "5k": "22:08",
+        "10k": "45:58",
+        "halfMarathon": "1:43:08",
+        "marathon": "3:38:16"
+      }
+    },
+    "goal": {
+      "targetTime": "3:30:00",
+      "targetPace": "4:58",
+      "marathonDate": "2026-12-05",
+      "weeksLeft": 29,
+      "currentPhase": "准备期",
+      "currentWeek": 0,
+      "phaseFocus": "建立基础跑量、维持有氧",
+      "targetWeeklyKm": [
+        45,
+        60
+      ]
+    },
+    "bodyStatus": {
+      "recovery": {
+        "percentage": 96,
+        "level": "Heavy training allowed",
+        "estimatedFullRecovery": "12h"
+      },
+      "hrv": {
+        "baseline": 66,
+        "normalRange": [
+          57,
+          75
+        ],
+        "latestValue": 56,
+        "latestEval": "Below normal",
+        "trend7d": [
+          {
+            "date": "2026-05-21",
+            "hrv": 56,
+            "eval": "Below normal"
+          },
+          {
+            "date": "2026-05-20",
+            "hrv": 54,
+            "eval": "Below normal"
+          },
+          {
+            "date": "2026-05-19",
+            "hrv": 62,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-18",
+            "hrv": 64,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-17",
+            "hrv": 66,
+            "eval": "Normal"
+          },
+          {
+            "date": "2026-05-16",
+            "hrv": 52,
+            "eval": "Below normal"
+          },
+          {
+            "date": "2026-05-15",
+            "hrv": 67,
+            "eval": "Normal"
+          }
+        ],
+        "consecutiveBelow": 2
+      },
+      "sleep": {
+        "latestScore": 56,
+        "deepRatio": 24,
+        "trend7d": [
+          {
+            "date": "2026-05-18",
+            "score": 56,
+            "deepRatio": 24
+          },
+          {
+            "date": "2026-05-19",
+            "score": 88,
+            "deepRatio": 16
+          },
+          {
+            "date": "2026-05-20",
+            "score": 80,
+            "deepRatio": 23
+          },
+          {
+            "date": "2026-05-21",
+            "score": 92,
+            "deepRatio": 21
+          }
+        ]
+      },
+      "stress": {
+        "avg7d": 19.428571428571427,
+        "trend": [
+          {
+            "date": "20260515",
+            "stress": 17
+          },
+          {
+            "date": "20260516",
+            "stress": 18
+          },
+          {
+            "date": "20260517",
+            "stress": 17
+          },
+          {
+            "date": "20260518",
+            "stress": 22
+          },
+          {
+            "date": "20260519",
+            "stress": 23
+          },
+          {
+            "date": "20260520",
+            "stress": 22
+          },
+          {
+            "date": "20260521",
+            "stress": 17
+          }
+        ]
+      },
+      "trainingLoad": {
+        "shortTerm": 63,
+        "longTerm": 61,
+        "ratio": 1.03,
+        "comment": "Optimized"
+      }
+    },
+    "workouts": [
+      {
+        "date": "2026-05-20",
+        "distance": 12.78,
+        "duration": "1:06:53",
+        "avgPace": "5:14",
+        "movingAvgPace": "5:14",
+        "adjustedPace": "5:14",
+        "bestKm": "4:53",
+        "avgHR": 150,
+        "avgCadence": 177,
+        "avgStrideLength": 1.08,
+        "elevationGain": 3,
+        "elevationLoss": 4,
+        "calories": 854,
+        "trainingLoad": 190,
+        "performance": "Good",
+        "splits": [
+          {
+            "km": 1,
+            "paceSeconds": 379,
+            "paceStr": "6:19",
+            "hr": 129,
+            "cumulativeTimeSeconds": 379,
+            "nextTimeSec": 1779273092.5
+          },
+          {
+            "km": 2,
+            "paceSeconds": 356,
+            "paceStr": "5:56",
+            "hr": 141,
+            "cumulativeTimeSeconds": 734,
+            "nextTimeSec": 1779273448
+          },
+          {
+            "km": 3,
+            "paceSeconds": 313,
+            "paceStr": "5:13",
+            "hr": 144,
+            "cumulativeTimeSeconds": 1047,
+            "nextTimeSec": 1779273761
+          },
+          {
+            "km": 4,
+            "paceSeconds": 315,
+            "paceStr": "5:15",
+            "hr": 149,
+            "cumulativeTimeSeconds": 1362,
+            "nextTimeSec": 1779274075.5
+          },
+          {
+            "km": 5,
+            "paceSeconds": 308,
+            "paceStr": "5:08",
+            "hr": 153,
+            "cumulativeTimeSeconds": 1670,
+            "nextTimeSec": 1779274383.5
+          },
+          {
+            "km": 6,
+            "paceSeconds": 310,
+            "paceStr": "5:10",
+            "hr": 152,
+            "cumulativeTimeSeconds": 1979,
+            "nextTimeSec": 1779274693
+          },
+          {
+            "km": 7,
+            "paceSeconds": 305,
+            "paceStr": "5:05",
+            "hr": 152,
+            "cumulativeTimeSeconds": 2284,
+            "nextTimeSec": 1779274997.5
+          },
+          {
+            "km": 8,
+            "paceSeconds": 302,
+            "paceStr": "5:02",
+            "hr": 155,
+            "cumulativeTimeSeconds": 2586,
+            "nextTimeSec": 1779275299.5
+          },
+          {
+            "km": 9,
+            "paceSeconds": 307,
+            "paceStr": "5:07",
+            "hr": 159,
+            "cumulativeTimeSeconds": 2892,
+            "nextTimeSec": 1779275606
+          },
+          {
+            "km": 10,
+            "paceSeconds": 302,
+            "paceStr": "5:02",
+            "hr": 160,
+            "cumulativeTimeSeconds": 3194,
+            "nextTimeSec": 1779275907.6666667
+          },
+          {
+            "km": 11,
+            "paceSeconds": 298,
+            "paceStr": "4:58",
+            "hr": 164,
+            "cumulativeTimeSeconds": 3491,
+            "nextTimeSec": 1779276205.3333333
+          },
+          {
+            "km": 12,
+            "paceSeconds": 299,
+            "paceStr": "4:59",
+            "hr": 166,
+            "cumulativeTimeSeconds": 3791,
+            "nextTimeSec": 1779276504.5
+          }
+        ],
+        "paceDrift": {
+          "firstHalfPace": "5:28",
+          "firstHalfPaceSeconds": 328,
+          "secondHalfPace": "5:01",
+          "secondHalfPaceSeconds": 301,
+          "driftPct": -8.4
+        },
+        "hrZones": {
+          "zone1": 0,
+          "zone2": 4,
+          "zone3": 10,
+          "zone4": 29,
+          "zone5": 57
+        },
+        "cadenceStats": {
+          "avg": 176,
+          "min": 106,
+          "max": 184,
+          "stdDev": 4.2,
+          "distribution": {
+            "pctBelow170": 2,
+            "pct170to180": 81,
+            "pctAbove180": 17
+          }
+        },
+        "elevationStats": {
+          "gain": 6,
+          "loss": 7,
+          "net": -1,
+          "max": 8,
+          "min": 6,
+          "avg": 7
+        },
+        "perKmHrTrend": [
+          {
+            "km": 1,
+            "avgHR": 129
+          },
+          {
+            "km": 2,
+            "avgHR": 141
+          },
+          {
+            "km": 3,
+            "avgHR": 144
+          },
+          {
+            "km": 4,
+            "avgHR": 149
+          },
+          {
+            "km": 5,
+            "avgHR": 153
+          },
+          {
+            "km": 6,
+            "avgHR": 152
+          },
+          {
+            "km": 7,
+            "avgHR": 152
+          },
+          {
+            "km": 8,
+            "avgHR": 155
+          },
+          {
+            "km": 9,
+            "avgHR": 159
+          },
+          {
+            "km": 10,
+            "avgHR": 160
+          },
+          {
+            "km": 11,
+            "avgHR": 164
+          },
+          {
+            "km": 12,
+            "avgHR": 166
+          }
+        ],
+        "aerobicDecoupling": {
+          "value": -19.4,
+          "assessment": "注意 — 后半程配速下降但心率也降低，可能主动降速"
+        },
+        "paceVariability": {
+          "cv": 7.6,
+          "stdDev": 24,
+          "assessment": "需改善 — 配速波动较大，建议关注匀速控制"
+        },
+        "runningEfficiency": {
+          "startIndex": 0.07904369883196365,
+          "endIndex": 0.07340098281293729,
+          "trendPct": -7.1,
+          "trend": "下降 — 后段跑步效率降低，可能疲劳累积",
+          "segments": [
+            {
+              "index": 0,
+              "rei": 0.07904369883196365,
+              "avgSpeed": 10.376869391824508,
+              "avgHR": 131.2801595214357
+            },
+            {
+              "index": 1,
+              "rei": 0.07736149409210204,
+              "avgSpeed": 11.580159521435707,
+              "avgHR": 149.6889332003988
+            },
+            {
+              "index": 2,
+              "rei": 0.07588615402315005,
+              "avgSpeed": 11.837407776669975,
+              "avgHR": 155.9890329012961
+            },
+            {
+              "index": 3,
+              "rei": 0.07340098281293729,
+              "avgSpeed": 12.032931206380885,
+              "avgHR": 163.93419740777668
+            }
+          ]
+        },
+        "hrRecoveryRate": {
+          "peakHR": 168,
+          "hrAt60s": 168,
+          "drop": 0,
+          "assessment": "注意 — 心率恢复缓慢，可能训练过度或恢复不足"
+        }
+      },
+      {
+        "date": "2026-05-18",
+        "distance": 7.42,
+        "duration": "48:12",
+        "avgPace": "6:30",
+        "movingAvgPace": "6:06",
+        "adjustedPace": "6:28",
+        "bestKm": "5:38",
+        "avgHR": 130,
+        "avgCadence": 164,
+        "avgStrideLength": 0.94,
+        "elevationGain": 14,
+        "elevationLoss": 16,
+        "calories": 486,
+        "trainingLoad": 65,
+        "performance": "Normal",
+        "splits": [
+          {
+            "km": 1,
+            "paceSeconds": 448,
+            "paceStr": "7:28",
+            "hr": 125,
+            "cumulativeTimeSeconds": 448,
+            "nextTimeSec": 1779102426
+          },
+          {
+            "km": 2,
+            "paceSeconds": 370,
+            "paceStr": "6:10",
+            "hr": 143,
+            "cumulativeTimeSeconds": 818,
+            "nextTimeSec": 1779102796.3333333
+          },
+          {
+            "km": 3,
+            "paceSeconds": 408,
+            "paceStr": "6:48",
+            "hr": 147,
+            "cumulativeTimeSeconds": 1226,
+            "nextTimeSec": 1779103204.3333333
+          },
+          {
+            "km": 4,
+            "paceSeconds": 350,
+            "paceStr": "5:50",
+            "hr": 138,
+            "cumulativeTimeSeconds": 1576,
+            "nextTimeSec": 1779103554.3333333
+          },
+          {
+            "km": 5,
+            "paceSeconds": 340,
+            "paceStr": "5:40",
+            "hr": 142,
+            "cumulativeTimeSeconds": 1917,
+            "nextTimeSec": 1779103894.6666667
+          },
+          {
+            "km": 6,
+            "paceSeconds": 453,
+            "paceStr": "7:33",
+            "hr": 132,
+            "cumulativeTimeSeconds": 2370,
+            "nextTimeSec": 1779104348
+          },
+          {
+            "km": 7,
+            "paceSeconds": 366,
+            "paceStr": "6:06",
+            "hr": 141,
+            "cumulativeTimeSeconds": 2736,
+            "nextTimeSec": 1779104714
+          }
+        ],
+        "paceDrift": {
+          "firstHalfPace": "6:38",
+          "firstHalfPaceSeconds": 398,
+          "secondHalfPace": "6:21",
+          "secondHalfPaceSeconds": 381,
+          "driftPct": -4.2
+        },
+        "hrZones": {
+          "zone1": 5,
+          "zone2": 1,
+          "zone3": 11,
+          "zone4": 37,
+          "zone5": 46
+        },
+        "cadenceStats": {
+          "avg": 169,
+          "min": 66,
+          "max": 178,
+          "stdDev": 13.2,
+          "distribution": {
+            "pctBelow170": 15,
+            "pct170to180": 85,
+            "pctAbove180": 0
+          }
+        },
+        "elevationStats": {
+          "gain": 43,
+          "loss": 46,
+          "net": -3,
+          "max": 8,
+          "min": 3,
+          "avg": 4.8
+        },
+        "perKmHrTrend": [
+          {
+            "km": 1,
+            "avgHR": 125
+          },
+          {
+            "km": 2,
+            "avgHR": 143
+          },
+          {
+            "km": 3,
+            "avgHR": 147
+          },
+          {
+            "km": 4,
+            "avgHR": 138
+          },
+          {
+            "km": 5,
+            "avgHR": 142
+          },
+          {
+            "km": 6,
+            "avgHR": 132
+          },
+          {
+            "km": 7,
+            "avgHR": 141
+          }
+        ],
+        "aerobicDecoupling": {
+          "value": -11.2,
+          "assessment": "注意 — 后半程配速下降但心率也降低，可能主动降速"
+        },
+        "paceVariability": {
+          "cv": 10.9,
+          "stdDev": 43,
+          "assessment": "需改善 — 配速波动较大，建议关注匀速控制"
+        },
+        "runningEfficiency": {
+          "startIndex": 0.07614340871483734,
+          "endIndex": 0.06970370370370371,
+          "trendPct": -8.5,
+          "trend": "下降 — 后段跑步效率降低，可能疲劳累积",
+          "segments": [
+            {
+              "index": 0,
+              "rei": 0.07614340871483734,
+              "avgSpeed": 8.604099722991696,
+              "avgHR": 112.99861495844875
+            },
+            {
+              "index": 1,
+              "rei": 0.06955623852559602,
+              "avgSpeed": 9.497894736842087,
+              "avgHR": 136.54986149584488
+            },
+            {
+              "index": 2,
+              "rei": 0.07013103675622218,
+              "avgSpeed": 9.429030470914126,
+              "avgHR": 134.4487534626039
+            },
+            {
+              "index": 3,
+              "rei": 0.07119759867682199,
+              "avgSpeed": 9.658614958448762,
+              "avgHR": 135.65927977839334
+            },
+            {
+              "index": 4,
+              "rei": 0.06970370370370371,
+              "avgSpeed": 9.410000000000002,
+              "avgHR": 135
+            }
+          ]
+        },
+        "hrRecoveryRate": {
+          "peakHR": 151,
+          "hrAt60s": 148,
+          "drop": 3,
+          "assessment": "注意 — 心率恢复缓慢，可能训练过度或恢复不足"
+        }
+      },
+      {
+        "date": "2026-05-16",
+        "distance": 10.08,
+        "duration": "53:26",
+        "avgPace": "5:18",
+        "movingAvgPace": "5:19",
+        "adjustedPace": "5:16",
+        "bestKm": "4:47",
+        "avgHR": 149,
+        "avgCadence": 182,
+        "avgStrideLength": 1.04,
+        "elevationGain": 15,
+        "elevationLoss": 18,
+        "calories": 649,
+        "trainingLoad": 128,
+        "performance": "Good",
+        "splits": [
+          {
+            "km": 1,
+            "paceSeconds": 364,
+            "paceStr": "6:04",
+            "hr": 130,
+            "cumulativeTimeSeconds": 364,
+            "nextTimeSec": 1778924483
+          },
+          {
+            "km": 2,
+            "paceSeconds": 337,
+            "paceStr": "5:37",
+            "hr": 141,
+            "cumulativeTimeSeconds": 701,
+            "nextTimeSec": 1778924819.6666667
+          },
+          {
+            "km": 3,
+            "paceSeconds": 330,
+            "paceStr": "5:30",
+            "hr": 142,
+            "cumulativeTimeSeconds": 1031,
+            "nextTimeSec": 1778925150
+          },
+          {
+            "km": 4,
+            "paceSeconds": 324,
+            "paceStr": "5:24",
+            "hr": 147,
+            "cumulativeTimeSeconds": 1355,
+            "nextTimeSec": 1778925474
+          },
+          {
+            "km": 5,
+            "paceSeconds": 312,
+            "paceStr": "5:12",
+            "hr": 154,
+            "cumulativeTimeSeconds": 1667,
+            "nextTimeSec": 1778925786.3333333
+          },
+          {
+            "km": 6,
+            "paceSeconds": 317,
+            "paceStr": "5:17",
+            "hr": 156,
+            "cumulativeTimeSeconds": 1984,
+            "nextTimeSec": 1778926103
+          },
+          {
+            "km": 7,
+            "paceSeconds": 310,
+            "paceStr": "5:10",
+            "hr": 161,
+            "cumulativeTimeSeconds": 2294,
+            "nextTimeSec": 1778926412.6666667
+          },
+          {
+            "km": 8,
+            "paceSeconds": 308,
+            "paceStr": "5:08",
+            "hr": 159,
+            "cumulativeTimeSeconds": 2602,
+            "nextTimeSec": 1778926720.6666667
+          },
+          {
+            "km": 9,
+            "paceSeconds": 292,
+            "paceStr": "4:52",
+            "hr": 166,
+            "cumulativeTimeSeconds": 2894,
+            "nextTimeSec": 1778927013
+          },
+          {
+            "km": 10,
+            "paceSeconds": 288,
+            "paceStr": "4:48",
+            "hr": 169,
+            "cumulativeTimeSeconds": 3182,
+            "nextTimeSec": 1778927301
+          }
+        ],
+        "paceDrift": {
+          "firstHalfPace": "5:33",
+          "firstHalfPaceSeconds": 333,
+          "secondHalfPace": "5:03",
+          "secondHalfPaceSeconds": 303,
+          "driftPct": -9.3
+        },
+        "hrZones": {
+          "zone1": 1,
+          "zone2": 5,
+          "zone3": 10,
+          "zone4": 37,
+          "zone5": 47
+        },
+        "cadenceStats": {
+          "avg": 181,
+          "min": 134,
+          "max": 194,
+          "stdDev": 3.9,
+          "distribution": {
+            "pctBelow170": 0,
+            "pct170to180": 30,
+            "pctAbove180": 70
+          }
+        },
+        "elevationStats": {
+          "gain": 26,
+          "loss": 29,
+          "net": -3,
+          "max": 8,
+          "min": 5,
+          "avg": 5.7
+        },
+        "perKmHrTrend": [
+          {
+            "km": 1,
+            "avgHR": 130
+          },
+          {
+            "km": 2,
+            "avgHR": 141
+          },
+          {
+            "km": 3,
+            "avgHR": 142
+          },
+          {
+            "km": 4,
+            "avgHR": 147
+          },
+          {
+            "km": 5,
+            "avgHR": 154
+          },
+          {
+            "km": 6,
+            "avgHR": 156
+          },
+          {
+            "km": 7,
+            "avgHR": 161
+          },
+          {
+            "km": 8,
+            "avgHR": 159
+          },
+          {
+            "km": 9,
+            "avgHR": 166
+          },
+          {
+            "km": 10,
+            "avgHR": 169
+          }
+        ],
+        "aerobicDecoupling": {
+          "value": -22.6,
+          "assessment": "注意 — 后半程配速下降但心率也降低，可能主动降速"
+        },
+        "paceVariability": {
+          "cv": 6.6,
+          "stdDev": 21,
+          "assessment": "需改善 — 配速波动较大，建议关注匀速控制"
+        },
+        "runningEfficiency": {
+          "startIndex": 0.0807238224990269,
+          "endIndex": 0.0739693420495128,
+          "trendPct": -8.4,
+          "trend": "下降 — 后段跑步效率降低，可能疲劳累积",
+          "segments": [
+            {
+              "index": 0,
+              "rei": 0.0807238224990269,
+              "avgSpeed": 10.330236612702372,
+              "avgHR": 127.97011207970112
+            },
+            {
+              "index": 1,
+              "rei": 0.07667504676265154,
+              "avgSpeed": 11.12848069738479,
+              "avgHR": 145.13823163138233
+            },
+            {
+              "index": 2,
+              "rei": 0.07297614432092438,
+              "avgSpeed": 11.485790784557942,
+              "avgHR": 157.39103362391035
+            },
+            {
+              "index": 3,
+              "rei": 0.0739693420495128,
+              "avgSpeed": 12.174819427148204,
+              "avgHR": 164.59277708592776
+            }
+          ]
+        },
+        "hrRecoveryRate": {
+          "peakHR": 171,
+          "hrAt60s": 171,
+          "drop": 0,
+          "assessment": "注意 — 心率恢复缓慢，可能训练过度或恢复不足"
+        }
+      },
+      {
+        "date": "2026-05-14",
+        "distance": 13.01,
+        "duration": "1:07:01",
+        "avgPace": "5:09",
+        "movingAvgPace": "5:11",
+        "adjustedPace": "5:09",
+        "bestKm": "4:26",
+        "avgHR": 147,
+        "avgCadence": 177,
+        "avgStrideLength": 1.1,
+        "elevationGain": 3,
+        "elevationLoss": 8,
+        "calories": 833,
+        "trainingLoad": 189,
+        "performance": "Best",
+        "splits": [
+          {
+            "km": 1,
+            "paceSeconds": 340,
+            "paceStr": "5:40",
+            "hr": 121,
+            "cumulativeTimeSeconds": 340,
+            "nextTimeSec": 1778756466.3333333
+          },
+          {
+            "km": 2,
+            "paceSeconds": 352,
+            "paceStr": "5:52",
+            "hr": 125,
+            "cumulativeTimeSeconds": 692,
+            "nextTimeSec": 1778756818
+          },
+          {
+            "km": 3,
+            "paceSeconds": 299,
+            "paceStr": "4:59",
+            "hr": 142,
+            "cumulativeTimeSeconds": 991,
+            "nextTimeSec": 1778757116.5
+          },
+          {
+            "km": 4,
+            "paceSeconds": 305,
+            "paceStr": "5:05",
+            "hr": 143,
+            "cumulativeTimeSeconds": 1295,
+            "nextTimeSec": 1778757421
+          },
+          {
+            "km": 5,
+            "paceSeconds": 295,
+            "paceStr": "4:55",
+            "hr": 151,
+            "cumulativeTimeSeconds": 1590,
+            "nextTimeSec": 1778757716
+          },
+          {
+            "km": 6,
+            "paceSeconds": 293,
+            "paceStr": "4:53",
+            "hr": 158,
+            "cumulativeTimeSeconds": 1883,
+            "nextTimeSec": 1778758009
+          },
+          {
+            "km": 7,
+            "paceSeconds": 274,
+            "paceStr": "4:34",
+            "hr": 167,
+            "cumulativeTimeSeconds": 2157,
+            "nextTimeSec": 1778758283
+          },
+          {
+            "km": 8,
+            "paceSeconds": 270,
+            "paceStr": "4:30",
+            "hr": 166,
+            "cumulativeTimeSeconds": 2427,
+            "nextTimeSec": 1778758553
+          },
+          {
+            "km": 9,
+            "paceSeconds": 287,
+            "paceStr": "4:47",
+            "hr": 167,
+            "cumulativeTimeSeconds": 2714,
+            "nextTimeSec": 1778758839.6666667
+          },
+          {
+            "km": 10,
+            "paceSeconds": 282,
+            "paceStr": "4:42",
+            "hr": 164,
+            "cumulativeTimeSeconds": 2996,
+            "nextTimeSec": 1778759122
+          },
+          {
+            "km": 11,
+            "paceSeconds": 290,
+            "paceStr": "4:50",
+            "hr": 163,
+            "cumulativeTimeSeconds": 3286,
+            "nextTimeSec": 1778759412
+          },
+          {
+            "km": 12,
+            "paceSeconds": 290,
+            "paceStr": "4:50",
+            "hr": 162,
+            "cumulativeTimeSeconds": 3576,
+            "nextTimeSec": 1778759701.6666667
+          }
+        ],
+        "paceDrift": {
+          "firstHalfPace": "5:11",
+          "firstHalfPaceSeconds": 311,
+          "secondHalfPace": "5:08",
+          "secondHalfPaceSeconds": 308,
+          "driftPct": -1
+        },
+        "hrZones": {
+          "zone1": 1,
+          "zone2": 10,
+          "zone3": 13,
+          "zone4": 29,
+          "zone5": 47
+        },
+        "cadenceStats": {
+          "avg": 176,
+          "min": 112,
+          "max": 208,
+          "stdDev": 10.8,
+          "distribution": {
+            "pctBelow170": 4,
+            "pct170to180": 57,
+            "pctAbove180": 39
+          }
+        },
+        "elevationStats": {
+          "gain": 2,
+          "loss": 9,
+          "net": -7,
+          "max": 13,
+          "min": 6,
+          "avg": 9.3
+        },
+        "perKmHrTrend": [
+          {
+            "km": 1,
+            "avgHR": 121
+          },
+          {
+            "km": 2,
+            "avgHR": 125
+          },
+          {
+            "km": 3,
+            "avgHR": 142
+          },
+          {
+            "km": 4,
+            "avgHR": 143
+          },
+          {
+            "km": 5,
+            "avgHR": 151
+          },
+          {
+            "km": 6,
+            "avgHR": 158
+          },
+          {
+            "km": 7,
+            "avgHR": 167
+          },
+          {
+            "km": 8,
+            "avgHR": 166
+          },
+          {
+            "km": 9,
+            "avgHR": 167
+          },
+          {
+            "km": 10,
+            "avgHR": 164
+          },
+          {
+            "km": 11,
+            "avgHR": 163
+          },
+          {
+            "km": 12,
+            "avgHR": 162
+          }
+        ],
+        "aerobicDecoupling": {
+          "value": -13.5,
+          "assessment": "注意 — 后半程配速下降但心率也降低，可能主动降速"
+        },
+        "paceVariability": {
+          "cv": 7.9,
+          "stdDev": 24,
+          "assessment": "需改善 — 配速波动较大，建议关注匀速控制"
+        },
+        "runningEfficiency": {
+          "startIndex": 0.08628616181312528,
+          "endIndex": 0.050510204081632655,
+          "trendPct": -41.5,
+          "trend": "下降 — 后段跑步效率降低，可能疲劳累积",
+          "segments": [
+            {
+              "index": 0,
+              "rei": 0.08628616181312528,
+              "avgSpeed": 10.754143426294812,
+              "avgHR": 124.63346613545816
+            },
+            {
+              "index": 1,
+              "rei": 0.08089810464282864,
+              "avgSpeed": 12.141484063745011,
+              "avgHR": 150.08366533864543
+            },
+            {
+              "index": 2,
+              "rei": 0.07798975279058837,
+              "avgSpeed": 12.902021912350582,
+              "avgHR": 165.43227091633466
+            },
+            {
+              "index": 3,
+              "rei": 0.07059565312668083,
+              "avgSpeed": 10.588715139442224,
+              "avgHR": 149.99103585657372
+            },
+            {
+              "index": 4,
+              "rei": 0.050510204081632655,
+              "avgSpeed": 4.95,
+              "avgHR": 98
+            }
+          ]
+        },
+        "hrRecoveryRate": {
+          "peakHR": 171,
+          "hrAt60s": 169,
+          "drop": 2,
+          "assessment": "注意 — 心率恢复缓慢，可能训练过度或恢复不足"
+        }
+      }
+    ],
+    "weeklySummary": {
+      "totalKm": 43.3,
+      "runCount": 4,
+      "totalTL": 572,
+      "intensityDistribution": {
+        "easyKm": 43.3,
+        "moderateKm": 0,
+        "hardKm": 0
+      },
+      "loadRatio": 1.03,
+      "shortTermLoad": 63,
+      "longTermLoad": 61
+    }
+  },
+  "analysis": {
+    "workoutReviews": [
+      {
+        "date": "2026-05-20",
+        "summary": "2026-05-20 训练 12.78km，配速 5:14/km，Good",
+        "positives": [
+          "完成训练目标"
+        ],
+        "improvements": [
+          "配速波动较大，建议加强匀速控制"
+        ],
+        "detailedAnalysis": "这是一次 12.78km 的训练，平均配速 5:14/km，平均心率 150bpm。有氧脱钩率 -19.4%。配速变异系数 7.6%。"
+      },
+      {
+        "date": "2026-05-18",
+        "summary": "2026-05-18 训练 7.42km，配速 6:30/km，Normal",
+        "positives": [
+          "完成训练目标"
+        ],
+        "improvements": [
+          "配速波动较大，建议加强匀速控制"
+        ],
+        "detailedAnalysis": "这是一次 7.42km 的训练，平均配速 6:30/km，平均心率 130bpm。有氧脱钩率 -11.2%。配速变异系数 10.9%。"
+      },
+      {
+        "date": "2026-05-16",
+        "summary": "2026-05-16 训练 10.08km，配速 5:18/km，Good",
+        "positives": [
+          "完成训练目标"
+        ],
+        "improvements": [
+          "配速波动较大，建议加强匀速控制"
+        ],
+        "detailedAnalysis": "这是一次 10.08km 的训练，平均配速 5:18/km，平均心率 149bpm。有氧脱钩率 -22.6%。配速变异系数 6.6%。"
+      },
+      {
+        "date": "2026-05-14",
+        "summary": "2026-05-14 训练 13.01km，配速 5:09/km，Best",
+        "positives": [
+          "完成训练目标"
+        ],
+        "improvements": [
+          "配速波动较大，建议加强匀速控制"
+        ],
+        "detailedAnalysis": "这是一次 13.01km 的训练，平均配速 5:09/km，平均心率 147bpm。有氧脱钩率 -13.5%。配速变异系数 7.9%。"
+      }
+    ],
+    "bodyAssessment": {
+      "overallLevel": "green",
+      "summary": "恢复状态良好，HRV正常，可以按计划训练",
+      "details": [
+        "HRV在正常范围内",
+        "恢复度充足",
+        "训练负荷适中"
+      ],
+      "recommendations": [
+        "保持当前训练节奏",
+        "注意睡眠质量"
+      ]
+    },
+    "trainingPatternAnalysis": {
+      "summary": "近一周以轻松跑为主，训练负荷适中，强度分布合理",
+      "strengths": [
+        "跑量稳定",
+        "恢复良好"
+      ],
+      "risks": [
+        "步频偏低"
+      ],
+      "suggestions": [
+        "加强步频训练",
+        "逐步引入节奏跑"
+      ]
+    },
+    "weeklyPlan": [
+      {
+        "dayIndex": 1,
+        "dayName": "周一",
+        "date": "2026-05-25",
+        "type": "轻松跑",
+        "totalDistance": 8,
+        "hrZone": "<135bpm",
+        "paceZone": "6:00-6:20/km",
+        "description": "有氧基础恢复跑",
+        "prescription": {
+          "warmup": "2km 慢跑热身 @6:30-6:40/km",
+          "main": "4km 轻松跑 @6:00-6:20/km，保持心率<135bpm",
+          "cooldown": "2km 慢跑冷身 + 4×100m 加速跑 (ST)",
+          "notes": "关注步频180+spm"
+        }
+      },
+      {
+        "dayIndex": 2,
+        "dayName": "周二",
+        "date": "2026-05-26",
+        "type": "休息",
+        "totalDistance": 0,
+        "hrZone": "-",
+        "paceZone": "-",
+        "description": "完全休息",
+        "prescription": {}
+      },
+      {
+        "dayIndex": 3,
+        "dayName": "周三",
+        "date": "2026-05-27",
+        "type": "中长距离",
+        "totalDistance": 10,
+        "hrZone": "<145bpm",
+        "paceZone": "5:40-6:00/km",
+        "description": "有氧耐力",
+        "prescription": {
+          "warmup": "2km 热身 @6:20/km",
+          "main": "6km 中长距离 @5:40-6:00/km",
+          "cooldown": "2km 冷身",
+          "notes": "注意呼吸节奏"
+        }
+      },
+      {
+        "dayIndex": 4,
+        "dayName": "周四",
+        "date": "2026-05-28",
+        "type": "休息",
+        "totalDistance": 0,
+        "hrZone": "-",
+        "paceZone": "-",
+        "description": "恢复或力量训练",
+        "prescription": {}
+      },
+      {
+        "dayIndex": 5,
+        "dayName": "周五",
+        "date": "2026-05-29",
+        "type": "轻松跑+ST",
+        "totalDistance": 8,
+        "hrZone": "<140bpm",
+        "paceZone": "5:50-6:10/km",
+        "description": "有氧+加速跑",
+        "prescription": {
+          "warmup": "2km 热身",
+          "main": "4km 轻松跑 + 6×100m ST",
+          "cooldown": "2km 冷身",
+          "notes": "ST注意动作幅度"
+        }
+      },
+      {
+        "dayIndex": 6,
+        "dayName": "周六",
+        "date": "2026-05-30",
+        "type": "LSD",
+        "totalDistance": 14,
+        "hrZone": "<140bpm",
+        "paceZone": "6:00-6:30/km",
+        "description": "长距离慢跑",
+        "prescription": {
+          "warmup": "2km 热身 @6:30/km",
+          "main": "10km LSD @6:00-6:30/km，心率<140",
+          "cooldown": "2km 冷身",
+          "notes": "控制心率，不追求速度"
+        }
+      },
+      {
+        "dayIndex": 7,
+        "dayName": "周日",
+        "date": "2026-05-31",
+        "type": "休息",
+        "totalDistance": 0,
+        "hrZone": "-",
+        "paceZone": "-",
+        "description": "完全休息",
+        "prescription": {}
+      }
+    ],
+    "coachAdvice": "本周处于准备期，训练重点是建立有氧基础。上周跑量43.3km，略低于目标上限，整体节奏合理。\n\n建议本周保持4次跑步频率，LSD是重点课表，注意控制心率在Z2以内。步频方面，部分训练低于170spm，建议在轻松跑中加入加速跑(ST)练习，逐步提升步频至180+spm。\n\n恢复方面，HRV和睡眠指标正常，可以正常按计划执行。如果感觉疲劳累积，可将周三的中长距离降级为轻松跑。"
+  }
+}
