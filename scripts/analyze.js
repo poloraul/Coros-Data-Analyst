@@ -297,36 +297,31 @@ function generatePlan(data, weekly, recovery) {
 
   const template = templates[phase.name] || templates["基础期 I"];
 
-  // Build full 7-day plan (Mon-Sun)
-  for (let d = 1; d <= 7; d++) {
-    const t = template[d - 1];
+  // Build 7-day plan starting from today
+  const todayStr = now.toISOString().slice(0, 10);
+  for (let i = 0; i < 7; i++) {
+    const dayDate = new Date(now);
+    dayDate.setDate(dayDate.getDate() + i);
+    const dayStr = dayDate.toISOString().slice(0, 10);
+    const tIdx = (today - 1 + i) % 7;
+    const t = template[tIdx];
     if (!t) continue;
 
-    const dayDate = new Date(now);
-    dayDate.setDate(dayDate.getDate() + (d - today));
-    const dayStr = dayDate.toISOString().slice(0, 10);
-
-    const isPast = d < today;
-    const isToday = d === today;
+    const isToday = i === 0;
     const completed = records.find(r => r.date === dayStr);
 
     if (completed) {
       days.push({
-        dayIndex: d, dayName: weekDays[d - 1], date: dayStr, isPast: true, isToday,
+        dayIndex: i + 1, dayName: weekDays[tIdx], date: dayStr, isPast: true, isToday,
         type: `✅ ${completed.distance}km`, distance: completed.distance,
         pace: completed.avgPace, hrZone: `${completed.avgHR} bpm`, isCompleted: true,
-      });
-    } else if (isPast) {
-      days.push({
-        dayIndex: d, dayName: weekDays[d - 1], date: dayStr, isPast: true, isToday: false,
-        type: "休息", distance: 0, pace: "-", hrZone: "-", isCompleted: false,
       });
     } else {
       const adjustedDist = t.type === "休息" ? 0 : Math.round(t.dist * recoveryMultiplier);
       const adjustedPace = recovery.level !== "green" && t.type !== "休息" ? "降低一档" : t.pace;
       const adjustedHR = recovery.level === "red" && t.type !== "休息" ? "严格控制" : t.hr;
       days.push({
-        dayIndex: d, dayName: weekDays[d - 1], date: dayStr, isPast: false, isToday,
+        dayIndex: i + 1, dayName: weekDays[tIdx], date: dayStr, isPast: dayStr < todayStr, isToday,
         type: t.type, distance: adjustedDist, pace: adjustedPace, hrZone: adjustedHR, isCompleted: false,
       });
     }
@@ -538,6 +533,9 @@ function buildLLMContext(data) {
   const loadEntries = data.trainingLoad || [];
   const sleepData = data.dailyHealth || data.sleep || [];
 
+  const now = new Date();
+  const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+
   // Weekly summary inline
   const totalKm = records.reduce((s, r) => s + (r.distance || 0), 0);
   const totalTL = (data.activityDetails || []).reduce((s, d) => s + (d.trainingLoad || 0), 0);
@@ -622,6 +620,10 @@ function buildLLMContext(data) {
       },
     },
     workouts,
+    today: {
+      date: now.toISOString().slice(0, 10),
+      dayOfWeek: weekDays[now.getDay() === 0 ? 6 : now.getDay() - 1],
+    },
     weeklySummary: {
       totalKm: Math.round(totalKm * 10) / 10,
       runCount,
@@ -667,6 +669,7 @@ async function main() {
   }
 
   const data = JSON.parse(readFileSync(dataPath, "utf-8"));
+  data.activityDetails = (data.activityDetails || []).sort((a, b) => b.date.localeCompare(a.date));
 
   // Step 1: Build LLM context (tcxMetrics already in data from fetch.js)
   console.log("Building analysis context...");
@@ -737,9 +740,10 @@ async function main() {
     "suggestions": ["改进建议"]
   },
   "weeklyPlan": [
+    "7天训练计划，从context.today的日期开始，dayIndex=1为今天，依次到第7天",
     {
       "dayIndex": 1-7,
-      "dayName": "周一/周二...",
+      "dayName": "周一/周二...（从今天对应的星期开始连续7天）",
       "date": "YYYY-MM-DD",
       "type": "轻松跑/节奏跑/间歇/LSD/休息...",
       "totalDistance": 里程数,

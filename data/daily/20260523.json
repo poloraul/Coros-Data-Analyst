@@ -1,6 +1,6 @@
 {
   "fetchDate": "20260523",
-  "fetchedAt": "2026-05-23T02:02:06.256Z",
+  "fetchedAt": "2026-05-23T12:24:02.616Z",
   "userInfo": {
     "height": 176,
     "weight": 65.8,
@@ -10,7 +10,7 @@
   },
   "sportRecords": [
     {
-      "index": 1,
+      "index": 2,
       "sport": "Outdoor Run",
       "date": "2026-05-20",
       "duration": "1:06:53",
@@ -26,7 +26,7 @@
       ]
     },
     {
-      "index": 2,
+      "index": 3,
       "sport": "Outdoor Run",
       "date": "2026-05-18",
       "duration": "48:12",
@@ -42,7 +42,7 @@
       ]
     },
     {
-      "index": 3,
+      "index": 4,
       "sport": "Outdoor Run",
       "date": "2026-05-16",
       "duration": "53:26",
@@ -51,6 +51,22 @@
       "avgHR": 149,
       "calories": 649,
       "labelId": "477529796776067174",
+      "sportType": 100,
+      "startCoords": [
+        31.268999,
+        121.412003
+      ]
+    },
+    {
+      "index": 1,
+      "sport": "Outdoor Run",
+      "date": "2026-05-23",
+      "duration": "45:16",
+      "distance": 7.02,
+      "avgPace": "6:27",
+      "avgHR": 135,
+      "calories": 482,
+      "labelId": "477689373335257692",
       "sportType": 100,
       "startCoords": [
         31.268999,
@@ -458,6 +474,25 @@
           "maxAlt": 8
         }
       }
+    },
+    {
+      "elevationLoss": 4,
+      "workoutTime": "45:16",
+      "avgPace": "6:27",
+      "movingAvgPace": "6:16",
+      "adjustedPace": "6:26",
+      "bestKm": "5:45",
+      "performance": "Below Average",
+      "distance": 7.02,
+      "avgStrideLength": 0.93,
+      "avgHR": 135,
+      "avgCadence": 166,
+      "elevationGain": 2,
+      "calories": 482,
+      "trainingLoad": 69,
+      "labelId": "477689373335257692",
+      "sportType": 100,
+      "date": "2026-05-23"
     }
   ],
   "dailyHealth": [

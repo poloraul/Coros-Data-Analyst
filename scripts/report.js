@@ -135,8 +135,9 @@ function generateRuleBasedPlan(data, recovery) {
   const recoveryMultiplier = recovery.level === "red" ? 0.6 : recovery.level === "yellow" ? 0.8 : 1.0;
   const completedKm = records.reduce((s, r) => s + (r.distance || 0), 0);
   const now = new Date();
-  const todayDow = now.getDay() === 0 ? 7 : now.getDay();
+  const todayStr = now.toISOString().slice(0, 10);
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const todayDow = now.getDay() === 0 ? 7 : now.getDay(); // 1=Mon...7=Sun
 
   const templates = {
     "准备期": [
@@ -198,33 +199,30 @@ function generateRuleBasedPlan(data, recovery) {
   const template = templates[phase.name] || templates["准备期"];
   const days = [];
 
-  for (let d = 1; d <= 7; d++) {
+  for (let i = 0; i < 7; i++) {
     const dayDate = new Date(now);
-    dayDate.setDate(dayDate.getDate() + (d - todayDow));
+    dayDate.setDate(dayDate.getDate() + i);
     const dayStr = dayDate.toISOString().slice(0, 10);
-    const t = template[d - 1];
-    const isPast = d < todayDow;
-    const isToday = d === todayDow;
+    const tIdx = (todayDow - 1 + i) % 7;
+    const t = template[tIdx];
+    const isToday = i === 0;
+    const isPast = dayStr < todayStr || (isToday && records.find(r => r.date === dayStr));
     const completedRecord = records.find(r => r.date === dayStr);
+    const dayName = weekDays[tIdx];
 
     if (completedRecord) {
       days.push({
-        dayName: weekDays[d - 1], date: dayStr, isPast: true, isToday,
+        dayName, date: dayStr, isPast: true, isToday,
         type: `✅ ${completedRecord.distance}km ${completedRecord.avgPace}/km`,
         distance: completedRecord.distance, pace: completedRecord.avgPace,
         hrZone: `${completedRecord.avgHR}bpm`, desc: "已完成",
-      });
-    } else if (isPast) {
-      days.push({
-        dayName: weekDays[d - 1], date: dayStr, isPast: true, isToday: false,
-        type: t.type, distance: t.dist, pace: t.pace, hrZone: t.hr, desc: t.desc,
       });
     } else {
       const adjustedDist = t.type === "休息" ? 0 : Math.round(t.dist * recoveryMultiplier);
       const adjustedPace = recovery.level !== "green" && t.type !== "休息" ? "降低一档" : t.pace;
       const adjustedHR = recovery.level === "red" && t.type !== "休息" ? "严格控制" : t.hr;
       days.push({
-        dayName: weekDays[d - 1], date: dayStr, isPast: false, isToday,
+        dayName, date: dayStr, isPast, isToday,
         type: t.type, distance: adjustedDist, pace: adjustedPace, hrZone: adjustedHR, desc: t.desc,
       });
     }
@@ -242,7 +240,7 @@ function generateHTML(data, aiAnalysis) {
   const user = data.userInfo || {};
   const fitness = data.fitness || {};
   const records = data.sportRecords || [];
-  const details = data.activityDetails || [];
+  const details = (data.activityDetails || []).sort((a, b) => b.date.localeCompare(a.date));
   const hrvDays = data.hrv?.days || [];
   const loadEntries = data.trainingLoad || [];
   const maxHR = 220 - getAge(user.birthday || "1990-01-01");
@@ -460,16 +458,19 @@ tr:hover td{background:var(--row-hover)}
 <div class="section">
   <div class="section-header">
     <div class="section-title-row">
-      <div class="section-title">最近一次训练分析</div>
+      <div class="section-title">最近一次训练分析${(() => {
+        const d = hasAI && aiWorkoutReviews.length > 0 ? details[0] : ruleReview?.activity;
+        return d ? `（${d.date}）` : "";
+      })()}</div>
       ${sourceBadge}
     </div>
   </div>
 
 ${(() => {
+  const a = details[0];
   // AI-based review
   if (hasAI && aiWorkoutReviews.length > 0) {
     const r = aiWorkoutReviews[0];
-    const a = details[0];
     if (!a) return '<p style="color:var(--muted)">暂无训练数据</p>';
     const paceRatio = paceToSeconds(a.avgPace) / paceToSeconds(tp);
     let intensityZone = "未知";
@@ -483,7 +484,7 @@ ${(() => {
 
     return `
   <div class="cards" style="margin-bottom:16px">
-    <div class="card"><div class="label">日期</div><div class="value" style="font-size:1.2rem">${a.date}</div><div class="sub">${a.distance}km | ${a.workoutTime}</div></div>
+    <div class="card"><div class="label">距离/时间</div><div class="value">${a.distance}<span style="font-size:.9rem">km</span></div><div class="sub">${a.workoutTime}</div></div>
     <div class="card"><div class="label">配速</div><div class="value">${a.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${a.bestKm || "-"} | ${intensityZone}</div></div>
     <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${hrPct}% HRmax</div></div>
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${cadenceGap ? `低于180目标${cadenceGap}spm` : "达标"}</div></div>
@@ -509,7 +510,7 @@ ${(() => {
     const a = ruleReview.activity;
     return `
   <div class="cards" style="margin-bottom:16px">
-    <div class="card"><div class="label">日期</div><div class="value" style="font-size:1.2rem">${a.date}</div><div class="sub">${a.distance}km | ${a.workoutTime}</div></div>
+    <div class="card"><div class="label">距离/时间</div><div class="value">${a.distance}<span style="font-size:.9rem">km</span></div><div class="sub">${a.workoutTime}</div></div>
     <div class="card"><div class="label">配速</div><div class="value">${a.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${a.bestKm || "-"} | ${ruleReview.intensityZone}</div></div>
     <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${Math.round(ruleReview.hrPct)}% HRmax</div></div>
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${ruleReview.cadenceGap ? `低于180目标${ruleReview.cadenceGap}spm` : "达标"}</div></div>
