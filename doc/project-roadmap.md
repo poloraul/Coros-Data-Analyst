@@ -18,10 +18,13 @@
 | 功能 | 状态 | 说明 |
 |------|------|------|
 | 数据采集 | ✅ | 10 项 Coros MCP 数据采集 + 文本解析 |
+| 数据增量获取 | ✅ | 同天二次运行仅刷新运动记录，其余数据复用（2026-05-23） |
 | TCX 下载 | ✅ | crs-connect SDK 登录下载，Token 缓存，增量更新 |
 | TCX 基础分析 | ✅ | 分段/漂移/心率分区/步频/海拔 |
 | TCX 高级分析 | ✅ | 有氧脱钩/配速变异/跑步效率/心率恢复 |
 | LLM 深度复盘 | ✅ | 多 provider 支持（anthropic/openai/qianfan） |
+| LLM 分析去重 | ✅ | 数据未变时跳过 LLM 调用，--force 强制重新分析（2026-05-23） |
+| LLM 备用切换 | ✅ | 千帆限流自动切换 DeepSeek fallback（2026-05-23） |
 | HTML 报告 | ✅ | Chart.js 图表 + 亮暗主题 |
 | 训练计划框架 | ✅ | 24 周 5 阶段 + 恢复调整系数 |
 | 自动化调度 | ✅ | macOS launchd 每日 07:00 |
@@ -57,7 +60,30 @@
 
 ---
 
-## 4. 技术债务
+## 4. 变更日志
+
+### 2026-05-23 性能优化：增量获取 + 分析去重 + LLM 备用切换
+
+**背景**：每次执行全量拉取 10 个 MCP 调用 + 重复 LLM 分析，百度千帆调用超限后无备用方案。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `scripts/fetch.js` | 新增 `fetchIncremental()`，同天二次运行仅刷新 sportRecords + activityDetails（2 次 MCP 调用代替 10 次），按 labelId 合并去重；新增 TCX 下载+解析流程，`tcxMetrics` 写入 daily JSON |
+| `scripts/analyze.js` | 新增分析去重检查，已有 analysis JSON 且 workouts 未变时跳过 LLM 调用；新增 `--force` 参数；移除 TCX 解析逻辑，改为从 daily JSON 直接读取 `tcxMetrics` |
+| `lib/llm.js` | 新增 fallback 机制，主 LLM 限流（429/rate/limit/配额）自动切换备用 LLM；支持 `config.apiKey` 直接写死 key |
+| `coros.config.json` | 增加 `fallback` 字段配置 DeepSeek 备用模型（api.deepseek.com, deepseek-v4-pro） |
+
+**关键设计决策**：
+- 增量策略：每天首次全量，后续只刷新运动记录（变化快），HRV/恢复/睡眠等慢变数据复用
+- 分析去重：对比 context 中 workouts 日期列表判断数据是否变化
+- 架构调整：TCX 下载+解析移入 fetch.js，analyze.js 仅负责 LLM 复盘和计划生成
+- API Key：DeepSeek key 直接写死在 config 中，不使用环境变量
+
+---
+
+## 5. 技术债务
 
 | 项目 | 问题 | 建议处理方式 |
 |------|------|-------------|
@@ -70,7 +96,7 @@
 
 ---
 
-## 5. 里程碑规划
+## 6. 里程碑规划
 
 ### M1: 稳定化（当前 → 2026-06）
 
@@ -99,7 +125,7 @@
 
 ---
 
-## 6. 关键指标追踪
+## 7. 关键指标追踪
 
 | 指标 | 当前值 | 目标值 |
 |------|--------|--------|

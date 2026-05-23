@@ -1,12 +1,14 @@
 #!/usr/bin/env node
 import { execSync } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { analyzeTCX } from "./tcx-analyzer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data", "daily");
+const TCX_DIR = path.join(PROJECT_ROOT, "data", "tcx");
 const ISSUER = "https://mcpcn.coros.com";
 const TIMEZONE = "Asia/Shanghai";
 
@@ -25,6 +27,14 @@ function formatDate(d) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}${m}${day}`;
+}
+
+function getAge(birthday) {
+  const today = new Date();
+  const birth = new Date(birthday);
+  let age = today.getFullYear() - birth.getFullYear();
+  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
+  return age;
 }
 
 function callTool(toolName, args) {
@@ -220,9 +230,83 @@ function parseUserInfo(text) {
   return Object.keys(r).length ? r : null;
 }
 
+// --- Incremental fetch ---
+
+function fetchActivityDetails(sportRecords) {
+  const details = [];
+  for (const record of sportRecords) {
+    if (record.labelId && record.sportType) {
+      const detailText = callTool("getActivityDetail", {
+        labelId: record.labelId, sportType: record.sportType,
+      });
+      const detail = parseActivityDetail(detailText);
+      if (detail) {
+        detail.labelId = record.labelId;
+        detail.sportType = record.sportType;
+        detail.date = record.date;
+        details.push(detail);
+      }
+    }
+  }
+  return details;
+}
+
+function mergeSportRecords(existing, incoming) {
+  const map = new Map();
+  for (const r of existing) map.set(r.labelId, r);
+  for (const r of incoming) map.set(r.labelId, r);
+  return [...map.values()];
+}
+
+function mergeActivityDetails(existing, incoming) {
+  const map = new Map();
+  for (const d of existing) map.set(d.labelId, d);
+  for (const d of incoming) map.set(d.labelId, d);
+  return [...map.values()];
+}
+
+function saveDailyData(today, data) {
+  mkdirSync(DATA_DIR, { recursive: true });
+  const outPath = path.join(DATA_DIR, `${today}.json`);
+  writeFileSync(outPath, JSON.stringify(data, null, 2), "utf-8");
+  return outPath;
+}
+
+function downloadTCXFiles(dateStr) {
+  try {
+    const cmd = `node "${path.join(__dirname, "download-tcx.js")}" --date ${dateStr}`;
+    execSync(cmd, { encoding: "utf-8", timeout: 120000, stdio: "pipe" });
+    console.log("  TCX download complete.");
+  } catch (e) {
+    console.error(`  [WARN] TCX download failed: ${e.message.split("\n")[0]}`);
+  }
+}
+
+function enrichWithTCX(data) {
+  const details = data.activityDetails || [];
+  if (details.length === 0) return;
+
+  const birthday = data.userInfo?.birthday || "1990-01-01";
+  const maxHR = 220 - getAge(birthday);
+  let enriched = 0;
+
+  for (const detail of details) {
+    if (!detail.labelId || detail.tcxMetrics) continue;
+    const tcxPath = path.join(TCX_DIR, `${detail.labelId}.tcx`);
+    if (existsSync(tcxPath)) {
+      const metrics = analyzeTCX(tcxPath, maxHR);
+      if (metrics) {
+        detail.tcxMetrics = metrics;
+        enriched++;
+      }
+    }
+  }
+  console.log(`  TCX enriched: ${enriched}/${details.length} activities`);
+}
+
 // --- Main ---
 
-function fetchAll(dateStr, isFull) {
+function fetchAll(dateStr) {
   const today = dateStr || formatDate(new Date());
   const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
   const startDate3 = formatDate(new Date(Date.now() - 3 * 86400000));
@@ -250,21 +334,7 @@ function fetchAll(dateStr, isFull) {
   data.sportRecords = parseSportRecords(sportText);
 
   console.log("  [3/10] Activity details...");
-  data.activityDetails = [];
-  for (const record of data.sportRecords) {
-    if (record.labelId && record.sportType) {
-      const detailText = callTool("getActivityDetail", {
-        labelId: record.labelId, sportType: record.sportType,
-      });
-      const detail = parseActivityDetail(detailText);
-      if (detail) {
-        detail.labelId = record.labelId;
-        detail.sportType = record.sportType;
-        detail.date = record.date;
-        data.activityDetails.push(detail);
-      }
-    }
-  }
+  data.activityDetails = fetchActivityDetails(data.sportRecords);
 
   console.log("  [4/10] Daily health (7 days)...");
   data.dailyHealth = parseDailyHealth(callTool("queryDailyHealthData", { days: 7, timezone: TIMEZONE }));
@@ -291,9 +361,7 @@ function fetchAll(dateStr, isFull) {
     startDate: weekStart, endDate: weekEnd, timezone: TIMEZONE,
   }));
 
-  mkdirSync(DATA_DIR, { recursive: true });
-  const outPath = path.join(DATA_DIR, `${today}.json`);
-  writeFileSync(outPath, JSON.stringify(data, null, 2), "utf-8");
+  const outPath = saveDailyData(today, data);
   console.log(`\nSaved to ${outPath}`);
   console.log(`  Sport records: ${data.sportRecords.length}`);
   console.log(`  Activity details: ${data.activityDetails.length}`);
@@ -302,8 +370,75 @@ function fetchAll(dateStr, isFull) {
   console.log(`  Training load days: ${data.trainingLoad.length}`);
   console.log(`  Schedule entries: ${data.trainingSchedule.length}`);
 
+  // Download TCX files & enrich
+  console.log("\nDownloading TCX files...");
+  downloadTCXFiles(today);
+  enrichWithTCX(data);
+  saveDailyData(today, data);
+
   return data;
 }
 
+function fetchIncremental(dateStr) {
+  const today = dateStr || formatDate(new Date());
+  const existingPath = path.join(DATA_DIR, `${today}.json`);
+
+  let existing;
+  try {
+    existing = JSON.parse(readFileSync(existingPath, "utf-8"));
+  } catch {
+    return null;
+  }
+
+  if (existing.fetchDate !== today) return null;
+
+  console.log(`Incremental update (data already fetched today at ${existing.fetchedAt})`);
+
+  const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
+
+  console.log("  [1/2] Sport records (7 days)...");
+  const sportText = callTool("querySportRecords", {
+    startDate: startDate7, endDate: today,
+    sportTypeCodes: [65535], minDistanceKm: null, maxDistanceKm: null,
+    minDurationMinutes: null, maxDurationMinutes: null, maxAveragePace: null,
+    locationKeyword: null, limit: 20, timezone: TIMEZONE,
+  });
+  const newRecords = parseSportRecords(sportText);
+
+  console.log("  [2/2] Activity details...");
+  const newDetails = fetchActivityDetails(newRecords);
+
+  // Merge
+  const mergedRecords = mergeSportRecords(existing.sportRecords || [], newRecords);
+  const mergedDetails = mergeActivityDetails(existing.activityDetails || [], newDetails);
+
+  const newRecordCount = newRecords.filter(r => !(existing.sportRecords || []).some(e => e.labelId === r.labelId)).length;
+  const newDetailCount = newDetails.filter(d => !(existing.activityDetails || []).some(e => e.labelId === d.labelId)).length;
+
+  existing.sportRecords = mergedRecords;
+  existing.activityDetails = mergedDetails;
+  existing.fetchedAt = new Date().toISOString();
+
+  // Download new TCX files & enrich
+  if (newDetailCount > 0) {
+    console.log("\nDownloading new TCX files...");
+    downloadTCXFiles(today);
+  }
+  enrichWithTCX(existing);
+  saveDailyData(today, existing);
+
+  const outPath = path.join(DATA_DIR, `${today}.json`);
+  console.log(`\nSaved to ${outPath}`);
+  console.log(`  Sport records: ${mergedRecords.length} (+${newRecordCount} new)`);
+  console.log(`  Activity details: ${mergedDetails.length} (+${newDetailCount} new)`);
+
+  return existing;
+}
+
 const args = parseArgs();
-fetchAll(args.date, args.full);
+if (!args.full) {
+  const result = fetchIncremental(args.date);
+  if (result) process.exit(0);
+  console.log("No existing data for today, performing full fetch...");
+}
+fetchAll(args.date);

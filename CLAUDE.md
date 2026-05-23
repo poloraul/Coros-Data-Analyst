@@ -17,18 +17,17 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 当用户要求复盘、训练分析、训练计划、恢复评估时，按以下步骤执行：
 
-1. `node scripts/fetch.js` — 采集最新数据
-2. `node scripts/download-tcx.js` — 下载 TCX 运动文件（高级分析用）
-3. `node scripts/analyze.js` — TCX 高级分析 + LLM 深度复盘，生成 `YYYYMMDD-analysis.json`
-4. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
+1. `node scripts/fetch.js` — 采集最新数据 + 下载 TCX + TCX 解析（增量/全量自动判断）
+2. `node scripts/analyze.js` — LLM 深度复盘 + 训练计划生成，输出 `YYYYMMDD-analysis.json`
+3. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
 
-脚本支持 `--date YYYYMMDD` 参数指定日期。
+脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析。
 
-**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic` 和 `openai` 两个 provider。需要设置对应的环境变量（`ANTHROPIC_API_KEY` 或 `OPENAI_API_KEY`）。
+**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic`、`openai`、`qianfan` 三个 provider。支持 `apiKey` 直接写死或 `apiKeyEnv` 环境变量。主 LLM 限流时自动切换到 `fallback` 配置的备用模型。
 
 ## 数据存储
 
-- `data/daily/YYYYMMDD.json` — 每日概览（活动摘要 + 健康数据）
+- `data/daily/YYYYMMDD.json` — 每日概览（活动摘要 + 健康数据 + TCX 高级指标）
 - `data/daily/YYYYMMDD-analysis.json` — LLM 分析结果（复盘 + 训练计划）
 - `data/tcx/{labelId}.tcx` — TCX 运动文件（GPS 轨迹 + 逐点心率）
 - `data/.crs-token/` — crs-connect 认证令牌（自动管理）

@@ -1,7 +1,8 @@
 #!/usr/bin/env node
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { createLLM } from "../lib/llm.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -23,10 +24,11 @@ const PHASES = [
 // --- Utility ---
 function parseArgs() {
   const args = process.argv.slice(2);
-  const parsed = { date: null, mode: "daily" };
+  const parsed = { date: null, mode: "daily", force: false };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--date" && args[i + 1]) parsed.date = args[++i];
     if (args[i] === "--mode" && args[i + 1]) parsed.mode = args[++i];
+    if (args[i] === "--force") parsed.force = true;
   }
   return parsed;
 }
@@ -510,24 +512,282 @@ function generateMarkdownReport(data) {
   return md;
 }
 
-// --- Main ---
-const args = parseArgs();
-const dateFile = args.date || (() => {
-  const now = new Date();
-  const y = now.getFullYear();
-  const m = String(now.getMonth() + 1).padStart(2, "0");
-  const d = String(now.getDate()).padStart(2, "0");
-  return `${y}${m}${d}`;
-})();
+// --- LLM Integration ---
 
-const dataPath = path.join(DATA_DIR, `${dateFile}.json`);
-
-if (!existsSync(dataPath)) {
-  console.error(`Data file not found: ${dataPath}`);
-  console.error(`Run 'node scripts/fetch.js' first to fetch data.`);
-  process.exit(1);
+function loadLLMConfig() {
+  const configPath = path.join(PROJECT_ROOT, "coros.config.json");
+  try {
+    const config = JSON.parse(readFileSync(configPath, "utf-8"));
+    return config.llm || null;
+  } catch {
+    return null;
+  }
 }
 
-const data = JSON.parse(readFileSync(dataPath, "utf-8"));
-const report = generateMarkdownReport(data);
-console.log(report);
+/**
+ * Build the LLM context object from daily JSON (TCX metrics already embedded).
+ */
+function buildLLMContext(data) {
+  const user = data.userInfo || {};
+  const fitness = data.fitness || {};
+  const maxHR = 220 - getAge(user.birthday || "1990-01-01");
+  const weeksLeft = weeksUntilMarathon();
+  const phase = getCurrentPhase(weeksLeft);
+  const records = data.sportRecords || [];
+  const hrvDays = data.hrv?.days || [];
+  const loadEntries = data.trainingLoad || [];
+  const sleepData = data.dailyHealth || data.sleep || [];
+
+  // Weekly summary inline
+  const totalKm = records.reduce((s, r) => s + (r.distance || 0), 0);
+  const totalTL = (data.activityDetails || []).reduce((s, d) => s + (d.trainingLoad || 0), 0);
+  const runCount = records.filter((r) => r.sportType === 100 || r.sportType === 101).length;
+
+  // Build workouts from activityDetails (tcxMetrics already included by fetch.js)
+  const workouts = (data.activityDetails || []).map((d) => ({
+    date: d.date,
+    distance: d.distance,
+    duration: d.workoutTime,
+    avgPace: d.avgPace,
+    bestKm: d.bestKm,
+    avgHR: d.avgHR,
+    avgCadence: d.avgCadence,
+    trainingLoad: d.trainingLoad,
+    performance: d.performance,
+    maxHR,
+    tcxMetrics: d.tcxMetrics || null,
+  }));
+
+  return {
+    profile: {
+      age: getAge(user.birthday),
+      height: user.height,
+      weight: user.weight,
+      gender: user.gender,
+      vo2max: fitness.vo2max,
+      thresholdPace: fitness.thresholdPace,
+      maxHR,
+      racePredictions: {
+        "5k": fitness.pred5k,
+        "10k": fitness.pred10k,
+        halfMarathon: fitness.predHalfMarathon,
+        marathon: fitness.predMarathon,
+      },
+    },
+    goal: {
+      targetTime: "3:30:00",
+      targetPace: "4:58/km",
+      marathonDate: "2026-12-06",
+      weeksLeft,
+      currentPhase: phase.name,
+      currentWeek: phase.currentWeek,
+      phaseFocus: phase.focus,
+      targetWeeklyKm: phase.weeklyKm,
+    },
+    bodyStatus: {
+      recovery: {
+        percentage: data.recovery?.percentage,
+        level: data.recovery?.level,
+        estimatedFullRecovery: data.recovery?.estimatedFullRecovery,
+      },
+      hrv: {
+        baseline: data.hrv?.baseline,
+        normalRange: data.hrv?.normalRange,
+        latestValue: hrvDays[0]?.hrv,
+        latestEval: hrvDays[0]?.evaluation,
+        trend7d: hrvDays.slice(0, 7).map((d) => ({ date: d.date, hrv: d.hrv, eval: d.evaluation })),
+        consecutiveBelow: (() => {
+          let n = 0;
+          for (const d of hrvDays) {
+            if (d.hrv < (data.hrv?.normalRange?.[0] || 50)) n++;
+            else break;
+          }
+          return n;
+        })(),
+      },
+      sleep: {
+        latestScore: sleepData[0]?.sleepScore,
+        deepRatio: sleepData[0]?.deepRatio,
+        trend7d: sleepData.slice(0, 7).map((s) => ({
+          date: s.date,
+          score: s.sleepScore,
+          deepRatio: s.deepRatio ?? null,
+        })),
+      },
+      trainingLoad: {
+        shortTerm: loadEntries[0]?.shortTermLoad,
+        longTerm: loadEntries[0]?.longTermLoad,
+        ratio: loadEntries[0]?.loadRatio,
+        comment: loadEntries[0]?.comment,
+      },
+    },
+    workouts,
+    weeklySummary: {
+      totalKm: Math.round(totalKm * 10) / 10,
+      runCount,
+      totalTL,
+    },
+  };
+}
+
+/**
+ * Save analysis result to JSON file.
+ */
+function saveAnalysisJSON(dateFile, context, analysisResult) {
+  const output = {
+    fetchDate: dateFile,
+    generatedAt: new Date().toISOString(),
+    context,
+    analysis: analysisResult,
+  };
+
+  const outPath = path.join(DATA_DIR, `${dateFile}-analysis.json`);
+  writeFileSync(outPath, JSON.stringify(output, null, 2), "utf-8");
+  console.log(`Analysis saved to ${path.relative(PROJECT_ROOT, outPath)}`);
+  return outPath;
+}
+
+// --- Main ---
+async function main() {
+  const args = parseArgs();
+  const dateFile = args.date || (() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    return `${y}${m}${d}`;
+  })();
+
+  const dataPath = path.join(DATA_DIR, `${dateFile}.json`);
+
+  if (!existsSync(dataPath)) {
+    console.error(`Data file not found: ${dataPath}`);
+    console.error("Run 'node scripts/fetch.js' first to fetch data.");
+    process.exit(1);
+  }
+
+  const data = JSON.parse(readFileSync(dataPath, "utf-8"));
+
+  // Step 1: Build LLM context (tcxMetrics already in data from fetch.js)
+  console.log("Building analysis context...");
+  const context = buildLLMContext(data);
+  const tcxCount = (data.activityDetails || []).filter(d => d.tcxMetrics).length;
+  console.log(`  ${tcxCount}/${(data.activityDetails || []).length} workouts have TCX data`);
+
+  // Step 1.5: Check if analysis already exists and data unchanged
+  if (!args.force) {
+    const analysisPath = path.join(DATA_DIR, `${dateFile}-analysis.json`);
+    if (existsSync(analysisPath)) {
+      try {
+        const existing = JSON.parse(readFileSync(analysisPath, "utf-8"));
+        const existingLabelIds = (existing.context?.workouts || []).map(w => w.date).filter(Boolean).sort();
+        const currentLabelIds = (data.activityDetails || []).map(d => d.date).filter(Boolean).sort();
+        if (existingLabelIds.length > 0 && JSON.stringify(existingLabelIds) === JSON.stringify(currentLabelIds)) {
+          console.log("Analysis already exists and data unchanged, skipping LLM call.");
+          console.log("Use --force to re-analyze.");
+          const mdReport = generateMarkdownReport(data);
+          console.log("\n" + mdReport);
+          return;
+        }
+        console.log("New activities detected since last analysis, re-analyzing...");
+      } catch {
+        console.log("Could not parse existing analysis, re-analyzing...");
+      }
+    }
+  }
+
+  // Step 2: Try LLM analysis
+  const llmConfig = loadLLMConfig();
+  let analysisResult = null;
+
+  if (llmConfig) {
+    try {
+      console.log(`Initializing LLM (${llmConfig.provider}/${llmConfig.model})...`);
+      const llm = createLLM(llmConfig);
+      const systemPrompt = `你是资深跑步教练（CSCS认证），专精于马拉松训练和运动生理学数据分析。
+
+分析原则：
+1. 数据驱动：基于跑步数据（特别是TCX逐点数据中的每公里配速、心率、步频变化和心率漂移）做量化分析
+2. 目标导向：以跑者首马3:30目标（配速4:58/km）为参考基准，评价当前训练是否在正确轨道上
+3. 生理学深度：利用心率漂移、心率分区分布、配速一致性等指标做专业分析
+4. 具体可执行：改进建议必须给出具体的配速范围、心率目标、步频要求或技术调整要点
+
+请输出严格JSON格式：
+
+{
+  "workoutReviews": [
+    {
+      "date": "日期",
+      "summary": "1-2句话概括训练性质（训练类型、距离、配速、表现评价）",
+      "detailedAnalysis": "详细技术分析（200-400字），必须引用TCX数据：每公里配速变化趋势、心率漂移率、在各心率区间的停留时间、配速一致性(CV)、步频分析。将这些数据转化为训练学评价",
+      "positives": ["具体亮点，如"KM7-12配速稳定在5:02-5:10/km，负分段跑法出色"", "..."],
+      "improvements": ["具体改进方向，需给出可操作的配速/心率/技术建议", "..."]
+    }
+  ],
+  "bodyAssessment": {
+    "overallLevel": "green/yellow/red",
+    "summary": "整体身体状态评估",
+    "details": ["各维度分项评估"],
+    "recommendations": ["具体改善建议"]
+  },
+  "trainingPatternAnalysis": {
+    "summary": "训练模式整体评价，指出关键问题",
+    "strengths": ["训练优势"],
+    "risks": ["潜在风险"],
+    "suggestions": ["改进建议"]
+  },
+  "weeklyPlan": [
+    {
+      "dayIndex": 1-7,
+      "dayName": "周一/周二...",
+      "date": "YYYY-MM-DD",
+      "type": "轻松跑/节奏跑/间歇/LSD/休息...",
+      "totalDistance": 里程数,
+      "paceZone": "配速区间要求",
+      "hrZone": "心率区间要求",
+      "description": "训练说明",
+      "prescription": {
+        "warmup": "热身安排",
+        "main": "主课安排",
+        "cooldown": "冷身安排",
+        "notes": "注意事项"
+      }
+    }
+  ],
+  "coachAdvice": "综合教练建议段落，结合身体状态、本周训练、下周计划给出整体指导"
+}
+
+特别重要：analysis必须具体到数据。不要写"心率合理"而要写"平均心率150bpm对应82%HRmax，处于Z3-Z4交界"。不要写"配速控制良好"而要写"KM5-12配速在5:02-5:10/km之间波动，CV=8.9%，配速一致性中等"。所有分析点必须有数据支撑。`;
+
+      const contextJson = JSON.stringify(context);
+      console.log(`  Context size: ${(contextJson.length / 1024).toFixed(0)} KB`);
+      analysisResult = await llm.chatJSON(systemPrompt, context);
+      if (analysisResult) {
+        console.log("LLM analysis complete.");
+        saveAnalysisJSON(dateFile, context, analysisResult);
+      } else {
+        console.log("  LLM returned non-JSON response. Checking raw output...");
+        // Try again without jsonMode, get raw text
+        const raw = await llm.chat(systemPrompt, contextJson);
+        if (raw) {
+          console.log(`  Raw response (first 200 chars): ${raw.slice(0, 200)}`);
+        } else {
+          console.log("  LLM returned no content at all.");
+        }
+      }
+    } catch (e) {
+      console.log(`LLM analysis failed: ${e.message}, falling back to rule-engine markdown.`);
+    }
+  } else {
+    console.log("No LLM configuration found, generating rule-engine markdown.");
+  }
+
+  // Step 3: Always output markdown report
+  const mdReport = generateMarkdownReport(data);
+  console.log("\n" + mdReport);
+}
+
+main().catch((e) => {
+  console.error(`Fatal error: ${e.message}`);
+  process.exit(1);
+});

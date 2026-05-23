@@ -3,46 +3,45 @@
 ## 1. 系统架构
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                    macOS launchd (cron)                   │
-│                   每日 07:00 触发                          │
-└─────────────────────┬───────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────┐
-│                    cron.sh                                │
-│              fetch → analyze → report                     │
-└─────┬───────────────────┬────────────────────┬──────────┘
-      │                   │                    │
-      ▼                   ▼                    ▼
-┌───────────┐    ┌──────────────┐    ┌──────────────────┐
-│ fetch.js  │    │ analyze.js   │    │   report.js      │
-│           │    │              │    │                  │
-│ Coros MCP │    │ TCX 解析     │    │ HTML 生成        │
-│ 10 项数据  │    │ LLM 复盘     │    │ Chart.js 图表    │
-│ 采集+解析  │    │ 训练计划生成  │    │ 亮/暗主题        │
-└─────┬─────┘    └──────┬───────┘    └────────┬─────────┘
-      │                 │                      │
-      ▼                 ▼                      ▼
-┌───────────┐    ┌──────────────┐    ┌──────────────────┐
-│ daily/    │    │ daily/       │    │ reports/         │
-│ YYYYMMDD  │    │ YYYYMMDD     │    │ YYYYMMDD-report  │
-│ .json     │    │ -analysis    │    │ .html            │
-└───────────┘    │ .json        │    └──────────────────┘
-                 └──────────────┘
-                      ▲
-               ┌──────┴───────┐
-               │ download-tcx │
-               │ .js          │
-               │              │
-               │ crs-connect  │
-               │ SDK 登录下载  │
-               └──────┬───────┘
-                      ▼
-               ┌──────────────┐
-               │ data/tcx/    │
-               │ {labelId}.tcx│
-               └──────────────┘
+┌──────────────────────────────────────────────────────────┐
+│                    macOS launchd (cron)                    │
+│                   每日 07:00 触发                           │
+└──────────────────────┬───────────────────────────────────┘
+                       │
+                       ▼
+┌──────────────────────────────────────────────────────────┐
+│                    cron.sh                                 │
+│              fetch → analyze → report                      │
+└──────┬──────────────────────┬────────────────┬───────────┘
+       │                      │                │
+       ▼                      ▼                ▼
+┌──────────────────┐  ┌──────────────┐  ┌──────────────────┐
+│   fetch.js       │  │ analyze.js   │  │   report.js      │
+│                  │  │              │  │                  │
+│ Coros MCP        │  │ LLM 复盘     │  │ HTML 生成        │
+│ 10 项数据采集    │  │ 训练计划生成  │  │ Chart.js 图表    │
+│ + TCX 下载+解析  │  │ 分析去重     │  │ 亮/暗主题        │
+│ + 增量/全量      │  │ LLM fallback │  │                  │
+└──┬────────┬──────┘  └──────┬───────┘  └────────┬─────────┘
+   │        │                │                    │
+   │   ┌────┴─────┐         ▼                    ▼
+   │   │download  │  ┌──────────────┐    ┌──────────────────┐
+   │   │-tcx.js   │  │ daily/       │    │ reports/         │
+   │   │(子进程)  │  │ YYYYMMDD     │    │ YYYYMMDD-report  │
+   │   └────┬─────┘  │ -analysis    │    │ .html            │
+   │        │        │ .json        │    └──────────────────┘
+   │        ▼        └──────────────┘
+   │  ┌──────────┐         ▲
+   │  │data/tcx/ │         │ 读取 daily JSON
+   │  │*.tcx     │         │ (含 tcxMetrics)
+   │  └──────────┘         │
+   │                       │
+   ▼                       │
+┌──────────────────┐       │
+│ daily/           │───────┘
+│ YYYYMMDD.json    │
+│ (含 tcxMetrics)  │
+└──────────────────┘
 ```
 
 ## 2. 数据流
@@ -51,9 +50,22 @@
 
 ```
 Coros MCP Server ──callTool()──> 文本输出 ──parse*()──> 结构化 JSON
+                                                          │
+                                                          ▼
+                                              download-tcx.js ──> TCX 文件
+                                                          │
+                                                          ▼
+                                                  tcx-analyzer.js ──> tcxMetrics
+                                                          │
+                                                          ▼
+                                              activityDetails[].tcxMetrics 写入 daily JSON
 ```
 
 每个 MCP Tool 返回格式化的文本，由对应的 `parse*` 函数提取为 JSON 对象。10 项数据汇聚到一个 daily JSON 文件中。
+
+**TCX 获取与解析**：fetch.js 在 MCP 数据采集后，自动调用 `download-tcx.js`（子进程）下载 TCX 文件，然后通过 `tcx-analyzer.js` 解析 TCX 数据，将 `tcxMetrics` 直接写入 daily JSON 的 `activityDetails` 中。analyze.js 无需再处理 TCX 解析。
+
+**增量策略**：同一天内首次运行执行全量拉取（10 个 MCP 调用 + TCX 下载解析），后续运行仅刷新 sportRecords + activityDetails（2 个 MCP 调用），其余数据（userInfo、fitness、hrv、sleep、recovery、trainingLoad、schedule）从已有文件复用。按 labelId 去重合并。新增活动自动下载 TCX 并解析。`--full` 参数强制全量刷新。
 
 ### 2.2 下载阶段（download-tcx.js）
 
@@ -63,21 +75,31 @@ daily JSON ──> 提取 labelId+sportType ──> crs-connect API ──> TCX 
 
 从 daily JSON 的 sportRecords 中提取活动标识，通过 `@nyt87/crs-connect` SDK 的 `getActivityDownloadFile` + `downloadFile` 下载 TCX。下载成功后回写 `tcxPath` 到 daily JSON。
 
+**注意**：download-tcx.js 同时被 fetch.js 作为子进程调用，也可独立运行（手动下载/`--force` 重下载）。
+
 ### 2.3 分析阶段（analyze.js）
 
 ```
-daily JSON ──> context-builder.js ──> 分析上下文 ──> LLM ──> analysis JSON
-                     │
-                     ├──> profile（用户档案）
-                     ├──> goal（训练目标）
-                     ├──> bodyStatus（恢复状态）
-                     ├──> workouts（训练详情 + TCX 高级指标）
-                     └──> weeklySummary（周概览）
+daily JSON（含 tcxMetrics）──> buildLLMContext() ──> 分析上下文 ──> LLM ──> analysis JSON
+                                       │
+                                       ├──> profile（用户档案）
+                                       ├──> goal（训练目标）
+                                       ├──> bodyStatus（恢复状态）
+                                       ├──> workouts（训练详情 + tcxMetrics）
+                                       └──> weeklySummary（周概览）
 ```
 
-TCX 高级指标由 `tcx-utils.js` + `tcx-advanced.js` 计算，包括：
+analyze.js 从 daily JSON 中直接读取已嵌入的 `tcxMetrics`，不执行 TCX 下载或解析。职责聚焦于：
+- 构建 LLM 上下文
+- 调用 LLM 生成深度复盘
+- 生成训练计划
+- 输出规则引擎 markdown（LLM 不可用时的降级方案）
+
+TCX 高级指标包括：
 - 公里分段、配速漂移、心率分区、步频分析、海拔分析
 - 有氧脱钩、配速变异系数、跑步效率指数、心率恢复速率
+
+**分析去重**：调用 LLM 前检查 `YYYYMMDD-analysis.json` 是否已存在，对比 workouts 日期列表。如果数据未变，跳过 LLM 调用直接使用已有结果。`--force` 参数强制重新分析。
 
 ### 2.4 报告阶段（report.js）
 
@@ -93,9 +115,10 @@ daily JSON ──> 内联分析逻辑 ──> HTML 模板 ──> reports/YYYYMM
 
 | 文件 | 职责 | 输入 | 输出 |
 |------|------|------|------|
-| fetch.js | 数据采集与解析 | --date, --full | data/daily/YYYYMMDD.json |
-| download-tcx.js | TCX 文件下载 | --date, --all, --force, --labelId | data/tcx/*.tcx |
-| analyze.js | LLM 深度复盘 | --date, --mode | data/daily/YYYYMMDD-analysis.json |
+| fetch.js | 数据采集 + TCX 下载/解析（增量/全量） | --date, --full | data/daily/YYYYMMDD.json（含 tcxMetrics） |
+| download-tcx.js | TCX 文件下载（独立运行或被 fetch.js 调用） | --date, --all, --force, --labelId | data/tcx/*.tcx |
+| tcx-analyzer.js | TCX 解析与指标计算 | TCX 文件路径, maxHR | kmSplits/hrDrift/hrZones/paceCV/cadence/elevation |
+| analyze.js | LLM 深度复盘 + 训练计划（去重） | --date, --mode, --force | data/daily/YYYYMMDD-analysis.json |
 | report.js | HTML 报告生成 | --date | reports/YYYYMMDD-report.html |
 | cron.sh | 自动化调度入口 | --weekly | 调用上述脚本 |
 | com.coros.daily-review.plist | launchd 定时任务配置 | - | 每日 07:00 执行 |
@@ -107,7 +130,7 @@ daily JSON ──> 内联分析逻辑 ──> HTML 模板 ──> reports/YYYYMM
 | tcx-utils.js | TCX 解析与基础指标计算 | parseTcxLaps, getTcxSummary, computeLapSplits, analyzePaceDrift, analyzeCadence, analyzeElevation, computePerKmHrTrend, calculateHrZones, getTcxEnrichedAnalysis |
 | tcx-advanced.js | TCX 高级指标计算 | computeAerobicDecoupling, computePaceVariability, computeRunningEfficiencyIndex, computeHrRecoveryRate |
 | context-builder.js | 分析上下文构建 | buildAnalysisContext |
-| llm.js | LLM 调用封装 | createLLM（支持 anthropic/openai/qianfan） |
+| llm.js | LLM 调用封装 | createLLM（支持 anthropic/openai/qianfan + fallback 自动切换） |
 
 ## 4. 数据模型
 
@@ -119,7 +142,7 @@ daily JSON ──> 内联分析逻辑 ──> HTML 模板 ──> reports/YYYYMM
   fetchedAt: "ISO datetime",
   userInfo: { height, weight, birthday, gender, nickname },
   sportRecords: [{ index, sport, date, duration, distance, avgPace, avgHR, calories, labelId, sportType, startCoords }],
-  activityDetails: [{ labelId, sportType, date, distance, workoutTime, avgPace, movingAvgPace, adjustedPace, bestKm, avgHR, avgCadence, avgStrideLength, elevationGain, elevationLoss, calories, trainingLoad, performance, tcxPath? }],
+  activityDetails: [{ labelId, sportType, date, distance, workoutTime, avgPace, movingAvgPace, adjustedPace, bestKm, avgHR, avgCadence, avgStrideLength, elevationGain, elevationLoss, calories, trainingLoad, performance, tcxPath?, tcxMetrics? }],
   dailyHealth: [{ date, steps, calories, exerciseMin, avgStress, sleepScore, sleepTotal, deepSleep, lightSleep, remSleep, awakeTime }],
   sleep: [{ date, sleepScore, mainSleep, deepRatio, lightRatio, remRatio, awakeRatio, awakeTimeMin, sleepWindow }],
   hrv: { baseline, normalRange: [low, high], days: [{ date, hrv, evaluation }] },
@@ -177,10 +200,19 @@ Trackpoint: { hr, distanceMeters, time, cadence, altitudeMeters, speed, lat, lon
     "provider": "anthropic|openai|qianfan",
     "model": "...",
     "apiKeyEnv": "ANTHROPIC_API_KEY|OPENAI_API_KEY|QIANFAN_API_KEY",
-    "maxTokens": 4096
+    "apiKey": "（可选，直接写死 key，优先于 apiKeyEnv）",
+    "maxTokens": 4096,
+    "fallback": {
+      "provider": "qianfan",
+      "model": "deepseek-v4-pro",
+      "baseURL": "https://api.deepseek.com",
+      "apiKey": "sk-xxx"
+    }
   }
 }
 ```
+
+主 LLM 限流（429/rate/limit/配额）时自动切换到 `fallback` 配置的备用模型。`apiKey` 字段优先于 `apiKeyEnv` 环境变量。
 
 ### 环境变量
 
