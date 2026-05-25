@@ -80,24 +80,28 @@ daily JSON ──> 提取 labelId+sportType ──> crs-connect API ──> TCX 
 ### 2.3 分析阶段（analyze.js）
 
 ```
-daily JSON（含 tcxMetrics）──> buildLLMContext() ──> 分析上下文 ──> LLM ──> analysis JSON
+daily JSON（含 tcxMetrics）──> buildLLMContext() ──> 分析上下文（~2KB）──> LLM ──> analysis JSON
                                        │
-                                       ├──> profile（用户档案）
-                                       ├──> goal（训练目标）
-                                       ├──> bodyStatus（恢复状态）
-                                       ├──> workouts（训练详情 + tcxMetrics）
-                                       └──> weeklySummary（周概览）
+                                       ├──> profile（年龄/身高/体重/VO2max/阈值配速/HRmax）
+                                       ├──> goal（训练目标/阶段/周数）
+                                       ├──> bodyStatus（恢复/HRV/睡眠/训练负荷，精简字段）
+                                       ├──> workouts（训练详情 + tcxSummary 压缩摘要）
+                                       └──> weeklySummary（周跑量/次数/总负荷）
 ```
 
-analyze.js 从 daily JSON 中直接读取已嵌入的 `tcxMetrics`，不执行 TCX 下载或解析。职责聚焦于：
-- 构建 LLM 上下文
+analyze.js 从 daily JSON 中直接读取 `tcxMetrics`，通过 `summarizeTcxMetrics()` 压缩为一行文本摘要（配速趋势/心率漂移/区间分布/步频），替代原始数组发送给 LLM。上下文从 ~6KB 压缩至 ~2KB。职责聚焦于：
+- 构建 LLM 上下文（含 TCX 摘要压缩）
 - 调用 LLM 生成深度复盘
 - 生成训练计划
 - 输出规则引擎 markdown（LLM 不可用时的降级方案）
 
-TCX 高级指标包括：
-- 公里分段、配速漂移、心率分区、步频分析、海拔分析
-- 有氧脱钩、配速变异系数、跑步效率指数、心率恢复速率
+TCX 高级指标（保留在 daily JSON 中供报告图表使用）：
+- 公里分段、心率漂移、心率分区、步频分析、海拔分析
+
+**上下文精简**（2026-05-25 优化）：
+- `tcxSummary` 替代 `tcxMetrics`：原始 kmSplits 数组 → 一行文本摘要（~400 字符）
+- 删除非必要字段：racePredictions（5k/10k/半马）、gender、trend7d（hrv/sleep）、estimatedFullRecovery
+- 系统提示词：原则 4→3 条，JSON schema 描述缩短
 
 **分析去重**：调用 LLM 前检查 `YYYYMMDD-analysis.json` 是否已存在，对比 workouts 日期列表。如果数据未变，跳过 LLM 调用直接使用已有结果。`--force` 参数强制重新分析。
 
@@ -160,16 +164,29 @@ daily JSON ──> 内联分析逻辑 ──> HTML 模板 ──> reports/YYYYMM
   fetchDate: "YYYYMMDD",
   generatedAt: "ISO datetime",
   context: {
-    profile: { age, height, weight, gender, birthday, vo2max, thresholdPace, maxHR, racePredictions },
+    profile: { age, height, weight, vo2max, thresholdPace, maxHR },
     goal: { targetTime, targetPace, marathonDate, weeksLeft, currentPhase, currentWeek, phaseFocus, targetWeeklyKm },
-    bodyStatus: { recovery, hrv, sleep, stress, trainingLoad },
-    workouts: [{ ...activityDetail, splits?, paceDrift?, hrZones?, cadenceStats?, elevationStats?, perKmHrTrend?, aerobicDecoupling?, paceVariability?, runningEfficiency?, hrRecoveryRate? }],
-    weeklySummary: { totalKm, runCount, totalTL, intensityDistribution, loadRatio, shortTermLoad, longTermLoad }
+    bodyStatus: {
+      recovery: { percentage, level },
+      hrv: { baseline, normalRange, latestValue, latestEval, consecutiveBelow },
+      sleep: { latestScore, deepRatio },
+      trainingLoad: { shortTerm, longTerm, ratio, comment }
+    },
+    workouts: [{ date, distance, duration, avgPace, bestKm, avgHR, avgCadence, trainingLoad, performance, tcxSummary }],
+    today: { date, dayOfWeek },
+    weeklySummary: { totalKm, runCount, totalTL }
   },
-  analysis: "LLM 生成的复盘文本",
-  plan: "LLM 生成的训练计划文本"
+  analysis: {
+    workoutReviews: [{ date, summary, detailedAnalysis, positives[], improvements[] }],
+    bodyAssessment: { overallLevel, summary, details[], recommendations[] },
+    trainingPatternAnalysis: { summary, strengths[], risks[], suggestions[] },
+    weeklyPlan: [{ dayIndex, dayName, date, type, totalDistance, paceZone, hrZone, description, prescription }],
+    coachAdvice: "..."
+  }
 }
 ```
+
+**注意**：`context` 中已精简字段（无 racePredictions/gender/trend7d/estimatedFullRecovery），`workouts[].tcxSummary` 为压缩文本摘要（格式：`P=309s→302s 负分段加速 CV8.9%(fair); HR134→162漂移20.8%; Z:Z1-2 9% Z3-4 77% Z5 14% (主Z4); 步频176(>180:17%)`）。原始 `tcxMetrics` 仅保存在 daily JSON 中供报告图表使用。
 
 ### 4.3 TCX 解析模型
 
@@ -201,7 +218,7 @@ Trackpoint: { hr, distanceMeters, time, cadence, altitudeMeters, speed, lat, lon
     "model": "...",
     "apiKeyEnv": "ANTHROPIC_API_KEY|OPENAI_API_KEY|QIANFAN_API_KEY",
     "apiKey": "（可选，直接写死 key，优先于 apiKeyEnv）",
-    "maxTokens": 4096,
+    "maxTokens": 8192,
     "fallback": {
       "provider": "qianfan",
       "model": "deepseek-v4-pro",

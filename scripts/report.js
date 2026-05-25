@@ -66,6 +66,17 @@ function getCurrentPhase(weeksLeft) {
   return { ...PHASES[PHASES.length - 1], currentWeek: weekNum };
 }
 
+function getCurrentWeekBounds() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const daysFromSat = (dayOfWeek + 1) % 7;
+  const start = new Date(now);
+  start.setDate(now.getDate() - daysFromSat);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+}
+
 // --- Rule-engine analysis (fallback when no AI analysis available) ---
 
 function assessRecovery(data) {
@@ -131,7 +142,8 @@ function reviewLatestWorkout(activity, thresholdPace, maxHR) {
 function generateRuleBasedPlan(data, recovery) {
   const weeksLeft = weeksUntilMarathon();
   const phase = getCurrentPhase(weeksLeft);
-  const records = data.sportRecords || [];
+  const { start, end } = getCurrentWeekBounds();
+  const records = (data.sportRecords || []).filter(r => r.date >= start && r.date <= end);
   const recoveryMultiplier = recovery.level === "red" ? 0.6 : recovery.level === "yellow" ? 0.8 : 1.0;
   const completedKm = records.reduce((s, r) => s + (r.distance || 0), 0);
   const now = new Date();
@@ -256,7 +268,9 @@ function generateHTML(data, aiAnalysis) {
   const aiWeeklyPlan = aiAnalysis?.weeklyPlan || [];
   const aiCoachAdvice = aiAnalysis?.coachAdvice || null;
 
-  const totalKm = records.reduce((s, r) => s + (r.distance || 0), 0);
+  const { start: weekStart, end: weekEnd } = getCurrentWeekBounds();
+  const weekRecords = records.filter(r => r.date >= weekStart && r.date <= weekEnd);
+  const totalKm = weekRecords.reduce((s, r) => s + (r.distance || 0), 0);
   const totalTL = details.reduce((s, d) => s + (d.trainingLoad || 0), 0);
 
   const levelColors = { green: "#7ec882", yellow: "#f4c542", red: "#e89898" };
@@ -339,7 +353,7 @@ function generateHTML(data, aiAnalysis) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>COROS 训练复盘 ${data.fetchDate}</title>
+<title>${user.nickname || "COROS"} 训练复盘 ${data.fetchDate}</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -430,7 +444,7 @@ tr:hover td{background:var(--row-hover)}
 
 <div class="header-row">
   <div>
-    <h1>COROS 训练复盘</h1>
+    <h1>${user.nickname || "COROS"} 训练复盘</h1>
     <p class="subtitle">${data.fetchDate} | ${user.nickname || "-"} | 距首马 ${weeksLeft} 周 (${phase.name}) | 目标 3:30:00</p>
   </div>
   <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
@@ -447,7 +461,7 @@ tr:hover td{background:var(--row-hover)}
     <div class="card"><div class="label">VO2max</div><div class="value">${fitness.vo2max || "-"}</div><div class="sub">阈值配速 ${tp}/km</div></div>
     <div class="card"><div class="label">全马预测</div><div class="value">${fitness.predMarathon || "-"}</div><div class="sub">目标 3:30:00</div></div>
     <div class="card"><div class="label">距首马</div><div class="value">${weeksLeft}<span style="font-size:.9rem">周</span></div><div class="sub">${phase.name}${phase.currentWeek > 0 ? " W" + phase.currentWeek : ""} | ${phase.focus}</div></div>
-    <div class="card"><div class="label">本周跑量</div><div class="value"${kmWarning ? ' style="color:#c9a030"' : ""}>${totalKm.toFixed(1)}<span style="font-size:.9rem">km</span></div><div class="sub">${kmWarning ? "⚠️ 超出目标上限" : `目标 ${kmTargetMin}-${kmTargetMax}km`}</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value"${kmWarning ? ' style="color:#c9a030"' : ""}>${totalKm.toFixed(1)}<span style="font-size:.9rem">km</span></div><div class="sub">${kmWarning ? "⚠️ 超出目标上限" : `目标 ${kmTargetMin}-${kmTargetMax}km`}<br><span style="font-size:.65rem;color:var(--muted)">周期 ${weekStart.slice(5).replace('-','/')}~${weekEnd.slice(5).replace('-','/')} (周六→周五)</span></div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value"${loadWarning ? ' style="color:#c9a030"' : ""}>${totalTL}<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 ${loadRatio || "-"}（目标 0.8-1.3）${loadWarning ? " ⚠️偏高" : ""} | ${loadEntries[0]?.comment || "-"}</div></div>
     <div class="card"><div class="label">恢复状态</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub"><span class="recovery-indicator" style="background:${levelColors[recovery.level]}"></span>${levelLabels[recovery.level]}</div></div>
     <div class="card"><div class="label">最新HRV</div><div class="value" style="color:${hrvWarning ? levelColors.yellow : levelColors.green}">${latestHRV || "-"}<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:${hrvWarning ? levelColors.yellow : levelColors.green}"></span>${hrvWarning ? "偏低" : "正常"} | 基线 ${recovery.baseline || "-"}ms</div></div>

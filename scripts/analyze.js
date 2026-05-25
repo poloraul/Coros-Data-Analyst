@@ -73,6 +73,17 @@ function getCurrentPhase(weeksLeft) {
   return { ...PHASES[PHASES.length - 1], currentWeek: weekNum };
 }
 
+function getCurrentWeekBounds() {
+  const now = new Date();
+  const dayOfWeek = now.getDay();
+  const daysFromSat = (dayOfWeek + 1) % 7;
+  const start = new Date(now);
+  start.setDate(now.getDate() - daysFromSat);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
+}
+
 // --- Analysis Modules ---
 
 function reviewWorkout(activity, thresholdPace, maxHR) {
@@ -173,8 +184,9 @@ function parseSleepPct(deepStr, totalStr) {
 }
 
 function weeklyReview(data) {
-  const records = data.sportRecords || [];
-  const details = data.activityDetails || [];
+  const { start, end } = getCurrentWeekBounds();
+  const records = (data.sportRecords || []).filter(r => r.date >= start && r.date <= end);
+  const details = (data.activityDetails || []).filter(d => d.date >= start && d.date <= end);
   const loadEntries = data.trainingLoad || [];
 
   const totalKm = records.reduce((sum, r) => sum + (r.distance || 0), 0);
@@ -507,6 +519,68 @@ function generateMarkdownReport(data) {
   return md;
 }
 
+// --- TCX Metrics Summarizer ---
+
+function summarizeTcxMetrics(metrics) {
+  if (!metrics) return null;
+  const parts = [];
+  const splits = metrics.kmSplits || [];
+
+  // Pace trend: first vs last km
+  if (splits.length >= 2) {
+    const first = splits[0];
+    const last = splits[splits.length - 1];
+    const paces = splits.map(s => s.paceSecPerKm).filter(p => p > 0);
+    if (paces.length >= 2) {
+      const paceDelta = last.paceSecPerKm - first.paceSecPerKm;
+      let trend;
+      if (paceDelta < -8) trend = "负分段加速";
+      else if (paceDelta > 8) trend = "后程掉速";
+      else if (Math.abs(paceDelta) <= 4) trend = "配速均匀";
+      else trend = "配速波动";
+      parts.push(`${trend}(${secondsToPace(first.paceSecPerKm)}→${secondsToPace(last.paceSecPerKm)})`);
+
+      // Anomaly detection
+      for (let i = 1; i < splits.length - 1; i++) {
+        const neighborAvg = (splits[i - 1].paceSecPerKm + splits[i + 1].paceSecPerKm) / 2;
+        if (splits[i].paceSecPerKm - neighborAvg > 15) {
+          parts.push(`KM${splits[i].km}异常慢(+${Math.round(splits[i].paceSecPerKm - neighborAvg)}s)`);
+          break;
+        }
+      }
+    }
+  }
+
+  if (metrics.paceCV) {
+    parts.push(`CV${metrics.paceCV.cvPct}%(${metrics.paceCV.evaluation})`);
+  }
+
+  // HR drift
+  if (metrics.hrDrift) {
+    parts.push(`HR${metrics.hrDrift.avgHRFirst}→${metrics.hrDrift.avgHRLast}漂移${metrics.hrDrift.driftPct}%`);
+  }
+
+  // HR zone distribution
+  if (metrics.hrZones) {
+    const z = (metrics.hrZones.pctZ1Z2 || 0) + (metrics.hrZones.pctZ3Z4 || 0) + (metrics.hrZones.pctZ5 || 0);
+    if (z > 0) {
+      parts.push(`Z:Z1-2 ${metrics.hrZones.pctZ1Z2}% Z3-4 ${metrics.hrZones.pctZ3Z4}% Z5 ${metrics.hrZones.pctZ5}% (主${metrics.hrZones.dominantZone})`);
+    }
+  }
+
+  // Cadence
+  if (metrics.cadence) {
+    parts.push(`步频${metrics.cadence.avgCadence}(>180:${metrics.cadence.pctAbove180}%)`);
+  }
+
+  // Elevation (only when significant)
+  if (metrics.elevation && metrics.elevation.totalGain > 20) {
+    parts.push(`爬升+${metrics.elevation.totalGain}m`);
+  }
+
+  return parts.join("; ");
+}
+
 // --- LLM Integration ---
 
 function loadLLMConfig() {
@@ -535,13 +609,16 @@ function buildLLMContext(data) {
 
   const now = new Date();
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
+  const { start: wS, end: wE } = getCurrentWeekBounds();
 
-  // Weekly summary inline
-  const totalKm = records.reduce((s, r) => s + (r.distance || 0), 0);
-  const totalTL = (data.activityDetails || []).reduce((s, d) => s + (d.trainingLoad || 0), 0);
-  const runCount = records.filter((r) => r.sportType === 100 || r.sportType === 101).length;
+  // Weekly summary inline (filtered by current week 周六→周五)
+  const wRecs = records.filter(r => r.date >= wS && r.date <= wE);
+  const wDetails = (data.activityDetails || []).filter(d => d.date >= wS && d.date <= wE);
+  const totalKm = wRecs.reduce((s, r) => s + (r.distance || 0), 0);
+  const totalTL = wDetails.reduce((s, d) => s + (d.trainingLoad || 0), 0);
+  const runCount = wRecs.filter((r) => r.sportType === 100 || r.sportType === 101).length;
 
-  // Build workouts from activityDetails (tcxMetrics already included by fetch.js)
+  // Build workouts with TCX summaries
   const workouts = (data.activityDetails || []).map((d) => ({
     date: d.date,
     distance: d.distance,
@@ -552,8 +629,7 @@ function buildLLMContext(data) {
     avgCadence: d.avgCadence,
     trainingLoad: d.trainingLoad,
     performance: d.performance,
-    maxHR,
-    tcxMetrics: d.tcxMetrics || null,
+    tcxSummary: summarizeTcxMetrics(d.tcxMetrics),
   }));
 
   return {
@@ -561,16 +637,9 @@ function buildLLMContext(data) {
       age: getAge(user.birthday),
       height: user.height,
       weight: user.weight,
-      gender: user.gender,
       vo2max: fitness.vo2max,
       thresholdPace: fitness.thresholdPace,
       maxHR,
-      racePredictions: {
-        "5k": fitness.pred5k,
-        "10k": fitness.pred10k,
-        halfMarathon: fitness.predHalfMarathon,
-        marathon: fitness.predMarathon,
-      },
     },
     goal: {
       targetTime: "3:30:00",
@@ -586,14 +655,12 @@ function buildLLMContext(data) {
       recovery: {
         percentage: data.recovery?.percentage,
         level: data.recovery?.level,
-        estimatedFullRecovery: data.recovery?.estimatedFullRecovery,
       },
       hrv: {
         baseline: data.hrv?.baseline,
         normalRange: data.hrv?.normalRange,
         latestValue: hrvDays[0]?.hrv,
         latestEval: hrvDays[0]?.evaluation,
-        trend7d: hrvDays.slice(0, 7).map((d) => ({ date: d.date, hrv: d.hrv, eval: d.evaluation })),
         consecutiveBelow: (() => {
           let n = 0;
           for (const d of hrvDays) {
@@ -606,11 +673,6 @@ function buildLLMContext(data) {
       sleep: {
         latestScore: sleepData[0]?.sleepScore,
         deepRatio: sleepData[0]?.deepRatio,
-        trend7d: sleepData.slice(0, 7).map((s) => ({
-          date: s.date,
-          score: s.sleepScore,
-          deepRatio: s.deepRatio ?? null,
-        })),
       },
       trainingLoad: {
         shortTerm: loadEntries[0]?.shortTermLoad,
@@ -707,61 +769,50 @@ async function main() {
     try {
       console.log(`Initializing LLM (${llmConfig.provider}/${llmConfig.model})...`);
       const llm = createLLM(llmConfig);
-      const systemPrompt = `你是资深跑步教练（CSCS认证），专精于马拉松训练和运动生理学数据分析。
+      const systemPrompt = `你是资深跑步教练（CSCS认证），专精马拉松训练和运动生理学。
 
 分析原则：
-1. 数据驱动：基于跑步数据（特别是TCX逐点数据中的每公里配速、心率、步频变化和心率漂移）做量化分析
-2. 目标导向：以跑者首马3:30目标（配速4:58/km）为参考基准，评价当前训练是否在正确轨道上
-3. 生理学深度：利用心率漂移、心率分区分布、配速一致性等指标做专业分析
-4. 具体可执行：改进建议必须给出具体的配速范围、心率目标、步频要求或技术调整要点
+1. 数据驱动：基于tcxSummary中的配速趋势、心率漂移、区间分布、步频数据做量化分析
+2. 目标导向：以首马3:30（配速4:58/km）为基准，评价训练方向
+3. 具体可执行：改进建议必须给出具体配速范围、心率目标或步频要求
 
 请输出严格JSON格式：
 
 {
   "workoutReviews": [
     {
-      "date": "日期",
-      "summary": "1-2句话概括训练性质（训练类型、距离、配速、表现评价）",
-      "detailedAnalysis": "详细技术分析（200-400字），必须引用TCX数据：每公里配速变化趋势、心率漂移率、在各心率区间的停留时间、配速一致性(CV)、步频分析。将这些数据转化为训练学评价",
-      "positives": ["具体亮点，如"KM7-12配速稳定在5:02-5:10/km，负分段跑法出色"", "..."],
-      "improvements": ["具体改进方向，需给出可操作的配速/心率/技术建议", "..."]
+      "date": "YYYY-MM-DD",
+      "summary": "训练概括（类型/距离/配速/表现）",
+      "detailedAnalysis": "技术分析（100-200字）：引用tcxSummary数据，分析配速趋势、心率漂移、区间分布",
+      "positives": ["具体亮点（需带数据支撑）"],
+      "improvements": ["改进建议（需含具体配速/心率/步频数值）"]
     }
   ],
   "bodyAssessment": {
     "overallLevel": "green/yellow/red",
-    "summary": "整体身体状态评估",
-    "details": ["各维度分项评估"],
-    "recommendations": ["具体改善建议"]
+    "summary": "身体状态评估",
+    "details": ["分项评估"],
+    "recommendations": ["改善建议"]
   },
   "trainingPatternAnalysis": {
-    "summary": "训练模式整体评价，指出关键问题",
-    "strengths": ["训练优势"],
-    "risks": ["潜在风险"],
-    "suggestions": ["改进建议"]
+    "summary": "训练模式评价",
+    "strengths": ["优势"],
+    "risks": ["风险"],
+    "suggestions": ["建议"]
   },
-  "weeklyPlan": [
-    "7天训练计划，从context.today的日期开始，dayIndex=1为今天，依次到第7天",
-    {
-      "dayIndex": 1-7,
-      "dayName": "周一/周二...（从今天对应的星期开始连续7天）",
-      "date": "YYYY-MM-DD",
-      "type": "轻松跑/节奏跑/间歇/LSD/休息...",
-      "totalDistance": 里程数,
-      "paceZone": "配速区间要求",
-      "hrZone": "心率区间要求",
-      "description": "训练说明",
-      "prescription": {
-        "warmup": "热身安排",
-        "main": "主课安排",
-        "cooldown": "冷身安排",
-        "notes": "注意事项"
-      }
-    }
-  ],
-  "coachAdvice": "综合教练建议段落，结合身体状态、本周训练、下周计划给出整体指导"
-}
-
-特别重要：analysis必须具体到数据。不要写"心率合理"而要写"平均心率150bpm对应82%HRmax，处于Z3-Z4交界"。不要写"配速控制良好"而要写"KM5-12配速在5:02-5:10/km之间波动，CV=8.9%，配速一致性中等"。所有分析点必须有数据支撑。`;
+  "weeklyPlan": [{
+    "dayIndex": 1-7,
+    "dayName": "周一/周二...",
+    "date": "YYYY-MM-DD",
+    "type": "轻松跑/节奏跑/间歇/LSD/休息",
+    "totalDistance": 公里数,
+    "paceZone": "配速区间",
+    "hrZone": "心率区间",
+    "description": "训练说明",
+    "prescription": {"warmup": "...", "main": "...", "cooldown": "...", "notes": "..."}
+  }],
+  "coachAdvice": "教练综合建议"
+}`;
 
       const contextJson = JSON.stringify(context);
       console.log(`  Context size: ${(contextJson.length / 1024).toFixed(0)} KB`);

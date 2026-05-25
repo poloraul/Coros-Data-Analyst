@@ -62,6 +62,20 @@
 
 ## 4. 变更日志
 
+### 2026-05-25 LLM Token 优化：TCX 摘要压缩 + 上下文精简
+
+**背景**：LLM 分析上下文 ~6.4KB，其中 TCX 原始数组数据占 64%，系统提示词冗长，单次分析耗时 ~2.5 分钟。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `scripts/analyze.js` | 新增 `summarizeTcxMetrics()`，将原始 kmSplits/hrZones/hrDrift/cadence/paceCV 压缩为一行紧凑文本摘要（~400 字符替代 ~4KB）；`buildLLMContext()` 使用 `tcxSummary` 替代 `tcxMetrics`，删除冗余字段（racePredictions、gender、trend7d、estimatedFullRecovery）；系统提示词精简（原则 4→3 条，JSON schema 内联描述缩短，删除冗余反例段落） |
+| `lib/llm.js` | jsonMode 保持 false（DeepSeek json_object 模式输出不稳定） |
+| `coros.config.json` | maxTokens 保持 8192（输出分析 ~6000 字符，4096 不够） |
+
+**效果**：上下文 5,731 → 1,562 字符（-73%），分析耗时 2:29 → 1:09（-54%），分析输出 5,680 → 4,074 字符（-28%）。
+
 ### 2026-05-23 性能优化：增量获取 + 分析去重 + LLM 备用切换
 
 **背景**：每次执行全量拉取 10 个 MCP 调用 + 重复 LLM 分析，百度千帆调用超限后无备用方案。
