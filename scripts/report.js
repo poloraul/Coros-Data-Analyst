@@ -2,6 +2,8 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { MARATHON_DATE, PHASES } from "../lib/training-constants.js";
+import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -22,59 +24,6 @@ function formatDate(d) {
   const m = String(d.getMonth() + 1).padStart(2, "0");
   const day = String(d.getDate()).padStart(2, "0");
   return `${y}${m}${day}`;
-}
-
-function paceToSeconds(pace) {
-  if (!pace) return 0;
-  const parts = pace.split(":");
-  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-}
-
-function secondsToPace(secs) {
-  const m = Math.floor(secs / 60);
-  const s = Math.round(secs % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function getAge(birthday) {
-  const today = new Date();
-  const birth = new Date(birthday);
-  let age = today.getFullYear() - birth.getFullYear();
-  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-
-const MARATHON_DATE = new Date(2026, 11, 6);
-const PHASES = [
-  { name: "基础期 I", startWeek: 1, endWeek: 8, weeklyKm: [50, 65], focus: "有氧耐力、建立跑量" },
-  { name: "基础期 II", startWeek: 9, endWeek: 16, weeklyKm: [65, 80], focus: "节奏跑引入、MLD" },
-  { name: "强化期", startWeek: 17, endWeek: 20, weeklyKm: [75, 90], focus: "间歇、阈值、MP配速" },
-  { name: "巅峰期", startWeek: 21, endWeek: 22, weeklyKm: [80, 85], focus: "最长LSD、MP实战" },
-  { name: "减量期", startWeek: 23, endWeek: 24, weeklyKm: [50, 30], focus: "减量保状态" },
-];
-
-function weeksUntilMarathon() {
-  return Math.max(0, Math.ceil((MARATHON_DATE - new Date()) / (7 * 86400000)));
-}
-
-function getCurrentPhase(weeksLeft) {
-  if (weeksLeft > 24) return { name: "准备期", weeklyKm: [45, 60], currentWeek: 0, focus: "建立基础跑量、维持有氧" };
-  const weekNum = 24 - weeksLeft + 1;
-  for (const phase of PHASES) {
-    if (weekNum >= phase.startWeek && weekNum <= phase.endWeek) return { ...phase, currentWeek: weekNum };
-  }
-  return { ...PHASES[PHASES.length - 1], currentWeek: weekNum };
-}
-
-function getCurrentWeekBounds() {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const daysFromSat = (dayOfWeek + 1) % 7;
-  const start = new Date(now);
-  start.setDate(now.getDate() - daysFromSat);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
 // --- Rule-engine analysis (fallback when no AI analysis available) ---
@@ -635,7 +584,7 @@ ${aiWorkoutReviews.length > 1 ? `
     <div class="cards">
       <div class="card"><div class="label">恢复度</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub">${data.recovery?.level || "-"}</div></div>
       <div class="card"><div class="label">HRV连续偏低</div><div class="value">${recovery.consecutiveBelow}<span style="font-size:.9rem">天</span></div><div class="sub">${recovery.consecutiveBelow >= 2 ? "⚠️ 需关注" : "正常"}</div></div>
-      <div class="card"><div class="label">睡眠(最新)</div><div class="value">${data.sleep?.[0]?.sleepScore || "-"}</div><div class="sub">${data.sleep?.[0]?.sleepWindow || "-"}</div></div>
+      <div class="card"><div class="label">睡眠(最新)</div><div class="value">${data.sleep?.[data.sleep.length - 1]?.sleepScore || data.dailyHealth?.[data.dailyHealth.length - 1]?.sleepScore || "-"}</div><div class="sub">${data.sleep?.[data.sleep.length - 1]?.sleepWindow || "-"}</div></div>
       <div class="card"><div class="label">负荷比</div><div class="value">${loadEntries[0]?.loadRatio || "-"}</div><div class="sub">${loadEntries[0]?.comment || "-"}</div></div>
       <div class="card"><div class="label">预计完全恢复</div><div class="value">${data.recovery?.estimatedFullRecovery || "-"}</div><div class="sub">${data.recovery?.level || "-"}</div></div>
     </div>

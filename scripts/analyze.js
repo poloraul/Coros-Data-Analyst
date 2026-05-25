@@ -3,23 +3,12 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createLLM } from "../lib/llm.js";
+import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES } from "../lib/training-constants.js";
+import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data", "daily");
-
-// --- 330 Marathon 24-week training framework ---
-const MARATHON_DATE = new Date(2026, 11, 6); // Dec 6, 2026
-const MARATHON_TARGET_PACE = "4:58"; // /km for 3:30 marathon
-const MARATHON_TARGET_TIME = "3:30:00";
-
-const PHASES = [
-  { name: "基础期 I", startWeek: 1, endWeek: 8, weeklyKm: [50, 65], focus: "有氧耐力、建立跑量", keySessions: ["轻松跑", "中长距离"] },
-  { name: "基础期 II", startWeek: 9, endWeek: 16, weeklyKm: [65, 80], focus: "节奏跑引入、MLD", keySessions: ["轻松跑", "节奏跑", "中长距离"] },
-  { name: "强化期", startWeek: 17, endWeek: 20, weeklyKm: [75, 90], focus: "间歇、阈值、MP配速", keySessions: ["间歇", "节奏跑", "MP跑", "LSD"] },
-  { name: "巅峰期", startWeek: 21, endWeek: 22, weeklyKm: [80, 85], focus: "最长LSD、MP实战", keySessions: ["MP长跑", "LSD 32km"] },
-  { name: "减量期", startWeek: 23, endWeek: 24, weeklyKm: [50, 30], focus: "减量保状态", keySessions: ["轻松跑", "少量MP"] },
-];
 
 // --- Utility ---
 function parseArgs() {
@@ -31,57 +20,6 @@ function parseArgs() {
     if (args[i] === "--force") parsed.force = true;
   }
   return parsed;
-}
-
-function paceToSeconds(pace) {
-  if (!pace) return 0;
-  const parts = pace.split(":");
-  return parseInt(parts[0]) * 60 + parseInt(parts[1]);
-}
-
-function secondsToPace(secs) {
-  const m = Math.floor(secs / 60);
-  const s = Math.round(secs % 60);
-  return `${m}:${String(s).padStart(2, "0")}`;
-}
-
-function getAge(birthday) {
-  const today = new Date();
-  const birth = new Date(birthday);
-  let age = today.getFullYear() - birth.getFullYear();
-  if (today.getMonth() < birth.getMonth() || (today.getMonth() === birth.getMonth() && today.getDate() < birth.getDate())) age--;
-  return age;
-}
-
-function weeksUntilMarathon() {
-  const now = new Date();
-  const diff = MARATHON_DATE - now;
-  return Math.max(0, Math.ceil(diff / (7 * 86400000)));
-}
-
-function getCurrentPhase(weeksLeft) {
-  const totalWeeks = 24;
-  if (weeksLeft > totalWeeks) {
-    return { name: "准备期", startWeek: 0, endWeek: 0, weeklyKm: [45, 60], focus: "建立基础跑量、维持有氧", currentWeek: 0, weeksUntilPlan: weeksLeft - totalWeeks };
-  }
-  const weekNum = totalWeeks - weeksLeft + 1;
-  for (const phase of PHASES) {
-    if (weekNum >= phase.startWeek && weekNum <= phase.endWeek) {
-      return { ...phase, currentWeek: weekNum };
-    }
-  }
-  return { ...PHASES[PHASES.length - 1], currentWeek: weekNum };
-}
-
-function getCurrentWeekBounds() {
-  const now = new Date();
-  const dayOfWeek = now.getDay();
-  const daysFromSat = (dayOfWeek + 1) % 7;
-  const start = new Date(now);
-  start.setDate(now.getDate() - daysFromSat);
-  const end = new Date(start);
-  end.setDate(start.getDate() + 6);
-  return { start: start.toISOString().slice(0, 10), end: end.toISOString().slice(0, 10) };
 }
 
 // --- Analysis Modules ---
@@ -611,7 +549,7 @@ function buildLLMContext(data) {
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
   const { start: wS, end: wE } = getCurrentWeekBounds();
 
-  // Weekly summary inline (filtered by current week 周六→周五)
+  // Weekly summary inline (filtered by current week 周一→周日)
   const wRecs = records.filter(r => r.date >= wS && r.date <= wE);
   const wDetails = (data.activityDetails || []).filter(d => d.date >= wS && d.date <= wE);
   const totalKm = wRecs.reduce((s, r) => s + (r.distance || 0), 0);
@@ -671,8 +609,8 @@ function buildLLMContext(data) {
         })(),
       },
       sleep: {
-        latestScore: sleepData[0]?.sleepScore,
-        deepRatio: sleepData[0]?.deepRatio,
+        latestScore: sleepData[sleepData.length - 1]?.sleepScore,
+        deepRatio: sleepData[sleepData.length - 1]?.deepRatio ?? data.sleep?.[data.sleep.length - 1]?.deepRatio,
       },
       trainingLoad: {
         shortTerm: loadEntries[0]?.shortTermLoad,
