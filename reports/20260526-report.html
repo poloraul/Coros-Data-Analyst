@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis 训练复盘 20260526</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
+[data-theme="dark"]{--bg:#1a1b26;--card:#24283b;--border:#3b4261;--text:#a9b1d6;--text-strong:#c0caf5;--muted:#565f89;--accent:#9ece6a;--accent2:#e0af68;--accent3:#f7768e;--accent4:#7aa2f7;--shadow:rgba(0,0,0,.2);--row-hover:rgba(158,206,106,.06);--finding-border:rgba(59,66,97,.6)}
+body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:1200px;margin:0 auto;transition:background .3s,color .3s}
+h1{font-size:1.8rem;font-weight:800;color:var(--accent);margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.section{margin-bottom:36px}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:4px;height:18px;background:linear-gradient(135deg,var(--accent),#4db8a4);border-radius:2px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title-row{display:flex;align-items:center;gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.card .value{font-size:1.6rem;font-weight:800;color:var(--text-strong)}
+.card .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.chart-box h3{font-size:.85rem;font-weight:600;margin-bottom:10px;color:var(--muted)}
+.full-width{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--row-hover)}
+.recovery-indicator{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.7rem;font-weight:600;margin:2px}
+.badge-green{background:rgba(126,200,130,.2);color:#5aa65e}
+.badge-yellow{background:rgba(244,197,66,.2);color:#c9a030}
+.badge-red{background:rgba(232,152,152,.2);color:#c07070}
+.badge-blue{background:rgba(124,185,232,.2);color:#5a9ec7}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.review-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.review-box h4{font-size:.85rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.finding-item{font-size:.82rem;padding:4px 0;border-bottom:1px solid var(--finding-border)}
+.finding-item:last-child{border-bottom:none}
+.plan-today{background:rgba(77,184,164,.06)!important}
+[data-theme="dark"] .plan-today{background:rgba(158,206,106,.08)!important}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
+.theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
+/* New styles */
+.source-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;letter-spacing:.3px}
+.badge-ai{background:rgba(126,200,130,.15);color:#5aa65e;border:1px solid rgba(126,200,130,.3)}
+[data-theme="dark"] .badge-ai{background:rgba(158,206,106,.12);color:#9ece6a;border-color:rgba(158,206,106,.3)}
+.badge-rule{background:rgba(158,148,132,.15);color:#9e9484;border:1px solid rgba(158,148,132,.3)}
+[data-theme="dark"] .badge-rule{background:rgba(86,95,137,.15);color:#565f89;border-color:rgba(86,95,137,.3)}
+.ai-insight{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.ai-insight h4{font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--accent)}
+.ai-insight p{font-size:.85rem;line-height:1.7;margin-bottom:6px}
+.ai-insight .detail-text{font-size:.82rem;color:var(--text);line-height:1.8;white-space:pre-line}
+.coach-advice{background:linear-gradient(135deg,rgba(126,200,130,.08),rgba(77,184,164,.08));border:1px solid rgba(126,200,130,.2);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:20px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+[data-theme="dark"] .coach-advice{background:linear-gradient(135deg,rgba(158,206,106,.06),rgba(77,184,164,.06));border-color:rgba(158,206,106,.2)}
+.coach-advice h4{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--accent);display:flex;align-items:center;gap:6px}
+.coach-advice p{font-size:.88rem;line-height:1.8}
+.progress-bar-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);margin-bottom:14px;transition:background .3s,border-color .3s}
+.progress-bar-track{width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.progress-bar-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.prescription-toggle{cursor:pointer;color:var(--accent);font-size:.75rem;text-decoration:underline;user-select:none}
+.prescription-detail{display:none;margin-top:8px;padding:10px 12px;background:rgba(126,200,130,.04);border-radius:8px;font-size:.78rem;line-height:1.7}
+.prescription-detail.open{display:block}
+[data-theme="dark"] .prescription-detail{background:rgba(158,206,106,.06)}
+.prescription-detail dt{font-weight:600;color:var(--muted);margin-top:4px}
+.prescription-detail dt:first-child{margin-top:0}
+.prescription-detail dd{margin-left:0;margin-bottom:4px}
+.body-assessment-level{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;margin-bottom:8px}
+.body-assessment-level.green{background:rgba(126,200,130,.15);color:#5aa65e}
+.body-assessment-level.yellow{background:rgba(244,197,66,.15);color:#c9a030}
+.body-assessment-level.red{background:rgba(232,152,152,.15);color:#c07070}
+[data-theme="dark"] .body-assessment-level.green{background:rgba(158,206,106,.12);color:#9ece6a}
+[data-theme="dark"] .body-assessment-level.yellow{background:rgba(224,175,104,.12);color:#e0af68}
+[data-theme="dark"] .body-assessment-level.red{background:rgba(247,118,142,.12);color:#f7768e}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:500}
+.tag-strength{background:rgba(126,200,130,.12);color:#5aa65e}
+.tag-risk{background:rgba(232,152,152,.12);color:#c07070}
+.tag-suggestion{background:rgba(124,185,232,.12);color:#5a9ec7}
+[data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
+[data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
+[data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div>
+    <h1>Jarvis 训练复盘</h1>
+    <p class="subtitle">20260526 | Jarvis | 距首马 28 周 (准备期) | 目标 3:30:00</p>
+  </div>
+  <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+</div>
+
+<!-- ==================== Section 1: 个人训练关键指标 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">个人训练关键指标</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">VO2max</div><div class="value">52</div><div class="sub">阈值配速 4:37/km</div></div>
+    <div class="card"><div class="label">全马预测</div><div class="value">3:38:16</div><div class="sub">目标 3:30:00</div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">28<span style="font-size:.9rem">周</span></div><div class="sub">准备期 | 建立基础跑量、维持有氧</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value">12.0<span style="font-size:.9rem">km</span></div><div class="sub">目标 45-60km<br><span style="font-size:.65rem;color:var(--muted)">周期 05/25~05/31</span></div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">497<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 1.04（目标 0.8-1.3）</div></div>
+    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">98%</div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>良好</div></div>
+    <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#7ec882">57<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>正常 | 基线 65ms</div></div>
+  </div>
+</div>
+
+<!-- ==================== Section 2: 最近一次训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近一次训练分析（2026-05-25）</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+
+  <div class="cards" style="margin-bottom:16px">
+    <div class="card"><div class="label">距离/时间</div><div class="value">12.02<span style="font-size:.9rem">km</span></div><div class="sub">1:05:51</div></div>
+    <div class="card"><div class="label">配速</div><div class="value">5:29<span style="font-size:.9rem">/km</span></div><div class="sub">最快 5:21 | 轻松跑 (E区)</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">158<span style="font-size:.9rem">bpm</span></div><div class="sub">87% HRmax</div></div>
+    <div class="card"><div class="label">步频</div><div class="value">179<span style="font-size:.9rem">spm</span></div><div class="sub">低于180目标1spm</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">238<span style="font-size:.9rem">TL</span></div><div class="sub">Below Average</div></div>
+  </div>
+  <div class="review-grid">
+    <div class="ai-insight">
+      <h4>训练概要</h4>
+      <p>长距离节奏跑 12.02km，均配5:29/km，表现低于平均</p>
+      <div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">本课为12km持续跑，呈现明显的负分段特征（5:38→5:28），配速变异系数仅1.3%（优秀），后半程提速控制良好。心率由149上升至165，漂移10.7%，属于可接受范围，但67%时间在Z3-Z4且Z5占比30%，实际强度偏高（接近阈值下区）。步频平均178，仅有36%步频>180，尚未达到经济性最优区间。整体而言有氧耐力尚可，但同样配速下心率较高，提示有氧基础仍需加强。</div>
+    </div>
+    <div class="review-box">
+      <h4>亮点</h4>
+      <div class="finding-item" style="color:#5aa65e">负分段加速完成12km，配速稳定性极佳（CV 1.3%）</div><div class="finding-item" style="color:#5aa65e">后程配速从5:38提速至5:28，保持良好节奏感</div><div class="finding-item" style="color:#5aa65e">步频178较为连贯，体现了部分神经肌肉协调能力</div>
+      <h4 style="margin-top:12px">改进方向</h4>
+      <div class="finding-item" style="color:#c9a030">目标配速4:58时心率宜控制在150以下，当前5:29即达158，需通过低心率跑（<145bpm）增加有氧效率</div><div class="finding-item" style="color:#c9a030">步频目标提升至180以上，建议加入短冲（20-30s）快频跑和节拍器练习，减少触地时间</div>
+    </div>
+  </div>
+
+
+  <div style="margin-top:16px">
+    <div class="section-title" style="font-size:.95rem">其他近期训练</div>
+    <table>
+      <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
+      <tr>
+        <td>2026-05-23</td>
+        <td style="max-width:300px">恢复放松跑 7.02km，均配6:27/km，表现低于平均</td>
+        <td><span class="badge badge-green">心率控制在135以下，达到恢复跑初衷</span><span class="badge badge-green">训练负荷仅69，有效实施低负荷活动</span></td>
+        <td><span class="badge badge-yellow">恢复跑应保持匀速，建议配速稳定在6:10-6:20/km，避免忽快忽慢</span><span class="badge badge-yellow">即使慢跑也需保持步频≥175，使用节拍器强制提升，防止落地过重</span></td>
+      </tr><tr>
+        <td>2026-05-20</td>
+        <td style="max-width:300px">长距离中高强度跑 12.78km，均配5:14/km，表现良好</td>
+        <td><span class="badge badge-green">长距离负分段能力优秀，后程能加速至5:00/km</span><span class="badge badge-green">配速从恢复过渡到马速接近的区域，完成度良好</span><span class="badge badge-green">训练负荷适中，未导致过度压力</span></td>
+        <td><span class="badge badge-yellow">长距离跑心率漂移建议控制在10%以下，可通过前段更慢起跑（6:00-6:20）改善</span><span class="badge badge-yellow">此次配速5:14接近目标4:58，可尝试以5:00-5:10稳定巡航，步频提升至180以上以减少冲击</span></td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- ==================== Section 3: 最近7天训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近7天训练分析</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>HRV 7日趋势</h3>
+      <canvas id="hrvChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>训练负荷趋势</h3>
+      <canvas id="loadChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>最近训练配速 vs 阈值</h3>
+      <canvas id="paceChart"></canvas>
+    </div>
+    
+    <div class="chart-box">
+      <h3>睡眠质量趋势（近7天）</h3>
+      <canvas id="sleepChart"></canvas>
+    </div>
+    
+  </div>
+
+  <!-- Workouts Table -->
+  
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">近期训练一览</div>
+    <table>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
+      <tr>
+        <td>2026-05-25</td>
+        <td>12.02km</td>
+        <td>5:29/km</td>
+        <td>158bpm (87%)</td>
+        <td>179spm</td>
+        <td>238TL</td>
+        <td>Below Average</td>
+      </tr><tr>
+        <td>2026-05-23</td>
+        <td>7.02km</td>
+        <td>6:27/km</td>
+        <td>135bpm (74%)</td>
+        <td>166spm</td>
+        <td>69TL</td>
+        <td>Below Average</td>
+      </tr><tr>
+        <td>2026-05-20</td>
+        <td>12.78km</td>
+        <td>5:14/km</td>
+        <td>150bpm (82%)</td>
+        <td>177spm</td>
+        <td>190TL</td>
+        <td>Good</td>
+      </tr>
+    </table>
+  </div>
+  
+
+  <!-- Recovery Detail Cards -->
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">恢复指标</div>
+    <div class="cards">
+      <div class="card"><div class="label">恢复度</div><div class="value" style="color:#7ec882">98%</div><div class="sub">Heavy training allowed</div></div>
+      <div class="card"><div class="label">HRV连续偏低</div><div class="value">0<span style="font-size:.9rem">天</span></div><div class="sub">正常</div></div>
+      <div class="card"><div class="label">睡眠(最新)</div><div class="value">61</div><div class="sub">01:12 - 07:19</div></div>
+      <div class="card"><div class="label">负荷比</div><div class="value">1.04</div><div class="sub">Optimized</div></div>
+      <div class="card"><div class="label">预计完全恢复</div><div class="value">7h</div><div class="sub">Heavy training allowed</div></div>
+    </div>
+  </div>
+
+  <!-- AI Body Assessment & Training Pattern -->
+  
+  <div style="margin-top:14px">
+    <div class="analysis-grid">
+      
+      <div class="ai-insight">
+        <h4>身体状态评估</h4>
+        <div class="body-assessment-level yellow">需要关注</div>
+        <p>身体可承受较高强度，但恢复质量存在短板</p>
+        <ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7"><li>恢复百分比98%，允许进行大强度训练</li><li>HRV最新值57，处于正常范围下限（基线65），提示自主神经恢复略有不足</li><li>睡眠得分63，深度睡眠仅16%，影响肌肉修复与荷尔蒙分泌</li><li>训练负荷比值1.04，处于优化状态，无急慢性负荷失衡</li></ul>
+        <div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：确保每晚7-8小时睡眠，睡前1小时减少电子屏幕，可尝试冥想或呼吸练习提高深度睡眠比例；关注连续HRV状态，若再下降至56以下应主动减量或增加恢复日；在训练后补充优质蛋白和碳水化合物，促进睡眠期合成代谢</div>
+      </div>
+      
+
+      
+      <div class="ai-insight">
+        <h4>训练模式分析</h4>
+        <p>近期训练以长距离为主，负分段能力出色，但频率偏低且步频经济性待提升</p>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list"><span class="tag tag-strength">长距离跑具有良好的负分段能力，配速控制感强</span><span class="tag tag-strength">能完成较高质量的12km以上有氧/混氧训练</span><span class="tag tag-strength">心率漂移整体可控，对强度适应较快</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list"><span class="tag tag-risk">周训练频率偏低（仅1-2次跑），跑量积累不足，难以支撑4:58马速所需的有氧基础</span><span class="tag tag-risk">单次训练负荷集中，易产生局部疲劳积累</span><span class="tag tag-risk">步频普遍低于180（166-179），增加触地时间与受伤风险，且限制跑姿经济性</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list"><span class="tag tag-suggestion">将每周跑步次数增加至4-5次，穿插轻松跑、节奏跑和LSD，平衡负荷</span><span class="tag tag-suggestion">每周安排一次低心率长距离（心率<150，配速5:50-6:20）以建立有氧耐力</span><span class="tag tag-suggestion">每日进行5-10分钟高步频（185-190）技术练习，渐进迁移至主课中</span></div></div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+<!-- ==================== Section 4: 下一阶段训练计划 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">下一阶段训练计划</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Phase info + Progress bar -->
+  <div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span style="font-size:.85rem;font-weight:600">准备期 — 建立基础跑量、维持有氧</span>
+      <span style="font-size:.8rem;color:var(--muted)">目标 45-60km/周</span>
+    </div>
+    <div class="progress-bar-container" style="margin-bottom:0">
+      <div class="progress-bar-labels">
+        <span>已完成 12.0km</span>
+        <span>20%</span>
+        <span>目标 60km</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:20%;background:#e89898"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Plan Table -->
+  
+  <table>
+    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>处方</th></tr>
+    <tr class="">
+        <td>周二 05-26</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>完全休息或轻度交叉训练（游泳/骑车30分钟）</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-1').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-1"><dt>热身</dt><dd>-</dd><dt>主课</dt><dd>主动恢复：泡沫轴放松、拉伸，可散步</dd><dt>冷身</dt><dd>-</dd><dt>备注</dt><dd>昨日长距离后促进恢复，确保睡眠时长</dd></div></td>
+      </tr><tr class="">
+        <td>周三 05-27</td>
+        <td>轻松跑</td>
+        <td>8km</td>
+        <td>6:00-6:30/km</td>
+        <td>Zone1-2（<140bpm）</td>
+        <td>纯有氧慢跑，强化脂肪代谢与恢复</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-2').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-2"><dt>热身</dt><dd>动态拉伸+慢跑10分钟</dd><dt>主课</dt><dd>8km匀速轻松跑，配速6:15-6:30，心率严格控制在130-140，保持步频≥175</dd><dt>冷身</dt><dd>步行+静态拉伸5分钟</dd><dt>备注</dt><dd>注意保持小步幅高步频，感知地面弹性</dd></div></td>
+      </tr><tr class="">
+        <td>周四 05-28</td>
+        <td>节奏跑</td>
+        <td>10km</td>
+        <td>主课4:50-5:00/km</td>
+        <td>Zone3-4（155-165bpm）</td>
+        <td>建立马拉松配速感，提升乳酸清除力</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-3').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-3"><dt>热身</dt><dd>慢跑2km (6:30)+动态拉伸</dd><dt>主课</dt><dd>6km持续节奏跑，配速4:55-5:00/km，步频≥182；完成后缓和1km慢跑</dd><dt>冷身</dt><dd>1km冷身慢跑+全面拉伸</dd><dt>备注</dt><dd>配速严格对齐4:58目标，体感要保持可控，呼吸有序</dd></div></td>
+      </tr><tr class="">
+        <td>周五 05-29</td>
+        <td>休息/交叉训练</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>身体恢复或低冲击运动</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-4').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-4"><dt>热身</dt><dd>-</dd><dt>主课</dt><dd>可选游泳40分钟或瑜伽拉伸课</dd><dt>冷身</dt><dd>-</dd><dt>备注</dt><dd>积蓄能量迎接周末长距离</dd></div></td>
+      </tr><tr class="">
+        <td>周六 05-30</td>
+        <td>LSD长距离慢跑</td>
+        <td>15km</td>
+        <td>5:40-6:00/km</td>
+        <td>Zone1-2（<150bpm）</td>
+        <td>有氧容量建设，提升脂肪供能</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-5').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-5"><dt>热身</dt><dd>慢跑2km (6:30)</dd><dt>主课</dt><dd>11km LSD，配速5:50左右，心率<150；最后3km可掉速至6:00但保持心率</dd><dt>冷身</dt><dd>2km减速慢跑+充分拉伸</dd><dt>备注</dt><dd>全程步频≥178，注意补水（每5km补一次），避免心率漂移>10%</dd></div></td>
+      </tr><tr class="">
+        <td>周日 05-31</td>
+        <td>恢复跑</td>
+        <td>6km</td>
+        <td>6:30-6:40/km</td>
+        <td>Zone1（<135bpm）</td>
+        <td>轻量跑促进循环和恢复</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-6').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-6"><dt>热身</dt><dd>慢跑5分钟</dd><dt>主课</dt><dd>6km极慢速跑，配速6:30+，心率<135，专注步频≥175</dd><dt>冷身</dt><dd>全身静态拉伸10分钟</dd><dt>备注</dt><dd>不计较配速，纯粹活动筋骨</dd></div></td>
+      </tr><tr class="">
+        <td>周一 06-01</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>完全休息</td>
+        <td><span class="prescription-toggle" onclick="document.getElementById('p-7').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="p-7"><dt>热身</dt><dd>-</dd><dt>主课</dt><dd>放松，按摩，高蛋白饮食</dd><dt>冷身</dt><dd>-</dd><dt>备注</dt><dd>为下一周蓄力</dd></div></td>
+      </tr>
+  </table>
+
+  <!-- Coach Advice -->
+  
+  <div class="coach-advice" style="margin-top:20px">
+    <h4>AI 教练建议</h4>
+    <p>本周开始进入结构性周期，核心任务是将周跑量稳步推至45-50km，同时优化步频和心率经济性。你已展示出很好的负分段能力和长距离耐受，但当前有氧基础仍偏弱：同样配速5:29心率已达158，而目标马速4:58需要更强的心输出量经济性。接下来四周（准备期）请坚持80%跑量在低心率（<150bpm）完成，配合一次节奏课保持速度感知。步频方面，设定全课次底线175，结合快频跑训练逐步向182-185过渡。睡眠深度不足会直接影响线粒体适应和损伤修复，请务必改善。你的恢复状态允许上量，但要通过HRV和体感监控，若连续两天HRV低于56，立即减量30%并增加休息。坚持这个节奏，10周后你会明显感到4:58配速下的心率降低10-15次。</p>
+  </div>
+  
+</div>
+
+<script>
+// HRV Chart
+new Chart(document.getElementById('hrvChart'), {
+  type: 'line',
+  data: {
+    labels: ["05-20","05-21","05-22","05-23","05-24","05-25","05-26"],
+    datasets: [{
+      label: 'HRV',
+      data: [54,56,57,62,70,63,57],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: .3, pointRadius: 4,
+    }, {
+      label: '基线',
+      data: Array(7).fill(65),
+      borderColor: '#9e9484', borderDash: [5, 5], pointRadius: 0, fill: false,
+    }, {
+      label: '正常下限',
+      data: Array(7).fill(56),
+      borderColor: '#e89898', borderDash: [3, 3], pointRadius: 0, fill: false,
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: false } } }
+});
+
+// Training Load Chart
+new Chart(document.getElementById('loadChart'), {
+  type: 'bar',
+  data: {
+    labels: ["05-20","05-21","05-22","05-23","05-24","05-25","05-26"],
+    datasets: [{
+      label: '短期负荷',
+      data: [73,63,54,56,48,75,64],
+      backgroundColor: 'rgba(124,185,232,.7)',
+    }, {
+      label: '长期负荷',
+      data: [63,61,60,60,59,63,61],
+      backgroundColor: 'rgba(196,166,216,.7)',
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true } } }
+});
+
+// Pace Chart
+function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+new Chart(document.getElementById('paceChart'), {
+  type: 'bar',
+  data: {
+    labels: ["05-20","05-23","05-25"],
+    datasets: [{
+      label: '平均配速',
+      data: [5.233333333333333,6.45,5.483333333333333],
+      backgroundColor: ["rgba(77,184,164,.75)","rgba(124,185,232,.75)","rgba(124,185,232,.75)"],
+      borderColor: ["rgba(60,150,130,1)","rgba(90,158,199,1)","rgba(90,158,199,1)"],
+      borderWidth: 1.5, borderRadius: 6, barPercentage: 0.6,
+    }, {
+      label: '阈值 ' + fmtPace(4.617) + '/km',
+      data: Array(3).fill(4.617),
+      type: 'line',
+      borderColor: '#e89898', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.dataset.type === 'line') return ctx.dataset.label;
+        const v = ctx.parsed.y;
+        const ratio = v / 4.617;
+        let zone = ratio > 1.15 ? 'E区' : ratio > 1.05 ? 'E-M区' : ratio > 0.98 ? 'T区' : 'I区';
+        return fmtPace(v) + '/km (' + zone + ', ' + Math.round(ratio * 100) + '%阈值)';
+      } } }
+    },
+    scales: { y: { reverse: true, title: { display: true, text: '配速 (越低越快)' },
+      ticks: { callback: function(v) { return fmtPace(v); } }
+    } }
+  }
+});
+
+
+// Sleep Chart
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: ["05/20","05/21","05/22","05/23","05/24","05/25","05/26"],
+    datasets: [{
+      label: '睡眠评分',
+      data: [82,92,98,93,79,94,63],
+      backgroundColor: 'rgba(126,200,130,.6)',
+      borderColor: 'rgba(90,158,100,1)',
+      borderWidth: 1, borderRadius: 6, yAxisID: 'y',
+    }, {
+      label: '深睡比例(%)',
+      data: [25,22,18,15,13,15,17],
+      type: 'line',
+      borderColor: '#7cb9e8',
+      backgroundColor: 'rgba(124,185,232,.1)',
+      fill: false, tension: .3, pointRadius: 4, yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } } },
+    scales: {
+      y: { beginAtZero: true, max: 100, title: { display: true, text: '睡眠评分' }, position: 'left' },
+      y1: { beginAtZero: true, max: 50, title: { display: true, text: '深睡比例(%)' }, position: 'right', grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Theme toggle
+(function(){
+  const btn = document.getElementById('themeToggle');
+  const root = document.documentElement;
+  const saved = localStorage.getItem('coros-theme') || 'dark';
+  root.setAttribute('data-theme', saved); btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  btn.addEventListener('click', function(){
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('coros-theme', next);
+    updateChartColors();
+  });
+  function getThemeColor(varName) {
+    return getComputedStyle(root).getPropertyValue(varName).trim();
+  }
+  function updateChartColors() {
+    const gridColor = getThemeColor('--border');
+    const tickColor = getThemeColor('--muted');
+    Chart.defaults.color = tickColor;
+    Chart.defaults.borderColor = gridColor;
+    Chart.helpers.each(Chart.instances, function(chart){
+      if (chart.options.scales) {
+        Object.values(chart.options.scales).forEach(function(s){
+          s.grid = s.grid || {};
+          s.grid.color = gridColor;
+          s.ticks = s.ticks || {};
+          s.ticks.color = tickColor;
+        });
+      }
+      if (chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = tickColor;
+      chart.update();
+    });
+  }
+  updateChartColors();
+})();
+</script>
+
+</body>
+</html>

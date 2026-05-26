@@ -46,7 +46,7 @@ log("正在进行 LLM 深度训练复盘...");
 await agent(
   `运行训练分析脚本。
 
-  执行: node scripts/analyze.js --force ${dateArg.length > 0 ? dateArg + " " : ""}--date ${dateStr}
+  执行: node scripts/analyze.js --force --date ${dateStr}
   确认脚本 exit code 为 0。
 
   预期输出：

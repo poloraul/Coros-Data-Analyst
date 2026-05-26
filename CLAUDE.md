@@ -15,17 +15,9 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 ## 训练复盘指令
 
-当用户要求复盘、训练分析、训练计划、恢复评估时，按以下步骤执行：
+当用户要求复盘、训练分析、训练计划、恢复评估时，优先使用 Workflow 一键执行。
 
-1. `node scripts/fetch.js` — 采集最新数据 + 下载 TCX + TCX 解析（增量/全量自动判断）
-2. `node scripts/analyze.js` — LLM 深度复盘 + 训练计划生成，输出 `YYYYMMDD-analysis.json`
-3. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
-
-脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析。
-
-### Workflow 模式（新增）
-
-也可使用 Workflow 一键执行完整流程（含数据验证环节）：
+### Workflow 一键执行（推荐）
 
 `Workflow({name: "daily-review"})` — 自动完成采集→分析→验证→报告
 
@@ -51,6 +43,16 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 - bodyAssessment 中的 HRV/恢复/睡眠数值与原始数据是否一致
 
 **注意**：调用 workflow 时需在 prompt 中包含 `ultrawork` 关键词（系统要求）。
+
+### 手动分步执行（备用）
+
+当 Workflow 不适用时（如 LLM 出问题、需精细控制参数），可手动分步执行：
+
+1. `node scripts/fetch.js` — 采集最新数据 + 下载 TCX + TCX 解析（增量/全量自动判断）
+2. `node scripts/analyze.js` — LLM 深度复盘 + 训练计划生成，输出 `YYYYMMDD-analysis.json`
+3. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
+
+脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析。
 
 **LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic`、`openai`、`qianfan` 三个 provider。支持 `apiKey` 直接写死或 `apiKeyEnv` 环境变量。主 LLM 限流时自动切换到 `fallback` 配置的备用模型。
 
