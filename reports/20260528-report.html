@@ -136,9 +136,9 @@ tr:hover td{background:var(--row-hover)}
     <div class="card"><div class="label">训练负荷</div><div class="value">126<span style="font-size:.9rem">TL</span></div><div class="sub">Good</div></div>
   </div>
   
-  <div class="chart-box full-width" style="margin-bottom:16px;height:300px">
+  <div class="chart-box full-width" style="margin-bottom:16px;height:300px;display:flex;flex-direction:column">
     <h3>逐秒配速 & 心率</h3>
-    <canvas id="secPaceHrChart"></canvas>
+    <canvas id="secPaceHrChart" style="flex:1;min-height:0"></canvas>
   </div>
 
   <div class="review-grid">

@@ -310,9 +310,9 @@ function generateHTML(data, aiAnalysis) {
     }
   }
   const segChartHTML = secData.length >= 10 ? `
-  <div class="chart-box full-width" style="margin-bottom:16px;height:300px">
+  <div class="chart-box full-width" style="margin-bottom:16px;height:300px;display:flex;flex-direction:column">
     <h3>逐秒配速 & 心率</h3>
-    <canvas id="secPaceHrChart"></canvas>
+    <canvas id="secPaceHrChart" style="flex:1;min-height:0"></canvas>
   </div>
 ` : "";
 
