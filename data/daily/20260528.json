@@ -1,6 +1,6 @@
 {
   "fetchDate": "20260528",
-  "fetchedAt": "2026-05-28T01:11:51.265Z",
+  "fetchedAt": "2026-05-28T09:06:53.251Z",
   "userInfo": {
     "height": 176,
     "weight": 65.8,
@@ -174,6 +174,17 @@
           "minAlt": 11,
           "maxAlt": 14
         }
+      },
+      "weather": {
+        "tempMax": 28,
+        "tempMin": 23.4,
+        "feelsLikeMax": 31.3,
+        "feelsLikeMin": 26.6,
+        "weatherCode": 51,
+        "weatherDesc": "小毛毛雨",
+        "precipitation": 0.6,
+        "humidity": 90,
+        "windSpeed": 14
       }
     },
     {
@@ -312,6 +323,17 @@
           "minAlt": 4,
           "maxAlt": 7
         }
+      },
+      "weather": {
+        "tempMax": 31.2,
+        "tempMin": 22.4,
+        "feelsLikeMax": 37.9,
+        "feelsLikeMin": 26.7,
+        "weatherCode": 61,
+        "weatherDesc": "小雨",
+        "precipitation": 7,
+        "humidity": 99,
+        "windSpeed": 8.3
       }
     },
     {
@@ -422,6 +444,17 @@
           "minAlt": 1,
           "maxAlt": 4
         }
+      },
+      "weather": {
+        "tempMax": 32,
+        "tempMin": 21,
+        "feelsLikeMax": 38.7,
+        "feelsLikeMin": 23.1,
+        "weatherCode": 61,
+        "weatherDesc": "小雨",
+        "precipitation": 3.1,
+        "humidity": 95,
+        "windSpeed": 10.4
       }
     }
   ],

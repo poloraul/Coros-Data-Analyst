@@ -578,6 +578,7 @@ function buildLLMContext(data) {
     trainingLoad: d.trainingLoad,
     performance: d.performance,
     tcxSummary: summarizeTcxMetrics(d.tcxMetrics),
+    weather: d.weather || null,
   }));
 
   return {
@@ -723,6 +724,7 @@ async function main() {
 1. 数据驱动：基于tcxSummary中的配速趋势、心率漂移、区间分布、步频数据做量化分析
 2. 目标导向：以首马3:30（配速4:58/km）为基准，评价训练方向
 3. 具体可执行：改进建议必须给出具体配速范围、心率目标或步频要求
+4. 环境因素：结合天气数据（温度、体感温度、湿度、天气描述）分析对训练表现的影响，高温高湿需调低期望，凉爽干燥利于发挥
 
 请输出严格JSON格式：
 
@@ -731,7 +733,7 @@ async function main() {
     {
       "date": "YYYY-MM-DD",
       "summary": "训练概括（类型/距离/配速/表现）",
-      "detailedAnalysis": "技术分析（100-200字）：引用tcxSummary数据，分析配速趋势、心率漂移、区间分布",
+      "detailedAnalysis": "技术分析（100-200字）：引用tcxSummary数据和天气条件，分析配速趋势、心率漂移、区间分布、天气影响",
       "positives": ["具体亮点（需带数据支撑）"],
       "improvements": ["改进建议（需含具体配速/心率/步频数值）"]
     }

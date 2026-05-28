@@ -485,6 +485,7 @@ ${(() => {
     <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${hrPct}% HRmax</div></div>
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${cadenceGap ? `低于180目标${cadenceGap}spm` : "达标"}</div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
+    <div class="card"><div class="label">天气</div><div class="value" style="font-size:1.2rem">${a.weather?.weatherDesc || "-"}</div><div class="sub">${a.weather?.tempMax ? a.weather.tempMax + "°C" : ""} ${a.weather?.feelsLikeMax ? "体感" + a.weather.feelsLikeMax + "°C" : ""} ${a.weather?.humidity ? "湿度" + a.weather.humidity + "%" : ""}</div></div>
   </div>
   ${segChartHTML}
   <div class="review-grid">
@@ -548,7 +549,7 @@ ${aiWorkoutReviews.length > 1 ? `
   <div style="margin-top:16px">
     <div class="section-title" style="font-size:.95rem">其他近期训练</div>
     <table>
-      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
       ${details.slice(1).map(d => `<tr>
         <td>${d.date}</td>
         <td>${d.distance}km</td>
@@ -557,6 +558,7 @@ ${aiWorkoutReviews.length > 1 ? `
         <td>${d.avgCadence || "-"}spm</td>
         <td>${d.trainingLoad || "-"}TL</td>
         <td>${d.performance || "-"}</td>
+        <td>${d.weather?.weatherDesc || "-"} ${d.weather?.tempMax || ""}°C</td>
       </tr>`).join("")}
     </table>
   </div>
@@ -599,7 +601,7 @@ ${aiWorkoutReviews.length > 1 ? `
   <div style="margin-top:20px">
     <div class="section-title" style="font-size:.95rem">近期训练一览</div>
     <table>
-      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th></tr>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
       ${details.map(d => `<tr>
         <td>${d.date}</td>
         <td>${d.distance}km</td>
@@ -608,6 +610,7 @@ ${aiWorkoutReviews.length > 1 ? `
         <td>${d.avgCadence || "-"}spm</td>
         <td>${d.trainingLoad || "-"}TL</td>
         <td>${d.performance || "-"}</td>
+        <td>${d.weather?.weatherDesc || "-"} ${d.weather?.tempMax || ""}°C</td>
       </tr>`).join("")}
     </table>
   </div>

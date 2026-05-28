@@ -4,6 +4,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { analyzeTCX } from "./tcx-analyzer.js";
+import { fetchWeather } from "../lib/weather.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -304,9 +305,42 @@ function enrichWithTCX(data) {
   console.log(`  TCX enriched: ${enriched}/${details.length} activities`);
 }
 
+async function enrichWithWeather(data) {
+  const details = data.activityDetails || [];
+  const records = data.sportRecords || [];
+  if (details.length === 0 || records.length === 0) return;
+
+  // Build labelId -> startCoords map
+  const coordMap = {};
+  for (const r of records) {
+    if (r.labelId && r.startCoords) {
+      coordMap[r.labelId] = r.startCoords;
+    }
+  }
+
+  let enriched = 0;
+  for (const detail of details) {
+    if (detail.weather) continue;
+    if (!detail.labelId) continue;
+    const coords = coordMap[detail.labelId];
+    if (!coords) continue;
+
+    try {
+      const weather = await fetchWeather(coords[0], coords[1], detail.date);
+      if (weather) {
+        detail.weather = weather;
+        enriched++;
+      }
+    } catch (e) {
+      // Silently skip — weather is non-critical
+    }
+  }
+  console.log(`  Weather enriched: ${enriched}/${details.length} activities`);
+}
+
 // --- Main ---
 
-function fetchAll(dateStr) {
+async function fetchAll(dateStr) {
   const today = dateStr || formatDate(new Date());
   const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
   const startDate3 = formatDate(new Date(Date.now() - 3 * 86400000));
@@ -374,12 +408,13 @@ function fetchAll(dateStr) {
   console.log("\nDownloading TCX files...");
   downloadTCXFiles(today);
   enrichWithTCX(data);
+  await enrichWithWeather(data);
   saveDailyData(today, data);
 
   return data;
 }
 
-function fetchIncremental(dateStr) {
+async function fetchIncremental(dateStr) {
   const today = dateStr || formatDate(new Date());
   const existingPath = path.join(DATA_DIR, `${today}.json`);
 
@@ -425,6 +460,7 @@ function fetchIncremental(dateStr) {
     downloadTCXFiles(today);
   }
   enrichWithTCX(existing);
+  await enrichWithWeather(existing);
   saveDailyData(today, existing);
 
   const outPath = path.join(DATA_DIR, `${today}.json`);
@@ -436,9 +472,11 @@ function fetchIncremental(dateStr) {
 }
 
 const args = parseArgs();
-if (!args.full) {
-  const result = fetchIncremental(args.date);
-  if (result) process.exit(0);
-  console.log("No existing data for today, performing full fetch...");
-}
-fetchAll(args.date);
+(async () => {
+  if (!args.full) {
+    const result = await fetchIncremental(args.date);
+    if (result) process.exit(0);
+    console.log("No existing data for today, performing full fetch...");
+  }
+  await fetchAll(args.date);
+})();
