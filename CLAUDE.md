@@ -26,14 +26,17 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 **支持参数**：
 - `Workflow({name: "daily-review", args: {date: "20260525"}})` — 指定日期
-- 不带 args 默认当天
+- `Workflow({name: "daily-review", args: {provider: "volcengine"}})` — 指定 LLM 提供商（跳过交互选择）
+- `Workflow({name: "daily-review", args: {date: "20260525", provider: "volcengine"}})` — 同时指定
+- 不带 args 默认当天 + 交互选择 LLM
 
-**流程概览（4 阶段）**：
+**流程概览（5 阶段）**：
 
 | 阶段 | Agent | 内容 |
 |------|-------|------|
+| 选择 LLM | 通用 agent | 交互选择本次使用的 LLM 提供商（deepseek/volcengine） |
 | 数据采集 | 通用 agent | 运行 `node scripts/fetch.js`，返回日期 |
-| 深度分析 | 通用 agent | 运行 `node scripts/analyze.js --force` |
+| 深度分析 | 通用 agent | 运行 `node scripts/analyze.js --force --provider <name>` |
 | 数据验证 | haiku agent | 检查配速趋势方向、周跑量周期、数据一致性，输出结构化报告 |
 | 报告生成 | 通用 agent | 运行 `node scripts/report.js` + `open` |
 
@@ -52,9 +55,9 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 2. `node scripts/analyze.js` — LLM 深度复盘 + 训练计划生成，输出 `YYYYMMDD-analysis.json`
 3. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
 
-脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析。
+脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析、`--provider <name>` 指定 LLM 提供商。
 
-**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic`、`openai`、`qianfan` 三个 provider。支持 `apiKey` 直接写死或 `apiKeyEnv` 环境变量。主 LLM 限流时自动切换到 `fallback` 配置的备用模型。
+**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic`、`openai`、`qianfan`、`deepseek`、`volcengine` 五个 provider。`llm.providers` 映射存储命名提供商配置，`--provider <name>` 从中查找。支持 `apiKey` 直接写死或 `apiKeyEnv` 环境变量。主 LLM 限流时自动切换到 `fallback` 配置的备用模型。
 
 ## 数据存储
 

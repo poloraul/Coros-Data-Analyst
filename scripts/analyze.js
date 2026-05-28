@@ -13,11 +13,12 @@ const DATA_DIR = path.join(PROJECT_ROOT, "data", "daily");
 // --- Utility ---
 function parseArgs() {
   const args = process.argv.slice(2);
-  const parsed = { date: null, mode: "daily", force: false };
+  const parsed = { date: null, mode: "daily", force: false, provider: null };
   for (let i = 0; i < args.length; i++) {
     if (args[i] === "--date" && args[i + 1]) parsed.date = args[++i];
     if (args[i] === "--mode" && args[i + 1]) parsed.mode = args[++i];
     if (args[i] === "--force") parsed.force = true;
+    if (args[i] === "--provider" && args[i + 1]) parsed.provider = args[++i];
   }
   return parsed;
 }
@@ -521,12 +522,21 @@ function summarizeTcxMetrics(metrics) {
 
 // --- LLM Integration ---
 
-function loadLLMConfig() {
+function loadLLMConfig(providerName) {
   const configPath = path.join(PROJECT_ROOT, "coros.config.json");
   try {
     const config = JSON.parse(readFileSync(configPath, "utf-8"));
-    return config.llm || null;
-  } catch {
+    const llm = config.llm || null;
+    if (!llm) return null;
+    if (providerName && llm.providers?.[providerName]) {
+      return llm.providers[providerName];
+    }
+    if (providerName) {
+      throw new Error(`Provider "${providerName}" not found in llm.providers. Available: ${Object.keys(llm.providers || {}).join(", ")}`);
+    }
+    return llm;
+  } catch (e) {
+    if (e.message?.includes("not found in llm.providers")) throw e;
     return null;
   }
 }
@@ -700,7 +710,7 @@ async function main() {
   }
 
   // Step 2: Try LLM analysis
-  const llmConfig = loadLLMConfig();
+  const llmConfig = loadLLMConfig(args.provider);
   let analysisResult = null;
 
   if (llmConfig) {

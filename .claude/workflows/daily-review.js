@@ -2,6 +2,7 @@ export const meta = {
   name: "daily-review",
   description: "每日训练复盘：从 COROS 采集数据 → LLM 分析 → 数据验证 → HTML 报告",
   phases: [
+    { title: "选择 LLM", detail: "选择本次分析使用的 LLM 提供商" },
     { title: "数据采集", detail: "从 COROS MCP 获取最新训练数据" },
     { title: "深度分析", detail: "LLM 深度复盘 + 训练计划生成" },
     { title: "数据验证", detail: "验证分析结果的配速趋势、周跑量统计等数据一致性" },
@@ -11,6 +12,29 @@ export const meta = {
 
 // Support --date YYYYMMDD via args
 const dateArg = args?.date ? `--date ${args.date}` : "";
+
+phase("选择 LLM");
+let selectedProvider = args?.provider || null;
+if (!selectedProvider) {
+  const providerChoice = await agent(
+    `请询问用户本次分析使用哪个 LLM 提供商。向用户展示以下选项让其选择：
+    - deepseek: DeepSeek 原生 API
+    - volcengine: 火山方舟 (Volcengine Ark) Coding Plan
+    返回用户选择的提供商名称。`,
+    {
+      label: "provider-select",
+      schema: {
+        type: "object",
+        properties: {
+          provider: { type: "string", enum: ["deepseek", "volcengine"] },
+        },
+        required: ["provider"],
+      },
+    },
+  );
+  selectedProvider = providerChoice.provider;
+}
+log(`LLM 提供商: ${selectedProvider}`);
 
 phase("数据采集");
 log("正在从 COROS 获取最新训练数据...");
@@ -46,7 +70,7 @@ log("正在进行 LLM 深度训练复盘...");
 await agent(
   `运行训练分析脚本。
 
-  执行: node scripts/analyze.js --force --date ${dateStr}
+  执行: node scripts/analyze.js --force --date ${dateStr} --provider ${selectedProvider}
   确认脚本 exit code 为 0。
 
   预期输出：

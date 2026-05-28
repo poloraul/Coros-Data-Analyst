@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MARATHON_DATE, PHASES } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
+import { parseTCX } from "./tcx-analyzer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -261,18 +262,14 @@ function generateHTML(data, aiAnalysis) {
     return d.length === 8 ? d.slice(4, 6) + "/" + d.slice(6, 8) : d.slice(5);
   });
   const sleepScores = healthDays7.map(s => s.sleepScore);
-  const sleepDeepRatios = healthDays7.map(s => {
-    if (s.deepRatio != null) return s.deepRatio;
-    // Compute from deepSleep + sleepTotal text
-    const parseTime = (str) => {
-      if (!str) return 0;
-      const h = str.match(/(\d+)\s*h/); const m = str.match(/(\d+)\s*min/);
-      return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0);
-    };
-    const deep = parseTime(s.deepSleep);
-    const total = parseTime(s.sleepTotal);
-    return total > 0 ? Math.round((deep / total) * 100) : null;
-  });
+  const parseSleepTime = (str) => {
+    if (!str) return 0;
+    const h = str.match(/(\d+)\s*h/); const m = str.match(/(\d+)\s*min/);
+    return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0);
+  };
+  const deepHours = healthDays7.map(d => Math.round(parseSleepTime(d.deepSleep) / 60 * 10) / 10);
+  const lightHours = healthDays7.map(d => Math.round(parseSleepTime(d.lightSleep) / 60 * 10) / 10);
+  const remHours = healthDays7.map(d => Math.round(parseSleepTime(d.remSleep) / 60 * 10) / 10);
 
   // Rule-engine fallback for workout review
   const ruleReview = !hasAI || !aiWorkoutReviews.length ? reviewLatestWorkout(details[0], tp, maxHR) : null;
@@ -291,6 +288,33 @@ function generateHTML(data, aiAnalysis) {
   const loadRatio = loadEntries[0]?.loadRatio;
   const loadWarning = loadRatio && loadRatio > 1.3;
   const kmWarning = totalKm > kmTargetMax;
+
+  // Per-second pace+HR data from TCX (finest granularity)
+  let secData = [];
+  const latestActivity = details[0];
+  if (latestActivity?.labelId) {
+    const tcxPath = path.join(PROJECT_ROOT, "data", "tcx", `${latestActivity.labelId}.tcx`);
+    if (existsSync(tcxPath)) {
+      try {
+        const tps = parseTCX(tcxPath);
+        const startTime = tps.length > 0 ? new Date(tps[0].time).getTime() : 0;
+        secData = tps
+          .filter(tp => tp.speed > 0 && tp.hr > 0)
+          .map(tp => {
+            const elapsedSec = Math.round((new Date(tp.time).getTime() - startTime) / 1000);
+            const paceMinPerKm = 60 / tp.speed;
+            return { elapsedSec, paceMinPerKm, hr: tp.hr };
+          })
+          .filter(d => d.paceMinPerKm >= 3 && d.paceMinPerKm <= 15);
+      } catch {}
+    }
+  }
+  const segChartHTML = secData.length >= 10 ? `
+  <div class="chart-box full-width" style="margin-bottom:16px;height:300px">
+    <h3>逐秒配速 & 心率</h3>
+    <canvas id="secPaceHrChart"></canvas>
+  </div>
+` : "";
 
   // Source badge helper
   const sourceBadge = hasAI
@@ -453,6 +477,7 @@ ${(() => {
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${cadenceGap ? `低于180目标${cadenceGap}spm` : "达标"}</div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
   </div>
+  ${segChartHTML}
   <div class="review-grid">
     <div class="ai-insight">
       <h4>训练概要</h4>
@@ -479,6 +504,7 @@ ${(() => {
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${ruleReview.cadenceGap ? `低于180目标${ruleReview.cadenceGap}spm` : "达标"}</div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
   </div>
+  ${segChartHTML}
   <div class="review-grid">
     <div class="review-box">
       <h4>训练分析</h4>
@@ -753,7 +779,7 @@ new Chart(document.getElementById('paceChart'), {
       data: ${JSON.stringify(avgPaceMinPerKm)},
       backgroundColor: ${JSON.stringify(paceColors)},
       borderColor: ${JSON.stringify(paceBorders)},
-      borderWidth: 1.5, borderRadius: 6, barPercentage: 0.6,
+      borderWidth: 1.5, barPercentage: 0.6,
     }, {
       label: '阈值 ' + fmtPace(${tpMinPerKm.toFixed(3)}) + '/km',
       data: Array(${paceLabels.length}).fill(${tpMinPerKm.toFixed(3)}),
@@ -779,33 +805,134 @@ new Chart(document.getElementById('paceChart'), {
   }
 });
 
+${secData.length >= 10 ? `
+// Vertical crosshair plugin for per-second chart
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterDraw: function(chart) {
+    if (chart.tooltip._active && chart.tooltip._active.length) {
+      const active = chart.tooltip._active[0];
+      const ctx = chart.ctx;
+      const x = active.element.x;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chart.scales.y.top);
+      ctx.lineTo(x, chart.scales.y.bottom);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#9e9484';
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+Chart.register(crosshairPlugin);
+// Per-second Pace & HR Chart
+new Chart(document.getElementById('secPaceHrChart'), {
+  type: 'line',
+  data: {
+    datasets: [{
+      label: '配速',
+      data: ${JSON.stringify(secData.map(d => ({x: d.elapsedSec, y: d.paceMinPerKm})))},
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: 0, pointRadius: 0,
+      yAxisID: 'y',
+    }, {
+      label: '心率',
+      data: ${JSON.stringify(secData.map(d => ({x: d.elapsedSec, y: d.hr})))},
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: 0, pointRadius: 0,
+      yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: {
+        title: function(ctx) {
+          const sec = ctx[0].parsed.x;
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return m + ':' + String(s).padStart(2, '0');
+        },
+        label: function(ctx) {
+          if (ctx.datasetIndex === 0) return fmtPace(ctx.parsed.y) + '/km';
+          return ctx.parsed.y + ' bpm';
+        }
+      } }
+    },
+    scales: {
+      x: { type: 'linear', title: { display: true, text: '运动时间' },
+        ticks: { callback: function(v) {
+          const m = Math.floor(v / 60);
+          const s = Math.round(v % 60);
+          return m + ':' + String(s).padStart(2, '0');
+        } } },
+      y: { reverse: true, position: 'left', title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } } },
+      y1: { position: 'right', title: { display: true, text: '心率 (bpm)' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});` : ""}
+
 ${sleepLabels.length > 0 ? `
-// Sleep Chart
+// Sleep Chart — stacked bars (deep + light + REM) + sleep score line overlay
 new Chart(document.getElementById('sleepChart'), {
   type: 'bar',
   data: {
     labels: ${JSON.stringify(sleepLabels)},
     datasets: [{
-      label: '睡眠评分',
-      data: ${JSON.stringify(sleepScores)},
-      backgroundColor: 'rgba(126,200,130,.6)',
-      borderColor: 'rgba(90,158,100,1)',
-      borderWidth: 1, borderRadius: 6, yAxisID: 'y',
+      label: '深睡',
+      data: ${JSON.stringify(deepHours)},
+      backgroundColor: 'rgba(92,124,200,.8)',
+      yAxisID: 'y',
     }, {
-      label: '深睡比例(%)',
-      data: ${JSON.stringify(sleepDeepRatios)},
+      label: '浅睡',
+      data: ${JSON.stringify(lightHours)},
+      backgroundColor: 'rgba(140,170,220,.7)',
+      yAxisID: 'y',
+    }, {
+      label: 'REM',
+      data: ${JSON.stringify(remHours)},
+      backgroundColor: 'rgba(200,215,240,.6)',
+      yAxisID: 'y',
+    }, {
+      label: '睡眠评分',
       type: 'line',
-      borderColor: '#7cb9e8',
-      backgroundColor: 'rgba(124,185,232,.1)',
-      fill: false, tension: .3, pointRadius: 4, yAxisID: 'y1',
+      data: ${JSON.stringify(sleepScores)},
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: false, tension: .3, pointRadius: 5,
+      pointBackgroundColor: '#7ec882',
+      yAxisID: 'y1',
+      order: 0,
     }]
   },
   options: {
     responsive: true,
-    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } } },
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.datasetIndex < 3) {
+          const h = Math.floor(ctx.parsed.y);
+          const m = Math.round((ctx.parsed.y - h) * 60);
+          return ctx.dataset.label + ': ' + h + 'h' + String(m).padStart(2, '0') + 'min';
+        }
+        return ctx.dataset.label + ': ' + ctx.parsed.y;
+      } } } },
     scales: {
-      y: { beginAtZero: true, max: 100, title: { display: true, text: '睡眠评分' }, position: 'left' },
-      y1: { beginAtZero: true, max: 50, title: { display: true, text: '深睡比例(%)' }, position: 'right', grid: { drawOnChartArea: false } }
+      x: { stacked: true },
+      y: { stacked: true, position: 'left', min: 0, max: 12,
+        title: { display: true, text: '睡眠时长 (h)' },
+        ticks: { stepSize: 2 } },
+      y1: { position: 'right', min: 0, max: 100,
+        title: { display: true, text: '睡眠评分' },
+        grid: { drawOnChartArea: false } }
     }
   }
 });

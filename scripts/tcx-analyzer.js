@@ -139,6 +139,69 @@ export function computeKMSplits(trackpoints) {
 }
 
 /**
+ * Compute time-based segments from trackpoints.
+ * Groups trackpoints into fixed-time intervals and computes
+ * average pace and HR for each interval.
+ *
+ * @param {Array} trackpoints - from parseTCX()
+ * @param {number} intervalSec - interval in seconds (default 60)
+ * @returns {Array} of { elapsedLabel, elapsedSec, paceMinPerKm, paceSecPerKm, avgHR }
+ */
+export function computeTimeSegments(trackpoints, intervalSec = 60) {
+  const valid = trackpoints.filter((tp) => tp.time && tp.dist >= 0);
+  if (valid.length < 3) return [];
+
+  const startTime = new Date(valid[0].time).getTime();
+  const endTime = new Date(valid[valid.length - 1].time).getTime();
+  const totalSec = (endTime - startTime) / 1000;
+
+  if (totalSec < intervalSec) return [];
+
+  const segments = [];
+  let windowStart = 0;
+
+  while (windowStart + intervalSec <= totalSec) {
+    const windowEnd = windowStart + intervalSec;
+    const tStart = startTime + windowStart * 1000;
+    const tEnd = startTime + windowEnd * 1000;
+
+    const inWindow = valid.filter((tp) => {
+      const t = new Date(tp.time).getTime();
+      return t >= tStart && t < tEnd;
+    });
+
+    if (inWindow.length >= 2) {
+      const first = inWindow[0];
+      const last = inWindow[inWindow.length - 1];
+      const segTime = (new Date(last.time) - new Date(first.time)) / 1000;
+      const segDist = last.dist - first.dist;
+
+      if (segDist > 0 && segTime > 0) {
+        const paceSecPerKm = Math.round(segTime / (segDist / 1000));
+        // Skip non-running segments (pace slower than 12:00/km or faster than 3:00/km)
+        if (paceSecPerKm > 720 || paceSecPerKm < 180) { windowStart += intervalSec; continue; }
+
+        const avgHR = Math.round(inWindow.reduce((s, tp) => s + tp.hr, 0) / inWindow.length);
+        const m = Math.floor(windowEnd / 60);
+        const s = Math.floor(windowEnd % 60);
+
+        segments.push({
+          elapsedLabel: `${m}:${String(s).padStart(2, "0")}`,
+          elapsedSec: windowEnd,
+          paceMinPerKm: paceSecPerKm / 60,
+          paceSecPerKm,
+          avgHR,
+        });
+      }
+    }
+
+    windowStart += intervalSec;
+  }
+
+  return segments;
+}
+
+/**
  * HR drift: compare average HR in the first third vs last third of distance.
  * Lower drift indicates better aerobic fitness.
  */
