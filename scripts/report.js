@@ -306,6 +306,15 @@ function generateHTML(data, aiAnalysis) {
             return { elapsedSec, paceMinPerKm, hr: tp.hr };
           })
           .filter(d => d.paceMinPerKm >= 3 && d.paceMinPerKm <= 15);
+        // Lightweight SMA-3 smoothing on HR to reduce burrs
+        if (secData.length > 3) {
+          const sma = [secData[0]];
+          for (let i = 1; i < secData.length - 1; i++) {
+            sma.push({ ...secData[i], hr: Math.round((secData[i-1].hr + secData[i].hr + secData[i+1].hr) / 3) });
+          }
+          sma.push(secData[secData.length - 1]);
+          secData = sma;
+        }
       } catch {}
     }
   }
@@ -843,7 +852,7 @@ new Chart(document.getElementById('secPaceHrChart'), {
       data: ${JSON.stringify(secData.map(d => ({x: d.elapsedSec, y: d.hr})))},
       borderColor: '#e89898',
       backgroundColor: 'rgba(232,152,152,.1)',
-      fill: false, tension: 0, pointRadius: 0,
+      fill: false, tension: 0.3, pointRadius: 0,
       yAxisID: 'y1',
     }]
   },
