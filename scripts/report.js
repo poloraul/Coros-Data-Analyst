@@ -688,9 +688,9 @@ ${aiWorkoutReviews.length > 1 ? `
     if (hasAI && aiWeeklyPlan.length > 0) {
       return `
   <table>
-    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>处方</th></tr>
+    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>详细计划</th></tr>
     ${aiWeeklyPlan.map(d => {
-      const hasPrescription = d.prescription && (d.prescription.warmup || d.prescription.main || d.prescription.cooldown || d.prescription.notes);
+      const hasPrescription = d["详细计划"] && (d["详细计划"].warmup || d["详细计划"].main || d["详细计划"].cooldown || d["详细计划"].notes);
       const pId = "p-" + d.dayIndex;
       return `<tr class="${d.type === "休息" ? "" : ""}">
         <td>${d.dayName || ""} ${(d.date || "").slice(5)}</td>
@@ -699,7 +699,7 @@ ${aiWorkoutReviews.length > 1 ? `
         <td>${d.paceZone || "-"}</td>
         <td>${d.hrZone || "-"}</td>
         <td>${d.description || "-"}</td>
-        <td>${hasPrescription ? `<span class="prescription-toggle" onclick="document.getElementById('${pId}').classList.toggle('open')">展开详情</span><div class="prescription-detail" id="${pId}">${d.prescription.warmup ? `<dt>热身</dt><dd>${d.prescription.warmup}</dd>` : ""}${d.prescription.main ? `<dt>主课</dt><dd>${d.prescription.main}</dd>` : ""}${d.prescription.cooldown ? `<dt>冷身</dt><dd>${d.prescription.cooldown}</dd>` : ""}${d.prescription.notes ? `<dt>备注</dt><dd>${d.prescription.notes}</dd>` : ""}</div>` : "-"}</td>
+        <td>${hasPrescription ? `<span class="prescription-toggle" onclick="var el=document.getElementById('${pId}');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="${pId}">${d["详细计划"].warmup ? `<dt>热身</dt><dd>${d["详细计划"].warmup}</dd>` : ""}${d["详细计划"].main ? `<dt>主课</dt><dd>${d["详细计划"].main}</dd>` : ""}${d["详细计划"].cooldown ? `<dt>冷身</dt><dd>${d["详细计划"].cooldown}</dd>` : ""}${d["详细计划"].notes ? `<dt>备注</dt><dd>${d["详细计划"].notes}</dd>` : ""}</div>` : "-"}</td>
       </tr>`;
     }).join("")}
   </table>`;

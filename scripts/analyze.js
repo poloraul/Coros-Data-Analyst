@@ -726,6 +726,8 @@ async function main() {
 3. 具体可执行：改进建议必须给出具体配速范围、心率目标或步频要求
 4. 环境因素：结合天气数据（温度、体感温度、湿度、天气描述）分析对训练表现的影响，高温高湿需调低期望，凉爽干燥利于发挥
 
+注意：weeklyPlan 是未来7天的训练计划，必须从报告日期当天（${context.today.date}，${context.today.dayOfWeek}）开始，dayIndex为1-7对应报告日期起的第几天，不能用下一个周一/周日起算。
+
 请输出严格JSON格式：
 
 {
@@ -759,7 +761,7 @@ async function main() {
     "paceZone": "配速区间",
     "hrZone": "心率区间",
     "description": "训练说明",
-    "prescription": {"warmup": "...", "main": "...", "cooldown": "...", "notes": "..."}
+    "详细计划": {"warmup": "...", "main": "...", "cooldown": "...", "notes": "..."}
   }],
   "coachAdvice": "教练综合建议"
 }`;
