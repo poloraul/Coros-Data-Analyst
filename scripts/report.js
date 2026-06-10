@@ -234,6 +234,7 @@ function generateHTML(data, aiAnalysis) {
   const loadLabels = loadEntries.map(e => e.date.slice(5)).reverse();
   const shortLoads = loadEntries.map(e => e.shortTermLoad).reverse();
   const longLoads = loadEntries.map(e => e.longTermLoad).reverse();
+  const loadRatios = loadEntries.map(e => e.loadRatio).reverse();
 
   // Pace chart data
   const paceLabels = details.map(d => d.date.slice(5)).reverse();
@@ -466,7 +467,7 @@ ${(() => {
   const a = details[0];
   // AI-based review
   if (hasAI && aiWorkoutReviews.length > 0) {
-    const r = aiWorkoutReviews[0];
+    const r = aiWorkoutReviews.find(r => r.date === a?.date) || aiWorkoutReviews[0];
     if (!a) return '<p style="color:var(--muted)">暂无训练数据</p>';
     const paceRatio = paceToSeconds(a.avgPace) / paceToSeconds(tp);
     let intensityZone = "未知";
@@ -537,7 +538,7 @@ ${aiWorkoutReviews.length > 1 ? `
     <div class="section-title" style="font-size:.95rem">其他近期训练</div>
     <table>
       <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
-      ${aiWorkoutReviews.slice(1).map(r => `<tr>
+      ${aiWorkoutReviews.filter(r => r.date !== (details[0]?.date)).sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(r => `<tr>
         <td>${r.date || "-"}</td>
         <td style="max-width:300px">${r.summary || "-"}</td>
         <td>${(r.positives || []).map(p => `<span class="badge badge-green">${p}</span>`).join("") || "-"}</td>
@@ -624,7 +625,7 @@ ${aiWorkoutReviews.length > 1 ? `
       <div class="card"><div class="label">HRV连续偏低</div><div class="value">${recovery.consecutiveBelow}<span style="font-size:.9rem">天</span></div><div class="sub">${recovery.consecutiveBelow >= 2 ? "⚠️ 需关注" : "正常"}</div></div>
       <div class="card"><div class="label">睡眠(最新)</div><div class="value">${data.sleep?.[data.sleep.length - 1]?.sleepScore || data.dailyHealth?.[data.dailyHealth.length - 1]?.sleepScore || "-"}</div><div class="sub">${data.sleep?.[data.sleep.length - 1]?.sleepWindow || "-"}</div></div>
       <div class="card"><div class="label">负荷比</div><div class="value">${loadEntries[0]?.loadRatio || "-"}</div><div class="sub">${loadEntries[0]?.comment || "-"}</div></div>
-      <div class="card"><div class="label">预计完全恢复</div><div class="value">${data.recovery?.estimatedFullRecovery || "-"}</div><div class="sub">${data.recovery?.level || "-"}</div></div>
+      ${(() => { const fr = data.recovery?.estimatedFullRecovery || "-"; const ok = fr === "0h" || fr === "0h0min" || fr === "00:00:00"; return `<div class="card"><div class="label">预计完全恢复</div><div class="value" style="color:${ok ? levelColors.green : "inherit"}">${ok ? "完全恢复" : fr}</div><div class="sub">${data.recovery?.level || "-"}</div></div>`; })()}
     </div>
   </div>
 
@@ -771,13 +772,61 @@ new Chart(document.getElementById('loadChart'), {
       label: '短期负荷',
       data: ${JSON.stringify(shortLoads)},
       backgroundColor: 'rgba(124,185,232,.7)',
+      yAxisID: 'y',
+      order: 2,
     }, {
       label: '长期负荷',
       data: ${JSON.stringify(longLoads)},
-      backgroundColor: 'rgba(196,166,216,.7)',
+      backgroundColor: 'rgba(196,166,216,.5)',
+      yAxisID: 'y',
+      order: 3,
+    }, {
+      label: '负荷比',
+      type: 'line',
+      data: ${JSON.stringify(loadRatios)},
+      borderColor: 'rgba(232,152,152,.9)',
+      backgroundColor: 'rgba(232,152,152,.9)',
+      pointBackgroundColor: 'rgba(232,152,152,.9)',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.3,
+      yAxisID: 'y1',
+      order: 1,
+      fill: false,
+    }, {
+      label: '平衡线 (1.0)',
+      type: 'line',
+      data: Array(${loadLabels.length}).fill(1.0),
+      borderColor: 'rgba(150,150,150,.5)',
+      borderWidth: 1.5,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      yAxisID: 'y1',
+      order: 3,
+      fill: false,
     }]
   },
-  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: true } } }
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'TL', font: { size: 10 } }
+      },
+      y1: {
+        beginAtZero: false,
+        position: 'right',
+        min: 0.7,
+        max: 1.5,
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: '负荷比', font: { size: 10 } }
+      }
+    }
+  }
 });
 
 // Pace Chart
@@ -818,14 +867,14 @@ new Chart(document.getElementById('paceChart'), {
 });
 
 ${secData.length >= 10 ? `
-// Vertical crosshair plugin for per-second chart
+// Vertical crosshair plugin for per-second chart (Chart.js v4 compatible)
 const crosshairPlugin = {
   id: 'crosshair',
   afterDraw: function(chart) {
-    if (chart.tooltip._active && chart.tooltip._active.length) {
-      const active = chart.tooltip._active[0];
+    const active = chart.tooltip?.active;
+    if (active && active.length) {
       const ctx = chart.ctx;
-      const x = active.element.x;
+      const x = active[0].element.x;
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(x, chart.scales.y.top);
@@ -972,18 +1021,19 @@ new Chart(document.getElementById('sleepChart'), {
     const tickColor = getThemeColor('--muted');
     Chart.defaults.color = tickColor;
     Chart.defaults.borderColor = gridColor;
-    Chart.helpers.each(Chart.instances, function(chart){
-      if (chart.options.scales) {
-        Object.values(chart.options.scales).forEach(function(s){
-          s.grid = s.grid || {};
-          s.grid.color = gridColor;
-          s.ticks = s.ticks || {};
-          s.ticks.color = tickColor;
-        });
-      }
-      if (chart.options.plugins?.legend?.labels) chart.options.plugins.legend.labels.color = tickColor;
-      chart.update();
-    });
+    // Chart.js v4 兼容：使用 Object.entries 遍历实例，避免直接修改 scale 配置
+    var charts = Chart.instances;
+    if (charts) {
+      Object.keys(charts).forEach(function(id) {
+        var chart = charts[id];
+        if (!chart || !chart.options) return;
+        // 仅更新图例标签颜色（scale 颜色由 Chart.defaults 自动处理）
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+          chart.options.plugins.legend.labels.color = tickColor;
+        }
+        chart.update('none');
+      });
+    }
   }
   updateChartColors();
 })();

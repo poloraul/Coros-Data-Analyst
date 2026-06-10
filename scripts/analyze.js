@@ -305,7 +305,7 @@ function generateMarkdownReport(data) {
   const tp = fitness.thresholdPace || "4:37";
 
   // Individual workout reviews
-  const workoutReviews = (data.activityDetails || []).map(d => reviewWorkout(d, tp, maxHR)).filter(Boolean);
+  const workoutReviews = (data.activityDetails || []).map(d => reviewWorkout(d, tp, maxHR)).filter(Boolean).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
   // Recovery assessment
   const recovery = assessRecovery(data);
