@@ -2,8 +2,9 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MARATHON_DATE, PHASES } from "../lib/training-constants.js";
+import { MARATHON_DATE, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
+import { calcPaceZones, calcHRZones, classifyPace, classifyHR } from "../lib/zones.js";
 import { parseTCX } from "./tcx-analyzer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -225,6 +226,11 @@ function generateHTML(data, aiAnalysis) {
 
   const levelColors = { green: "#7ec882", yellow: "#f4c542", red: "#e89898" };
   const levelLabels = { green: "良好", yellow: "注意", red: "警告" };
+
+  // 配速区间 & 心率区间
+  const paceZones = calcPaceZones(tp);
+  const hrZones = calcHRZones(LACTATE_THRESHOLD_HR, { useLTHR: true });
+  const hrMode = "lthr"; // 心率分类模式
 
   const hrvLabels = hrvDays.map(d => d.date.slice(5)).reverse();
   const hrvValues = hrvDays.map(d => d.hrv).reverse();
@@ -450,6 +456,58 @@ tr:hover td{background:var(--row-hover)}
     <div class="card"><div class="label">最新HRV</div><div class="value" style="color:${hrvWarning ? levelColors.yellow : levelColors.green}">${latestHRV || "-"}<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:${hrvWarning ? levelColors.yellow : levelColors.green}"></span>${hrvWarning ? "偏低" : "正常"} | 基线 ${recovery.baseline || "-"}ms</div></div>
   </div>
 </div>
+
+<!-- ==================== Zone Section: 配速 & 心率区间 ==================== -->
+${paceZones || hrZones ? `
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">配速 &amp; 心率区间参考</div>
+      <span class="source-badge badge-rule">阈值配速 ${tp}/km · 乳酸阈心率 ${LACTATE_THRESHOLD_HR} bpm</span>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>配速区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>配速范围</th><th>%阈值</th></tr>
+        ${(paceZones?.zones || []).map((z, i) => {
+          const isCurrent = details[0] ? classifyPace(paceToSeconds(details[0].avgPace), paceToSeconds(tp)) === i : false;
+          return `<tr${isCurrent ? ' style="background:rgba(126,200,130,.08)"' : ""}>
+            <td><span class="badge" style="background:${z.color}22;color:${z.color};border:1px solid ${z.color}44">${z.key}</span></td>
+            <td>${z.name}</td>
+            <td><strong>${z.range}</strong></td>
+            <td>${z.pctOfThreshold}</td>
+          </tr>`;
+        }).join("")}
+        ${details[0] ? `<tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练配速 (${details[0].avgPace}/km) 所属区间</td></tr>` : ""}
+      </table>
+    </div>
+    <div class="chart-box">
+      <h3>心率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>心率范围</th><th>%参考</th></tr>
+        ${(hrZones?.zones || []).map((z, i) => {
+          const isCurrent = details[0] ? classifyHR(details[0].avgHR, LACTATE_THRESHOLD_HR, hrMode) === i : false;
+          return `<tr${isCurrent ? ' style="background:rgba(126,200,130,.08)"' : ""}>
+            <td><span class="badge" style="background:${z.color}22;color:${z.color};border:1px solid ${z.color}44">${z.key}</span></td>
+            <td>${z.name}</td>
+            <td><strong>${z.hrRange}</strong></td>
+            <td>${z.pctLTHR || z.pctMaxHR || ""}</td>
+          </tr>`;
+        }).join("")}
+        ${details[0] ? `<tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练心率 (${details[0].avgHR} bpm) 所属区间</td></tr>` : ""}
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
+    <strong>使用说明：</strong>
+    配速区间基于阈值配速（${tp}/km）按百分比计算；心率区间基于乳酸阈心率（${LACTATE_THRESHOLD_HR} bpm）计算。
+    训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
+    ${recovery.level !== "green" ? `<span style="color:${levelColors[recovery.level]}">⚠️ 当前恢复状态为"${levelLabels[recovery.level]}"，建议降低一档强度区间训练。</span>` : ""}
+  </div>
+</div>
+` : ""}
 
 <!-- ==================== Section 2: 最近一次训练分析 ==================== -->
 <div class="section">
@@ -694,7 +752,7 @@ ${aiWorkoutReviews.length > 1 ? `
       const hasPrescription = d["详细计划"] && (d["详细计划"].warmup || d["详细计划"].main || d["详细计划"].cooldown || d["详细计划"].notes);
       const pId = "p-" + d.dayIndex;
       return `<tr class="${d.type === "休息" ? "" : ""}">
-        <td>${d.dayName || ""} ${(d.date || "").slice(5)}</td>
+        <td>${(d.dayName || "").replace(/（[^）]*）/g, "")} ${(d.date || "").slice(5)}${/比赛/i.test(d.dayName + d.type) ? ' <span class="badge badge-yellow">🏁 比赛日</span>' : ""}</td>
         <td>${d.type}</td>
         <td>${d.totalDistance > 0 ? d.totalDistance + "km" : "-"}</td>
         <td>${d.paceZone || "-"}</td>

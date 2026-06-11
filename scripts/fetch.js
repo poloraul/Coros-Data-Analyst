@@ -38,29 +38,44 @@ function getAge(birthday) {
   return age;
 }
 
-function callTool(toolName, args) {
+function callTool(toolName, args, retries = 3) {
   const argsJson = JSON.stringify(args);
   const escaped = argsJson.replace(/'/g, "'\\''");
   const cmd = `coros-mcp --issuer ${ISSUER} call-tool --tool ${toolName} --arguments-json '${escaped}'`;
-  try {
-    const stdout = execSync(cmd, { encoding: "utf-8", timeout: 30000 });
-    const result = JSON.parse(stdout.trim());
-    if (result.isError) {
-      console.error(`  [WARN] ${toolName} returned error`);
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const stdout = execSync(cmd, { encoding: "utf-8", timeout: 30000 });
+      const result = JSON.parse(stdout.trim());
+      if (result.isError) {
+        if (attempt < retries) {
+          const delay = attempt * 1500;
+          console.error(`  [WARN] ${toolName} returned error, retrying (${attempt}/${retries})...`);
+          execSync(`sleep ${delay / 1000}`, { encoding: "utf-8" });
+          continue;
+        }
+        console.error(`  [WARN] ${toolName} returned error after ${retries} attempts`);
+        return null;
+      }
+      if (result.content?.[0]?.text) {
+        let text = result.content[0].text;
+        if (text.startsWith('"') && text.endsWith('"')) {
+          try { text = JSON.parse(text); } catch { /* keep as-is */ }
+        }
+        return text;
+      }
+      return null;
+    } catch (e) {
+      if (attempt < retries) {
+        const delay = attempt * 1500;
+        console.error(`  [WARN] ${toolName} failed (${attempt}/${retries}), retrying in ${delay}ms...`);
+        execSync(`sleep ${delay / 1000}`, { encoding: "utf-8" });
+        continue;
+      }
+      console.error(`  [WARN] ${toolName} failed after ${retries} attempts: ${e.message.split("\n")[0]}`);
       return null;
     }
-    if (result.content?.[0]?.text) {
-      let text = result.content[0].text;
-      if (text.startsWith('"') && text.endsWith('"')) {
-        try { text = JSON.parse(text); } catch { /* keep as-is */ }
-      }
-      return text;
-    }
-    return null;
-  } catch (e) {
-    console.error(`  [WARN] ${toolName} failed: ${e.message}`);
-    return null;
   }
+  return null;
 }
 
 // --- Parsers ---
@@ -340,6 +355,56 @@ async function enrichWithWeather(data) {
 
 // --- Main ---
 
+function mergeWithExisting(today, fresh) {
+  const existingPath = path.join(DATA_DIR, `${today}.json`);
+  let existing;
+  try { existing = JSON.parse(readFileSync(existingPath, "utf-8")); } catch { return fresh; }
+  if (existing.fetchDate !== today) return fresh;
+
+  let merged = 0;
+  const merged_ = { ...fresh };
+
+  // Object fields: keep existing if new fetch returned null/empty
+  for (const key of ["userInfo", "recovery", "fitness"]) {
+    if (!fresh[key] && existing[key]) {
+      merged_[key] = existing[key];
+      merged++;
+    }
+  }
+
+  // Array fields: merge, preferring existing data
+  for (const key of ["sportRecords", "activityDetails", "dailyHealth", "sleep", "trainingLoad", "trainingSchedule"]) {
+    const f = fresh[key] || [];
+    const e = existing[key] || [];
+    if (f.length === 0 && e.length > 0) {
+      merged_[key] = e;
+      merged++;
+    }
+  }
+
+  // HRV: special object with nested days array
+  if (fresh.hrv && existing.hrv) {
+    if ((!fresh.hrv.baseline && existing.hrv.baseline) || (fresh.hrv.days?.length === 0 && existing.hrv.days?.length > 0)) {
+      merged_.hrv = existing.hrv;
+      merged++;
+    }
+  }
+
+  // Preserve any TCX/weather enrichment that was done previously
+  for (const existingDetail of existing.activityDetails || []) {
+    const match = merged_.activityDetails.find(d => d.labelId === existingDetail.labelId);
+    if (match && existingDetail.tcxMetrics && !match.tcxMetrics) {
+      match.tcxMetrics = existingDetail.tcxMetrics;
+    }
+    if (match && existingDetail.weather && !match.weather) {
+      match.weather = existingDetail.weather;
+    }
+  }
+
+  if (merged > 0) console.log(`  Merged ${merged} fields from existing data (kept on fetch failure)`);
+  return merged_;
+}
+
 async function fetchAll(dateStr) {
   const today = dateStr || formatDate(new Date());
   const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
@@ -395,23 +460,26 @@ async function fetchAll(dateStr) {
     startDate: weekStart, endDate: weekEnd, timezone: TIMEZONE,
   }));
 
-  const outPath = saveDailyData(today, data);
-  console.log(`\nSaved to ${outPath}`);
-  console.log(`  Sport records: ${data.sportRecords.length}`);
-  console.log(`  Activity details: ${data.activityDetails.length}`);
-  console.log(`  Health days: ${data.dailyHealth.length}`);
-  console.log(`  HRV days: ${data.hrv.days?.length ?? 0}`);
-  console.log(`  Training load days: ${data.trainingLoad.length}`);
-  console.log(`  Schedule entries: ${data.trainingSchedule.length}`);
+  // Merge with existing data — don't let a failed session overwrite good data
+  const merged = mergeWithExisting(today, data);
 
-  // Download TCX files & enrich
+  const outPath = saveDailyData(today, merged);
+  console.log(`\nSaved to ${outPath}`);
+  console.log(`  Sport records: ${merged.sportRecords.length}`);
+  console.log(`  Activity details: ${merged.activityDetails.length}`);
+  console.log(`  Health days: ${merged.dailyHealth.length}`);
+  console.log(`  HRV days: ${merged.hrv.days?.length ?? 0}`);
+  console.log(`  Training load days: ${merged.trainingLoad.length}`);
+  console.log(`  Schedule entries: ${merged.trainingSchedule.length}`);
+
+  // Download TCX files & enrich (using merged data)
   console.log("\nDownloading TCX files...");
   downloadTCXFiles(today);
-  enrichWithTCX(data);
-  await enrichWithWeather(data);
-  saveDailyData(today, data);
+  enrichWithTCX(merged);
+  await enrichWithWeather(merged);
+  saveDailyData(today, merged);
 
-  return data;
+  return merged;
 }
 
 async function fetchIncremental(dateStr) {
@@ -431,7 +499,7 @@ async function fetchIncremental(dateStr) {
 
   const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
 
-  console.log("  [1/2] Sport records (7 days)...");
+  console.log("  [1/7] Sport records (7 days)...");
   const sportText = callTool("querySportRecords", {
     startDate: startDate7, endDate: today,
     sportTypeCodes: [65535], minDistanceKm: null, maxDistanceKm: null,
@@ -440,10 +508,10 @@ async function fetchIncremental(dateStr) {
   });
   const newRecords = parseSportRecords(sportText);
 
-  console.log("  [2/2] Activity details...");
+  console.log("  [2/7] Activity details...");
   const newDetails = fetchActivityDetails(newRecords);
 
-  // Merge
+  // Merge sport records
   const mergedRecords = mergeSportRecords(existing.sportRecords || [], newRecords);
   const mergedDetails = mergeActivityDetails(existing.activityDetails || [], newDetails);
 
@@ -452,6 +520,37 @@ async function fetchIncremental(dateStr) {
 
   existing.sportRecords = mergedRecords;
   existing.activityDetails = mergedDetails;
+
+  // Try to fill in missing non-sport fields (won't overwrite existing data)
+  const fillFields = [
+    { key: "userInfo", tool: "queryUserInfo", args: {}, parser: parseUserInfo, empty: null },
+    { key: "fitness", tool: "queryFitnessAssessmentOverview", args: {}, parser: parseFitnessOverview, empty: null },
+    { key: "recovery", tool: "queryRecoveryStatus", args: {}, parser: parseRecoveryStatus, empty: null },
+    { key: "trainingLoad", tool: "queryTrainingLoadAssessment", args: { days: 7 }, parser: parseTrainingLoad, empty: [] },
+    { key: "hrv", tool: "queryHrvAssessment", args: { days: 7, timezone: TIMEZONE }, parser: parseHRV, empty: { baseline: null, normalRange: null, days: [] } },
+    { key: "sleep", tool: "querySleepData", args: { startDate: formatDate(new Date(Date.now() - 3 * 86400000)), endDate: today, days: 3, timezone: TIMEZONE }, parser: parseSleepData, empty: [] },
+  ];
+  let filled = 0;
+  for (const { key, tool, args, parser, empty } of fillFields) {
+    const cur = existing[key];
+    const isEmpty = (v) => {
+      if (v == null) return true;
+      if (Array.isArray(v)) return v.length === 0;
+      if (typeof v === "object") return Object.keys(v).length === 0 || (v.days && Array.isArray(v.days) && v.days.length === 0 && !v.baseline);
+      return false;
+    };
+    if (isEmpty(cur)) {
+      console.log(`  [fill] ${key}...`);
+      const text = callTool(tool, args);
+      const parsed = parser(text);
+      if (!isEmpty(parsed)) {
+        existing[key] = parsed;
+        filled++;
+      }
+    }
+  }
+  if (filled > 0) console.log(`  Filled ${filled} missing fields`);
+
   existing.fetchedAt = new Date().toISOString();
 
   // Download new TCX files & enrich

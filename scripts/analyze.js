@@ -3,8 +3,9 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createLLM } from "../lib/llm.js";
-import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES } from "../lib/training-constants.js";
+import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
+import { calcPaceZones, calcHRZones } from "../lib/zones.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -630,6 +631,8 @@ function buildLLMContext(data) {
         comment: loadEntries[0]?.comment,
       },
     },
+    paceZones: calcPaceZones(fitness.thresholdPace),
+    hrZones: calcHRZones(LACTATE_THRESHOLD_HR, { useLTHR: true }),
     workouts,
     today: {
       date: now.toISOString().slice(0, 10),
@@ -639,6 +642,16 @@ function buildLLMContext(data) {
       totalKm: Math.round(totalKm * 10) / 10,
       runCount,
       totalTL,
+    },
+    upcomingRace: {
+      date: "2026-06-14",
+      dayName: "周日",
+      distanceKm: 10,
+      targetTimeMinLow: 48,
+      targetTimeMinHigh: 50,
+      targetPace: "4:48-5:00/km",
+      targetHRZone: "轻松跑 (Z2-Z3)",
+      description: "10公里路跑，当作一次节奏跑课表，正常训练强度，不影响全马330备战计划"
     },
   };
 }
@@ -726,7 +739,10 @@ async function main() {
 3. 具体可执行：改进建议必须给出具体配速范围、心率目标或步频要求
 4. 环境因素：结合天气数据（温度、体感温度、湿度、天气描述）分析对训练表现的影响，高温高湿需调低期望，凉爽干燥利于发挥
 
-注意：weeklyPlan 是未来7天的训练计划，必须从报告日期当天（${context.today.date}，${context.today.dayOfWeek}）开始，dayIndex为1-7对应报告日期起的第几天，不能用下一个周一/周日起算。
+注意：
+1. weeklyPlan 是未来7天的训练计划，必须从报告日期当天（${context.today.date}，${context.today.dayOfWeek}）开始，dayIndex为1-7对应报告日期起的第几天，不能用下一个周一/周日起算。
+2. ⚡${context.upcomingRace.date}（${context.upcomingRace.dayName}）有一场${context.upcomingRace.distanceKm}公里比赛，但对用户只是普通训练强度（当前10km预测42:31），请将周日作为一次节奏跑/比赛配速跑课表纳入正常训练计划，不需要赛前减量或特殊调整。整体计划应以全马330备战为主。
+3. 这是一个正常训练周，包含一次周日10km节奏跑，其他训练照常进行，周跑量目标45-60km。
 
 请输出严格JSON格式：
 
