@@ -1,0 +1,259 @@
+{
+  "fetchDate": "20260611",
+  "fetchedAt": "2026-06-11T09:38:35.939Z",
+  "userInfo": {
+    "height": 176,
+    "weight": 66.8,
+    "birthday": "1987-08-10",
+    "gender": "Male",
+    "nickname": "Jarvis"
+  },
+  "sportRecords": [],
+  "activityDetails": [],
+  "dailyHealth": [
+    {
+      "date": "20260605",
+      "steps": 18500,
+      "calories": 826,
+      "exerciseMin": 58,
+      "avgStress": 23,
+      "sleepScore": 93,
+      "sleepTotal": "9h 18min",
+      "deepSleep": "1h 28min",
+      "lightSleep": "5h 44min",
+      "remSleep": "1h 37min",
+      "awakeTime": "5 min"
+    },
+    {
+      "date": "20260606",
+      "steps": 5843,
+      "calories": 347,
+      "exerciseMin": 0,
+      "avgStress": 19,
+      "sleepScore": 73,
+      "sleepTotal": "6h 14min",
+      "deepSleep": "1h 37min",
+      "lightSleep": "2h 38min",
+      "remSleep": "22 min",
+      "awakeTime": "3 min"
+    },
+    {
+      "date": "20260607",
+      "steps": 23489,
+      "avgStress": 28,
+      "sleepScore": 97,
+      "sleepTotal": "7h 23min",
+      "deepSleep": "1h 46min",
+      "lightSleep": "3h 23min",
+      "remSleep": "1h 19min",
+      "awakeTime": "7 min"
+    },
+    {
+      "date": "20260608",
+      "steps": 5152,
+      "calories": 306,
+      "exerciseMin": 5,
+      "avgStress": 15,
+      "sleepScore": 94,
+      "sleepTotal": "7h 40min",
+      "deepSleep": "2h 3min",
+      "lightSleep": "4h 33min",
+      "remSleep": "1h 4min",
+      "awakeTime": "12 min"
+    },
+    {
+      "date": "20260609",
+      "steps": 20489,
+      "calories": 968,
+      "exerciseMin": 49,
+      "avgStress": 21,
+      "sleepScore": 97,
+      "sleepTotal": "9h 4min",
+      "deepSleep": "2h 17min",
+      "lightSleep": "4h 25min",
+      "remSleep": "1h 52min",
+      "awakeTime": "9 min"
+    },
+    {
+      "date": "20260610",
+      "steps": 18694,
+      "calories": 922,
+      "avgStress": 23,
+      "sleepScore": 88,
+      "sleepTotal": "6h 3min",
+      "deepSleep": "1h 16min",
+      "lightSleep": "3h 16min",
+      "remSleep": "1h 4min",
+      "awakeTime": "14 min"
+    },
+    {
+      "date": "20260611",
+      "steps": 5386,
+      "calories": 199,
+      "exerciseMin": 3,
+      "avgStress": 16,
+      "sleepScore": 95,
+      "sleepTotal": "7h 35min",
+      "deepSleep": "1h 24min",
+      "lightSleep": "3h 54min",
+      "remSleep": "2h 17min",
+      "awakeTime": "6 min"
+    }
+  ],
+  "sleep": [
+    {
+      "date": "2026-06-08",
+      "sleepScore": 93,
+      "mainSleep": "7h 40min",
+      "deepRatio": 26,
+      "lightRatio": 57,
+      "remRatio": 14,
+      "awakeRatio": 3,
+      "awakeTimeMin": 12,
+      "sleepWindow": "23:32 - 07:24"
+    },
+    {
+      "date": "2026-06-09",
+      "sleepScore": 96,
+      "mainSleep": "8h 34min",
+      "deepRatio": 26,
+      "lightRatio": 51,
+      "remRatio": 21,
+      "awakeRatio": 2,
+      "awakeTimeMin": 9,
+      "sleepWindow": "22:39 - 07:22"
+    },
+    {
+      "date": "2026-06-10",
+      "sleepScore": 88,
+      "mainSleep": "5h 36min",
+      "deepRatio": 22,
+      "lightRatio": 56,
+      "remRatio": 18,
+      "awakeRatio": 4,
+      "awakeTimeMin": 14,
+      "sleepWindow": "01:05 - 06:55"
+    },
+    {
+      "date": "2026-06-11",
+      "sleepScore": 95,
+      "mainSleep": "7h 35min",
+      "deepRatio": 18,
+      "lightRatio": 51,
+      "remRatio": 30,
+      "awakeRatio": 1,
+      "awakeTimeMin": 6,
+      "sleepWindow": "23:21 - 07:02"
+    }
+  ],
+  "hrv": {
+    "baseline": 64,
+    "normalRange": [
+      54,
+      74
+    ],
+    "days": [
+      {
+        "date": "2026-06-11",
+        "hrv": 56,
+        "evaluation": "Normal"
+      },
+      {
+        "date": "2026-06-10",
+        "hrv": 38,
+        "evaluation": "Low"
+      },
+      {
+        "date": "2026-06-09",
+        "hrv": 78,
+        "evaluation": "Above normal"
+      },
+      {
+        "date": "2026-06-08",
+        "hrv": 64,
+        "evaluation": "Normal"
+      },
+      {
+        "date": "2026-06-07",
+        "hrv": 47,
+        "evaluation": "Low"
+      },
+      {
+        "date": "2026-06-06",
+        "hrv": 70,
+        "evaluation": "Normal"
+      },
+      {
+        "date": "2026-06-05",
+        "hrv": 67,
+        "evaluation": "Normal"
+      }
+    ]
+  },
+  "trainingLoad": [
+    {
+      "date": "2026-06-11",
+      "comment": "Optimized",
+      "shortTermLoad": 65,
+      "longTermLoad": 63,
+      "loadRatio": 1.03
+    },
+    {
+      "date": "2026-06-10",
+      "comment": "Optimized",
+      "shortTermLoad": 76,
+      "longTermLoad": 65,
+      "loadRatio": 1.16
+    },
+    {
+      "date": "2026-06-09",
+      "comment": "Optimized",
+      "shortTermLoad": 74,
+      "longTermLoad": 64,
+      "loadRatio": 1.15
+    },
+    {
+      "date": "2026-06-08",
+      "comment": "Maintaining",
+      "shortTermLoad": 60,
+      "longTermLoad": 62,
+      "loadRatio": 0.96
+    },
+    {
+      "date": "2026-06-07",
+      "comment": "Optimized",
+      "shortTermLoad": 70,
+      "longTermLoad": 64,
+      "loadRatio": 1.09
+    },
+    {
+      "date": "2026-06-06",
+      "comment": "Maintaining",
+      "shortTermLoad": 57,
+      "longTermLoad": 61,
+      "loadRatio": 0.93
+    },
+    {
+      "date": "2026-06-05",
+      "comment": "Optimized",
+      "shortTermLoad": 67,
+      "longTermLoad": 63,
+      "loadRatio": 1.06
+    }
+  ],
+  "recovery": {
+    "percentage": 100,
+    "level": "Heavy training allowed",
+    "estimatedFullRecovery": "0h"
+  },
+  "fitness": {
+    "vo2max": 53,
+    "runningLevel": 88,
+    "thresholdPace": "4:18",
+    "pred5k": "20:33",
+    "pred10k": "42:31",
+    "predHalfMarathon": "1:34:42",
+    "predMarathon": "3:18:18"
+  },
+  "trainingSchedule": []
+}

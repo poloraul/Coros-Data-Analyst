@@ -1,0 +1,321 @@
+{
+  "fetchDate": "20260611",
+  "generatedAt": "2026-06-11T09:41:36.128Z",
+  "context": {
+    "profile": {
+      "age": 38,
+      "height": 176,
+      "weight": 66.8,
+      "vo2max": 53,
+      "thresholdPace": "4:18",
+      "maxHR": 182
+    },
+    "goal": {
+      "targetTime": "3:30:00",
+      "targetPace": "4:58/km",
+      "marathonDate": "2026-12-06",
+      "weeksLeft": 26,
+      "currentPhase": "准备期",
+      "currentWeek": 0,
+      "phaseFocus": "建立基础跑量、维持有氧",
+      "targetWeeklyKm": [
+        45,
+        60
+      ]
+    },
+    "bodyStatus": {
+      "recovery": {
+        "percentage": 100,
+        "level": "Heavy training allowed"
+      },
+      "hrv": {
+        "baseline": 64,
+        "normalRange": [
+          54,
+          74
+        ],
+        "latestValue": 56,
+        "latestEval": "Normal",
+        "consecutiveBelow": 0
+      },
+      "sleep": {
+        "latestScore": 95,
+        "deepRatio": 18
+      },
+      "trainingLoad": {
+        "shortTerm": 65,
+        "longTerm": 63,
+        "ratio": 1.03,
+        "comment": "Optimized"
+      }
+    },
+    "paceZones": {
+      "thresholdPace": "4:18",
+      "thresholdPaceSec": 258,
+      "zones": [
+        {
+          "key": "Z1",
+          "name": "恢复跑",
+          "color": "#7ec882",
+          "short": "恢复",
+          "pctOfThreshold": "0-81%",
+          "range": "> 5:19/km"
+        },
+        {
+          "key": "Z2",
+          "name": "轻松跑",
+          "color": "#4db8a4",
+          "short": "轻松",
+          "pctOfThreshold": "81-91%",
+          "range": "5:19/km — 4:44/km"
+        },
+        {
+          "key": "Z3",
+          "name": "马拉松配速",
+          "color": "#f4c542",
+          "short": "M配速",
+          "pctOfThreshold": "91-98%",
+          "range": "4:44/km — 4:23/km"
+        },
+        {
+          "key": "Z4",
+          "name": "阈值跑",
+          "color": "#e89898",
+          "short": "阈值",
+          "pctOfThreshold": "98-106%",
+          "range": "4:23/km — 4:03/km"
+        },
+        {
+          "key": "Z5",
+          "name": "间歇跑",
+          "color": "#c07070",
+          "short": "间歇",
+          "pctOfThreshold": "106-130%",
+          "range": "< 4:03/km"
+        }
+      ]
+    },
+    "hrZones": {
+      "refHR": 170,
+      "mode": "lthr",
+      "modeLabel": "乳酸阈心率 170 bpm",
+      "restingHR": null,
+      "zones": [
+        {
+          "key": "Z1",
+          "name": "恢复跑",
+          "color": "#7ec882",
+          "short": "恢复",
+          "hrRange": "< 138 bpm",
+          "hrRangeShort": "<138",
+          "pctLTHR": "<81%"
+        },
+        {
+          "key": "Z2",
+          "name": "轻松跑",
+          "color": "#4db8a4",
+          "short": "轻松",
+          "hrRange": "138 — 148 bpm",
+          "hrRangeShort": "138-148",
+          "pctLTHR": "81-87%"
+        },
+        {
+          "key": "Z3",
+          "name": "马拉松配速",
+          "color": "#f4c542",
+          "short": "M配速",
+          "hrRange": "148 — 160 bpm",
+          "hrRangeShort": "148-160",
+          "pctLTHR": "87-94%"
+        },
+        {
+          "key": "Z4",
+          "name": "阈值跑",
+          "color": "#e89898",
+          "short": "阈值",
+          "hrRange": "160 — 170 bpm",
+          "hrRangeShort": "160-170",
+          "pctLTHR": "94-100%"
+        },
+        {
+          "key": "Z5",
+          "name": "间歇跑",
+          "color": "#c07070",
+          "short": "间歇",
+          "hrRange": "> 170 bpm",
+          "hrRangeShort": ">170",
+          "pctLTHR": ">100%"
+        }
+      ]
+    },
+    "workouts": [],
+    "today": {
+      "date": "2026-06-11",
+      "dayOfWeek": "周四"
+    },
+    "weeklySummary": {
+      "totalKm": 0,
+      "runCount": 0,
+      "totalTL": 0
+    },
+    "upcomingRace": {
+      "date": "2026-06-14",
+      "dayName": "周日",
+      "distanceKm": 10,
+      "targetTimeMinLow": 48,
+      "targetTimeMinHigh": 50,
+      "targetPace": "4:48-5:00/km",
+      "targetHRZone": "轻松跑 (Z2-Z3)",
+      "description": "10公里路跑，当作一次节奏跑课表，正常训练强度，不影响全马330备战计划"
+    }
+  },
+  "analysis": {
+    "workoutReviews": [],
+    "bodyAssessment": {
+      "overallLevel": "green",
+      "summary": "身体状态优秀，恢复充分，HRV正常，睡眠质量高，训练负荷处于优化区间，可承受正常训练。",
+      "details": [
+        "恢复状态：100% 恢复度，允许进行高强度训练。",
+        "HRV：56 在正常范围（54-74）内，无积累性疲劳。",
+        "睡眠：得分 95，深度睡眠占比 18%，质量优异。",
+        "训练负荷：短期/长期负荷比 1.03，负荷优化，没有过度训练风险。"
+      ],
+      "recommendations": [
+        "保持当前恢复和睡眠质量。",
+        "本周可按正常计划执行，注意周日节奏跑强度控制，避免因状态好而加速。"
+      ]
+    },
+    "trainingPatternAnalysis": {
+      "summary": "当前处于准备期，缺少近期具体训练数据，但根据生理指标与目标分析，有氧基础及马拉松配速专项能力需在本阶段重点发展。",
+      "strengths": [
+        "VO₂max 53 提供良好的速度潜力，阈值配速 4:18/km 远超目标马拉松配速 4:58/km。",
+        "身体恢复与调节能力强（HRV、睡眠、负荷比均处于理想区间）。"
+      ],
+      "risks": [
+        "当前 10k 预测成绩 42:31（4:15/km），但本周末比赛目标配速 4:48-5:00，速度能力与目标之间的不匹配可能导致训练中过度依赖速度而轻视马拉松配速耐力。",
+        "缺乏足够有氧跑量积累将影响马拉松后半程表现。"
+      ],
+      "suggestions": [
+        "本周安排三次轻松跑（包含恢复跑），一次节奏跑（周日比赛），一次长距离跑，总跑量 45-50 km。",
+        "节奏跑严格按照 4:50-5:00/km 控制，心率维持在 138-158 bpm（Z2-Z3），不要因兴奋提速。",
+        "长距离跑配速 5:19-5:50/km，心率稳定在 Z2，强化慢肌纤维耐力。",
+        "逐步提升周跑量，避免强度同时增长。"
+      ]
+    },
+    "weeklyPlan": [
+      {
+        "dayIndex": 1,
+        "dayName": "周四",
+        "date": "2026-06-11",
+        "type": "轻松跑",
+        "totalDistance": 7,
+        "paceZone": "5:19 — 5:50/km",
+        "hrZone": "138-148 bpm (Z2)",
+        "description": "恢复性轻松跑，激活身体，为周末训练蓄力。",
+        "详细计划": {
+          "warmup": "5 分钟动态拉伸 + 10 分钟慢跑（5:50-6:00/km）",
+          "main": "40 分钟轻松跑，配速 5:19-5:50/km，心率 <148 bpm，保持呼吸自如",
+          "cooldown": "5 分钟慢跑 + 5 分钟静态拉伸",
+          "notes": "注意步频保持 175-180 spm，落地轻盈。"
+        }
+      },
+      {
+        "dayIndex": 2,
+        "dayName": "周五",
+        "date": "2026-06-12",
+        "type": "轻松跑",
+        "totalDistance": 8,
+        "paceZone": "5:19 — 5:40/km",
+        "hrZone": "138-148 bpm (Z2)",
+        "description": "有氧耐力维持，累积跑量，保持低强度。",
+        "详细计划": {
+          "warmup": "10 分钟慢跑 + 动态拉伸",
+          "main": "45-50 分钟轻松跑，配速 5:19-5:40/km，心率 Z2，若感觉良好可略加速至上限但不超过 Z3",
+          "cooldown": "5 分钟慢跑 + 拉伸",
+          "notes": "保持节奏，为周日节奏跑做好铺垫，不宜疲劳。"
+        }
+      },
+      {
+        "dayIndex": 3,
+        "dayName": "周六",
+        "date": "2026-06-13",
+        "type": "休息/恢复跑",
+        "totalDistance": 0,
+        "paceZone": "休息或慢跑",
+        "hrZone": "休息或 <138 bpm",
+        "description": "完全休息或极轻度恢复跑，确保周日比赛状态。",
+        "详细计划": {
+          "warmup": "",
+          "main": "休息，或 20-30 分钟超轻松慢跑（>6:00/km），心率 <138 bpm",
+          "cooldown": "充分拉伸、核心激活练习",
+          "notes": "补充碳水，注意补水。"
+        }
+      },
+      {
+        "dayIndex": 4,
+        "dayName": "周日",
+        "date": "2026-06-14",
+        "type": "节奏跑（比赛配速）",
+        "totalDistance": 10,
+        "paceZone": "4:50-5:00/km (目标比赛配速)",
+        "hrZone": "148-160 bpm (Z3) 上限不超过 160 bpm",
+        "description": "10 公里路跑，作为马拉松配速节奏跑，检验并建立配速感，切忌全力冲刺。",
+        "详细计划": {
+          "warmup": "15 分钟慢跑 + 动态拉伸 + 3 组 100 米渐快跑",
+          "main": "10 km 节奏跑，配速 4:50-5:00/km，心率控制在 148-158 bpm，后半程应感觉可控，若心率过高应降速",
+          "cooldown": "10 分钟慢跑 + 拉伸",
+          "notes": "专注呼吸节奏（如 3 步吸 2 步呼），步频 180 spm。当做一次高质量训练而不是比赛，不冲 PB。"
+        }
+      },
+      {
+        "dayIndex": 5,
+        "dayName": "周一",
+        "date": "2026-06-15",
+        "type": "恢复跑或休息",
+        "totalDistance": 5,
+        "paceZone": ">5:50/km",
+        "hrZone": "<138 bpm (Z1)",
+        "description": "赛后积极恢复，促进血液循环，加速代谢。",
+        "详细计划": {
+          "warmup": "快走 5 分钟",
+          "main": "30 分钟极轻松恢复跑，配速 5:50-6:20/km，心率绝对 <138 bpm",
+          "cooldown": "拉伸与泡沫轴",
+          "notes": "强度放低，关注拉伸和营养补充。"
+        }
+      },
+      {
+        "dayIndex": 6,
+        "dayName": "周二",
+        "date": "2026-06-16",
+        "type": "轻松跑 + 节奏短加速",
+        "totalDistance": 8,
+        "paceZone": "5:19-5:40/km 为主，含 4 组 30 秒 @4:30/km",
+        "hrZone": "138-148 bpm (Z2)，加速时允许短暂 Z4",
+        "description": "有氧跑中加入短时间马拉松配速刺激，活化神经肌肉。",
+        "详细计划": {
+          "warmup": "10 分钟慢跑 + 动态拉伸",
+          "main": "40 分钟轻松跑 (Z2)，期间插入 4×30 秒 @4:30-4:40/km，中间恢复 2 分钟 Z1",
+          "cooldown": "5 分钟慢跑 + 拉伸",
+          "notes": "加速时注意跑姿，减少触地时间。"
+        }
+      },
+      {
+        "dayIndex": 7,
+        "dayName": "周三",
+        "date": "2026-06-17",
+        "type": "LSD（长距离慢跑）",
+        "totalDistance": 13,
+        "paceZone": "5:19 — 5:50/km",
+        "hrZone": "138-148 bpm (Z2) 持续稳定",
+        "description": "本周最长距离，纯有氧耐力跑，积累跑量，提升脂肪供能能力。",
+        "详细计划": {
+          "warmup": "10 分钟慢跑 + 动态拉伸",
+          "main": "13 km 匀速跑，配速 5:19-5:40/km，心率稳定 Z2，尽量不漂移 >5%",
+          "cooldown": "10 分钟慢跑 + 拉伸 + 核心力量",
+          "notes": "注意补水，后半程如感觉疲劳可略降速至 5:50/km 但心率维持 Z2。"
+        }
+      }
+    ],
+    "coachAdvice": "目前身体指标优秀，是启动马拉松备战的完美时机。本周以轻松有氧跑量为主，周日节奏跑是核心，请严格按配速 4:50-5:00/km 执行，模拟马拉松后半程感觉，切忌因 10k 预测能力过高而加速。本周总跑量约 51 km，完全在目标区间 45-60 km。重点关注心率漂移（长跑中 <5%）、步频稳定在 180 左右。若周日出现高温或高湿，主动放慢 5-10 秒/km，安全第一。下一阶段可逐步引入间歇训练，巩固阈值能力。"
+  }
+}

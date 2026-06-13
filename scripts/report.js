@@ -262,18 +262,34 @@ function generateHTML(data, aiAnalysis) {
     return "rgba(192,112,112,1)";
   });
 
-  // Sleep chart data — use dailyHealth for 7-day coverage (data.sleep only has 3 days)
-  const healthDays7 = (data.dailyHealth || []).slice(0, 7);
-  const sleepLabels = healthDays7.map(s => {
-    const d = s.date || "";
-    return d.length === 8 ? d.slice(4, 6) + "/" + d.slice(6, 8) : d.slice(5);
-  });
-  const sleepScores = healthDays7.map(s => s.sleepScore);
+  // Sleep chart data — prefer dailyHealth (has absolute durations); fallback to sleep field
   const parseSleepTime = (str) => {
     if (!str) return 0;
     const h = str.match(/(\d+)\s*h/); const m = str.match(/(\d+)\s*min/);
     return (h ? parseInt(h[1]) * 60 : 0) + (m ? parseInt(m[1]) : 0);
   };
+  const buildSleepData = () => {
+    const dh = data.dailyHealth || [];
+    if (dh.length > 0) return dh;
+    // Fallback: convert 'sleep' field entries to dailyHealth-compatible format
+    const sl = data.sleep || [];
+    return sl.map(s => {
+      const totalMin = parseSleepTime(s.mainSleep);
+      return {
+        date: (s.date || "").replace(/-/g, ""),
+        sleepScore: s.sleepScore,
+        deepSleep: Math.round(totalMin * (s.deepRatio || 0) / 100) + "min",
+        lightSleep: Math.round(totalMin * (s.lightRatio || 0) / 100) + "min",
+        remSleep: Math.round(totalMin * (s.remRatio || 0) / 100) + "min",
+      };
+    });
+  };
+  const healthDays7 = buildSleepData().slice(0, 7);
+  const sleepLabels = healthDays7.map(s => {
+    const d = s.date || "";
+    return d.length === 8 ? d.slice(4, 6) + "/" + d.slice(6, 8) : d.slice(5);
+  });
+  const sleepScores = healthDays7.map(s => s.sleepScore);
   const deepHours = healthDays7.map(d => Math.round(parseSleepTime(d.deepSleep) / 60 * 10) / 10);
   const lightHours = healthDays7.map(d => Math.round(parseSleepTime(d.lightSleep) / 60 * 10) / 10);
   const remHours = healthDays7.map(d => Math.round(parseSleepTime(d.remSleep) / 60 * 10) / 10);
