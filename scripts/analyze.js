@@ -6,6 +6,7 @@ import { createLLM } from "../lib/llm.js";
 import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 import { calcPaceZones, calcHRZones } from "../lib/zones.js";
+import { getHolidayAnnotations, getHolidaysInRange } from "../lib/holidays.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -653,6 +654,14 @@ function buildLLMContext(data) {
       targetHRZone: "轻松跑 (Z2-Z3)",
       description: "10公里路跑，当作一次节奏跑课表，正常训练强度，不影响全马330备战计划"
     },
+    holidays: {
+      thisWeek: getHolidayAnnotations([...Array(7).keys()].map(i => {
+        const d = new Date(now);
+        d.setDate(d.getDate() + i);
+        return d.toISOString().slice(0, 10);
+      })),
+      upcoming: getHolidaysInRange(now.toISOString().slice(0, 10), "2026-12-31"),
+    },
   };
 }
 
@@ -743,6 +752,11 @@ async function main() {
 1. weeklyPlan 是未来7天的训练计划，必须从报告日期当天（${context.today.date}，${context.today.dayOfWeek}）开始，dayIndex为1-7对应报告日期起的第几天，不能用下一个周一/周日起算。
 2. ⚡${context.upcomingRace.date}（${context.upcomingRace.dayName}）有一场${context.upcomingRace.distanceKm}公里比赛，但对用户只是普通训练强度（当前10km预测42:31），请将周日作为一次节奏跑/比赛配速跑课表纳入正常训练计划，不需要赛前减量或特殊调整。整体计划应以全马330备战为主。
 3. 这是一个正常训练周，包含一次周日10km节奏跑，其他训练照常进行，周跑量目标45-60km。
+4. 训练安排偏好：
+   - 间歇跑、节奏跑等强度课放在周三或周四
+   - LSD（长距离慢跑）安排在周六或周日
+   - 其他日期安排轻松跑或休息
+5. 节假日安排：如果本周包含法定节假日（见holidays数据），节假日当天可以安排节奏跑、间歇跑或LSD等强度课，不必安排轻松跑或休息。
 
 请输出严格JSON格式：
 

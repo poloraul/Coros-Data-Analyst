@@ -320,6 +320,67 @@ function enrichWithTCX(data) {
   console.log(`  TCX enriched: ${enriched}/${details.length} activities`);
 }
 
+/**
+ * Reconcile activityDetails from TCX files.
+ * For sportRecords that have a TCX file but no activityDetail entry,
+ * parse the TCX to create one. This fixes cases where getActivityDetail
+ * failed (e.g., old activities that synced late) while TCX was downloaded.
+ */
+function reconcileFromTCX(data) {
+  const records = data.sportRecords || [];
+  const details = data.activityDetails || [];
+  const existingLabelIds = new Set(details.map(d => d.labelId));
+  const birthday = data.userInfo?.birthday || "1990-01-01";
+  const maxHR = 220 - getAge(birthday);
+  let created = 0;
+
+  for (const record of records) {
+    if (!record.labelId || existingLabelIds.has(record.labelId)) continue;
+    const tcxPath = path.join(TCX_DIR, `${record.labelId}.tcx`);
+    if (!existsSync(tcxPath)) continue;
+
+    const metrics = analyzeTCX(tcxPath, maxHR);
+    if (!metrics) continue;
+
+    // Parse duration (HH:MM:SS or MM:SS) into workoutTime
+    const fmtDuration = (d) => {
+      if (!d) return null;
+      const parts = d.split(':');
+      if (parts.length === 2) return d;
+      if (parts.length === 3) return `${+parts[0]}:${parts[1]}:${parts[2]}`;
+      return d;
+    };
+
+    const detail = {
+      date: record.date,
+      labelId: record.labelId,
+      sportType: record.sportType,
+      distance: record.distance,
+      avgPace: record.avgPace,
+      avgHR: record.avgHR,
+      calories: record.calories,
+      workoutTime: fmtDuration(record.duration),
+      movingAvgPace: record.avgPace,
+      adjustedPace: record.avgPace,
+      bestKm: null,
+      performance: null,
+      avgCadence: metrics.cadence?.avgCadence || null,
+      avgStrideLength: null,
+      elevationGain: metrics.elevation?.gain || null,
+      elevationLoss: metrics.elevation?.loss || null,
+      trainingLoad: null,
+      tcxMetrics: metrics,
+    };
+
+    data.activityDetails = data.activityDetails || [];
+    data.activityDetails.push(detail);
+    existingLabelIds.add(record.labelId);
+    created++;
+  }
+
+  if (created > 0) console.log(`  TCX reconciled: ${created} activities (sportRecord → activityDetail via TCX)`);
+}
+
 async function enrichWithWeather(data) {
   const details = data.activityDetails || [];
   const records = data.sportRecords || [];
@@ -476,6 +537,7 @@ async function fetchAll(dateStr) {
   console.log("\nDownloading TCX files...");
   downloadTCXFiles(today);
   enrichWithTCX(merged);
+  reconcileFromTCX(merged);
   await enrichWithWeather(merged);
   saveDailyData(today, merged);
 
@@ -559,6 +621,7 @@ async function fetchIncremental(dateStr) {
     downloadTCXFiles(today);
   }
   enrichWithTCX(existing);
+  reconcileFromTCX(existing);
   await enrichWithWeather(existing);
   saveDailyData(today, existing);
 

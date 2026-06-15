@@ -197,6 +197,64 @@ function generateRuleBasedPlan(data, recovery) {
   return { phase, days, completedKm, plannedKm, projectedTotal, targetKm: phase.weeklyKm?.join("-"), recoveryMultiplier };
 }
 
+// --- Plan Consistency Post-Processing ---
+
+/**
+ * Extract pace range (slow/fast in seconds) from text containing "配速X:XX-X:XX"
+ * Filters out stride/sprint paces (跨步跑) that don't represent main training zone.
+ */
+function extractPaceRange(text) {
+  if (!text) return null;
+  // Remove stride-related pace info before parsing (short bursts, not main zone)
+  const clean = text.replace(/跨步跑\s*\([^)]*配速[^)]*\)/g, '')
+                    .replace(/跨步[^，。，]*配速[^，。，]*[，。]/g, '');
+  const rangeRe = /配速(\d+:\d+)\s*[-–—~〜]\s*(\d+:\d+)/g;
+  const matches = [];
+  let m;
+  while ((m = rangeRe.exec(clean)) !== null) {
+    const p1 = paceToSeconds(m[1]);
+    const p2 = paceToSeconds(m[2]);
+    if (p1 && p2) matches.push({ slow: Math.max(p1, p2), fast: Math.min(p1, p2) });
+  }
+  if (matches.length === 0) {
+    // Fallback: try single pace "配速X:XX"
+    const singleRe = /配速(\d+:\d+)/g;
+    while ((m = singleRe.exec(clean)) !== null) {
+      const p = paceToSeconds(m[1]);
+      if (p) matches.push({ slow: p, fast: p });
+    }
+  }
+  if (matches.length === 0) return null;
+  return {
+    fastPace: Math.min(...matches.map(r => r.fast)),
+    slowPace: Math.max(...matches.map(r => r.slow)),
+  };
+}
+
+/**
+ * Derive pace zone string from detailed plan, matching actual paces used.
+ * Overrides LLM-generated independent paceZone for consistency.
+ */
+function derivePaceZone(detail, thresholdPace) {
+  if (!detail) return null;
+  const tp = paceToSeconds(thresholdPace);
+  if (!tp) return null;
+  // Try main section first, fallback to warmup then cooldown
+  let range = extractPaceRange(detail.main);
+  if (!range) range = extractPaceRange(detail.warmup);
+  if (!range) range = extractPaceRange(detail.cooldown);
+  if (!range) return null;
+  const fastStr = secondsToPace(range.fastPace);
+  const slowStr = secondsToPace(range.slowPace);
+  const fastZone = classifyPace(range.fastPace, tp);
+  const slowZone = classifyPace(range.slowPace, tp);
+  const zoneLabels = ['Z1', 'Z2', 'Z3', 'Z4', 'Z5'];
+  if (fastZone === slowZone) {
+    return `${fastStr} — ${slowStr}/km (${zoneLabels[fastZone]})`;
+  }
+  return `${fastStr} — ${slowStr}/km (${zoneLabels[fastZone]}-${zoneLabels[slowZone]})`;
+}
+
 // --- HTML Generation ---
 
 function generateHTML(data, aiAnalysis) {
@@ -222,6 +280,17 @@ function generateHTML(data, aiAnalysis) {
   const { start: weekStart, end: weekEnd } = getCurrentWeekBounds();
   const weekRecords = records.filter(r => r.date >= weekStart && r.date <= weekEnd);
   const totalKm = weekRecords.reduce((s, r) => s + (r.distance || 0), 0);
+  // Last 7 days (sliding window) — reusable across progress bar & tables
+  const fetchDate = data.fetchDate || formatDate(new Date());
+  const fetchDateObj = new Date(+fetchDate.slice(0,4), +fetchDate.slice(4,6)-1, +fetchDate.slice(6,8));
+  const last7Start = new Date(fetchDateObj);
+  last7Start.setDate(last7Start.getDate() - 6);
+  const fmtISO = (d) => d.toISOString().slice(0, 10);
+  const last7StartStr = fmtISO(last7Start);
+  const last7EndStr = fmtISO(fetchDateObj);
+  const last7Records = records.filter(r => r.date >= last7StartStr && r.date <= last7EndStr);
+  const last7Km = last7Records.reduce((s, r) => s + (r.distance || 0), 0);
+  const last7Details = details.filter(d => d.date >= last7StartStr && d.date <= last7EndStr);
   const totalTL = details.reduce((s, d) => s + (d.trainingLoad || 0), 0);
 
   const levelColors = { green: "#7ec882", yellow: "#f4c542", red: "#e89898" };
@@ -304,6 +373,7 @@ function generateHTML(data, aiAnalysis) {
   const kmTargetMax = (phase.weeklyKm || [60, 60])[1];
   const kmTargetMin = (phase.weeklyKm || [45, 45])[0];
   const kmPct = kmTargetMax > 0 ? Math.min(100, Math.round((totalKm / kmTargetMax) * 100)) : 0;
+  const last7Pct = kmTargetMax > 0 ? Math.min(100, Math.round((last7Km / kmTargetMax) * 100)) : 0;
 
   const latestHRV = hrvDays[0]?.hrv;
   const hrvNormalLow = data.hrv?.normalRange?.[0] || 50;
@@ -609,10 +679,10 @@ ${(() => {
 
 ${aiWorkoutReviews.length > 1 ? `
   <div style="margin-top:16px">
-    <div class="section-title" style="font-size:.95rem">其他近期训练</div>
+    <div class="section-title" style="font-size:.95rem">其他近期训练（近7天）</div>
     <table>
       <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
-      ${aiWorkoutReviews.filter(r => r.date !== (details[0]?.date)).sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(r => `<tr>
+      ${aiWorkoutReviews.filter(r => r.date !== (details[0]?.date) && r.date >= last7StartStr && r.date <= last7EndStr).sort((a, b) => (b.date || "").localeCompare(a.date || "")).map(r => `<tr>
         <td>${r.date || "-"}</td>
         <td style="max-width:300px">${r.summary || "-"}</td>
         <td>${(r.positives || []).map(p => `<span class="badge badge-green">${p}</span>`).join("") || "-"}</td>
@@ -620,12 +690,12 @@ ${aiWorkoutReviews.length > 1 ? `
       </tr>`).join("")}
     </table>
   </div>
-` : (details.length > 1 ? `
+` : (last7Details.length > 1 ? `
   <div style="margin-top:16px">
-    <div class="section-title" style="font-size:.95rem">其他近期训练</div>
+    <div class="section-title" style="font-size:.95rem">其他近期训练（近7天）</div>
     <table>
       <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
-      ${details.slice(1).map(d => `<tr>
+      ${last7Details.slice(1).map(d => `<tr>
         <td>${d.date}</td>
         <td>${d.distance}km</td>
         <td>${d.avgPace}/km</td>
@@ -672,12 +742,12 @@ ${aiWorkoutReviews.length > 1 ? `
   </div>
 
   <!-- Workouts Table -->
-  ${details.length > 0 ? `
+  ${last7Details.length > 0 ? `
   <div style="margin-top:20px">
-    <div class="section-title" style="font-size:.95rem">近期训练一览</div>
+    <div class="section-title" style="font-size:.95rem">近期训练一览（近7天）</div>
     <table>
       <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
-      ${details.map(d => `<tr>
+      ${last7Details.map(d => `<tr>
         <td>${d.date}</td>
         <td>${d.distance}km</td>
         <td>${d.avgPace}/km</td>
@@ -748,12 +818,12 @@ ${aiWorkoutReviews.length > 1 ? `
     </div>
     <div class="progress-bar-container" style="margin-bottom:0">
       <div class="progress-bar-labels">
-        <span>已完成 ${totalKm.toFixed(1)}km</span>
-        <span>${kmPct}%</span>
+        <span>近7天已完成 ${last7Km.toFixed(1)}km</span>
+        <span>${last7Pct}%</span>
         <span>目标 ${kmTargetMax}km</span>
       </div>
       <div class="progress-bar-track">
-        <div class="progress-bar-fill" style="width:${kmPct}%;background:${kmPct > 100 ? levelColors.yellow : kmPct > 80 ? levelColors.green : levelColors.red}"></div>
+        <div class="progress-bar-fill" style="width:${last7Pct}%;background:${last7Pct > 100 ? levelColors.yellow : last7Pct > 80 ? levelColors.green : levelColors.red}"></div>
       </div>
     </div>
   </div>
@@ -767,11 +837,13 @@ ${aiWorkoutReviews.length > 1 ? `
     ${aiWeeklyPlan.map(d => {
       const hasPrescription = d["详细计划"] && (d["详细计划"].warmup || d["详细计划"].main || d["详细计划"].cooldown || d["详细计划"].notes);
       const pId = "p-" + d.dayIndex;
+      // Derive paceZone from detailed plan for consistency (overrides LLM's independent generation)
+      const derivedPace = d["详细计划"] ? (derivePaceZone(d["详细计划"], tp) || d.paceZone || "-") : (d.paceZone || "-");
       return `<tr class="${d.type === "休息" ? "" : ""}">
         <td>${(d.dayName || "").replace(/（[^）]*）/g, "")} ${(d.date || "").slice(5)}${/比赛/i.test(d.dayName + d.type) ? ' <span class="badge badge-yellow">🏁 比赛日</span>' : ""}</td>
         <td>${d.type}</td>
         <td>${d.totalDistance > 0 ? d.totalDistance + "km" : "-"}</td>
-        <td>${d.paceZone || "-"}</td>
+        <td>${derivedPace}</td>
         <td>${d.hrZone || "-"}</td>
         <td>${d.description || "-"}</td>
         <td>${hasPrescription ? `<span class="prescription-toggle" onclick="var el=document.getElementById('${pId}');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="${pId}">${d["详细计划"].warmup ? `<dt>热身</dt><dd>${d["详细计划"].warmup}</dd>` : ""}${d["详细计划"].main ? `<dt>主课</dt><dd>${d["详细计划"].main}</dd>` : ""}${d["详细计划"].cooldown ? `<dt>冷身</dt><dd>${d["详细计划"].cooldown}</dd>` : ""}${d["详细计划"].notes ? `<dt>备注</dt><dd>${d["详细计划"].notes}</dd>` : ""}</div>` : "-"}</td>
