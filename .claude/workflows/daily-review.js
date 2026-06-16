@@ -17,16 +17,15 @@ phase("选择 LLM");
 let selectedProvider = args?.provider || null;
 if (!selectedProvider) {
   const providerChoice = await agent(
-    `请询问用户本次分析使用哪个 LLM 提供商。向用户展示以下选项让其选择：
+    `请询问用户本次分析使用哪个 LLM 提供商。当前可用:
     - deepseek: DeepSeek 原生 API
-    - volcengine: 火山方舟 (Volcengine Ark) Coding Plan
     返回用户选择的提供商名称。`,
     {
       label: "provider-select",
       schema: {
         type: "object",
         properties: {
-          provider: { type: "string", enum: ["deepseek", "volcengine"] },
+          provider: { type: "string", enum: ["deepseek"] },
         },
         required: ["provider"],
       },
@@ -82,74 +81,40 @@ await agent(
 );
 
 phase("数据验证");
-log("正在验证分析结果的准确性...");
-const verification = await agent(
-  `验证训练分析结果的数据一致性。
+log("运行数据验证脚本...");
+const verifyResult = await agent(
+  `运行数据一致性验证脚本。
 
-  读取以下文件：
-  1. data/daily/${dateStr}.json（COROS 原始数据）
-  2. data/daily/${dateStr}-analysis.json（LLM 分析结果）
+  执行: node scripts/validate.js --date ${dateStr}
+  确认 exit code 为 0，获取输出的 JSON 结果。
 
-  检查以下项目：
-  分析 JSON 中 tcxSummary 字段，格式如 "负分段加速(X:XX→X:XX)" 或 "后程掉速(X:XX→X:XX)"。
-  - 配速数值 = 每公里用时（秒），数值越大越慢
-  - "负分段加速" = 首公里配速 > 末公里配速（首公里慢末公里快，越跑越快）
-  - "后程掉速" = 首公里配速 < 末公里配速（首公里快末公里慢，越跑越慢）
-  - 检查标签与实际数值方向是否一致
-
-  **2. 周跑量统计**
-  - 周周期应为周一→周日
-  - 检查 weeklySummary.totalKm 是否匹配该周期内的活动记录
-
-  **3. 数据一致性**
-  - bodyAssessment 中引用的 HRV/恢复/睡眠数值与 raw data 是否基本一致
-  - weeklyPlan 中的日期是否从今天开始正确
-
-  输出检查报告。`,
+  将 JSON 中的 issues 数组、hasIssues 布尔值、summary 字符串直接返回。`,
   {
     label: "verify",
     model: "haiku",
     schema: {
       type: "object",
       properties: {
-        report: {
-          type: "object",
-          properties: {
-            issues: {
-              type: "array",
-              items: {
-                type: "object",
-                properties: {
-                  severity: { type: "string", enum: ["error", "warning", "info"] },
-                  category: { type: "string" },
-                  description: { type: "string" },
-                },
-                required: ["severity", "category", "description"],
-              },
-            },
-            hasIssues: { type: "boolean" },
-            summary: { type: "string" },
-          },
-          required: ["issues", "hasIssues", "summary"],
-        },
+        issues: { type: "array", items: { type: "object", properties: { severity: { type: "string" }, category: { type: "string" }, description: { type: "string" } } } },
+        hasIssues: { type: "boolean" },
+        summary: { type: "string" },
       },
-      required: ["report"],
     },
   },
 );
 
-if (verification.report.hasIssues) {
-  const errors = verification.report.issues.filter((i) => i.severity === "error");
-  const warnings = verification.report.issues.filter((i) => i.severity === "warning");
+if (verifyResult.hasIssues) {
+  const errors = verifyResult.issues.filter((i) => i.severity === "error");
+  const warnings = verifyResult.issues.filter((i) => i.severity === "warning");
   if (errors.length > 0) {
     log(`⚠️ 发现 ${errors.length} 个错误：${errors.map((e) => `[${e.category}] ${e.description}`).join("；")}`);
   }
   if (warnings.length > 0) {
     log(`⚠️  ${warnings.length} 个警告：${warnings.map((w) => `[${w.category}] ${w.description}`).join("；")}`);
   }
-  log(`验证摘要：${verification.report.summary}`);
+  log(`验证摘要：${verifyResult.summary}`);
 } else {
-  log(`✅ 验证通过：${verification.report.summary}`);
+  log(`✅ 验证通过：${verifyResult.summary}`);
 }
 
 phase("报告生成");
@@ -166,6 +131,6 @@ await agent(
 );
 
 log(`✅ 训练复盘流程完成！报告：reports/${dateStr}-report.html`);
-if (verification.report.hasIssues) {
-  log(`📋 验证发现了 ${verification.report.issues.length} 个问题，建议查看报告确认。`);
+if (verifyResult.hasIssues) {
+  log(`📋 验证发现了 ${verifyResult.issues.length} 个问题，建议查看报告确认。`);
 }

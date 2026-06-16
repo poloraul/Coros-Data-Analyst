@@ -469,7 +469,6 @@ function mergeWithExisting(today, fresh) {
 async function fetchAll(dateStr) {
   const today = dateStr || formatDate(new Date());
   const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
-  const startDate3 = formatDate(new Date(Date.now() - 3 * 86400000));
 
   const now = new Date();
   const dayOfWeek = now.getDay();
@@ -499,9 +498,9 @@ async function fetchAll(dateStr) {
   console.log("  [4/10] Daily health (7 days)...");
   data.dailyHealth = parseDailyHealth(callTool("queryDailyHealthData", { days: 7, timezone: TIMEZONE }));
 
-  console.log("  [5/10] Sleep data (3 days)...");
+  console.log("  [5/10] Sleep data (7 days)...");
   data.sleep = parseSleepData(callTool("querySleepData", {
-    startDate: startDate3, endDate: today, days: 3, timezone: TIMEZONE,
+    startDate: startDate7, endDate: today, days: 7, timezone: TIMEZONE,
   }));
 
   console.log("  [6/10] HRV (7 days)...");
@@ -590,7 +589,8 @@ async function fetchIncremental(dateStr) {
     { key: "recovery", tool: "queryRecoveryStatus", args: {}, parser: parseRecoveryStatus, empty: null },
     { key: "trainingLoad", tool: "queryTrainingLoadAssessment", args: { days: 7 }, parser: parseTrainingLoad, empty: [] },
     { key: "hrv", tool: "queryHrvAssessment", args: { days: 7, timezone: TIMEZONE }, parser: parseHRV, empty: { baseline: null, normalRange: null, days: [] } },
-    { key: "sleep", tool: "querySleepData", args: { startDate: formatDate(new Date(Date.now() - 3 * 86400000)), endDate: today, days: 3, timezone: TIMEZONE }, parser: parseSleepData, empty: [] },
+    { key: "dailyHealth", tool: "queryDailyHealthData", args: { days: 7, timezone: TIMEZONE }, parser: parseDailyHealth, empty: [] },
+    { key: "sleep", tool: "querySleepData", args: { startDate: formatDate(new Date(Date.now() - 7 * 86400000)), endDate: today, days: 7, timezone: TIMEZONE }, parser: parseSleepData, empty: [] },
   ];
   let filled = 0;
   for (const { key, tool, args, parser, empty } of fillFields) {

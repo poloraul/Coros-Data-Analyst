@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jarvis 训练复盘 20260615</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="chart.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
@@ -241,14 +241,14 @@ tr:hover td{background:var(--row-hover)}
   <div class="review-grid">
     <div class="ai-insight">
       <h4>训练概要</h4>
-      <p>10km节奏跑/路跑 · 10.68km · 配速4:34 · 心率169 · 雨中完美负分段表现，速度耐力突出</p>
-      <div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">负分段加速(4:51→4:32)，配速CV仅2.4%近乎完美。心率从160上升至174，漂移9%可控，88%时间在Z5速度耐力区（配速4:13-3:50/km的上端），实际配速4:34高居阈值之上。天气凉爽潮湿（24℃、93%湿度），体感良好，步频182高步频加持，展现出极强的阈值支撑能力。远超当前预测10km 42:31的水平。</div>
+      <p>速度训练：10.68km @4:34/km，平均心率169bpm，表现个人最佳（Best），高强度但控制出色。</p>
+      <div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">负分段加速(4:51→4:32)且CV仅2.4%，配速节奏近乎完美；心率从160bpm平稳升至174bpm，漂移幅度9%，大部分时间处于Z4-Z5交界，在凉爽的中毛毛雨天气(20~24℃, 体感22~27℃)下心率响应合理；步频182spm，>180spm占比86%，触地效率高。10.68km的持续快跑结合79m爬升，对专项速度耐力刺激充足。</div>
     </div>
     <div class="review-box">
       <h4>亮点</h4>
-      <div class="finding-item" style="color:#5aa65e">配速负分段+极低CV，比赛节奏感出色</div><div class="finding-item" style="color:#5aa65e">高湿度下心率顶住，步频高稳</div><div class="finding-item" style="color:#5aa65e">10km能力已显著超过预测水平</div>
+      <div class="finding-item" style="color:#5aa65e">负分段加速，后程能力突出，最后阶段配速达4:32/km</div><div class="finding-item" style="color:#5aa65e">步频稳定在182spm，高步频降低关节冲击</div><div class="finding-item" style="color:#5aa65e">心率漂移仅9%，心血管效率良好</div>
       <h4 style="margin-top:12px">改进方向</h4>
-      <div class="finding-item" style="color:#c9a030">作为节奏跑强度已足够，本周无需再额外加压</div><div class="finding-item" style="color:#c9a030">赛后48小时内充分恢复，不进行任何强度跑</div><div class="finding-item" style="color:#c9a030">注意湿滑路面步幅收紧，避免拉伤</div>
+      <div class="finding-item" style="color:#c9a030">可尝试将主跑段配速提升至4:25-4:30/km，更贴近阈值配速4:18/km，同时控制心率不超173bpm</div><div class="finding-item" style="color:#c9a030">湿度93%仍偏高，建议在类似天气中每15分钟小口补水</div>
     </div>
   </div>
 
@@ -259,19 +259,19 @@ tr:hover td{background:var(--row-hover)}
       <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
       <tr>
         <td>2026-06-11</td>
-        <td style="max-width:300px">有氧长距离 · 15.5km · 配速5:23 · 心率147 · 高温下负分段稳定，跑出高质量有氧耐力课</td>
-        <td><span class="badge badge-green">酷热下配速稳定性卓越</span><span class="badge badge-green">心率漂移9.1%合理，无心血管飙升</span><span class="badge badge-green">步频179, 长距离经济性良好</span></td>
-        <td><span class="badge badge-yellow">长距离配速可维持5:25-5:30不变，心率上限可暂留153</span><span class="badge badge-yellow">加强热天前饮水、每5公里补水策略</span></td>
+        <td style="max-width:300px">高温有氧耐力跑：15.5km @5:23/km，心率147bpm，在35℃高温下完成表现良好。</td>
+        <td><span class="badge badge-green">热环境下保持稳定的负分段，后程未掉速</span><span class="badge badge-green">心率严格控制在有氧区，避免热应激</span><span class="badge badge-green">配速选择明智，契合高温影响</span></td>
+        <td><span class="badge badge-yellow">未来高温长距离训练，可每30分钟少量饮用电解质水，并用水淋湿头部和手腕降温</span><span class="badge badge-yellow">步频从179spm逐步提升至≥180spm，降低热疲劳下的触地时间</span></td>
       </tr><tr>
         <td>2026-06-10</td>
-        <td style="max-width:300px">轻松跑 · 9.75km · 配速5:59 · 心率136 · 高温高湿下崩溃，后半程步速断崖式下滑，训练质量低</td>
-        <td><span class="badge badge-green">能主动停止强撑，避免严重热病</span><span class="badge badge-green">前半程体感控制有一定自觉</span></td>
-        <td><span class="badge badge-yellow">湿热天气轻松跑配速需降至6:30-7:00/km</span><span class="badge badge-yellow">严格限制心率<140或<136bpm（Z1-Z2下缘）</span><span class="badge badge-yellow">每2公里补水，携带降温毛巾</span></td>
+        <td style="max-width:300px">湿热轻松跑失控：9.75km @5:59/km，最后1km掉至步行，表现受热环境影响严重。</td>
+        <td><span class="badge badge-green">在极度湿热天气中仍完成了9.75km移动距离，意志力可嘉</span><span class="badge badge-green">监测到心率异常下降后停止跑步，避免了热中暑风险</span></td>
+        <td><span class="badge badge-yellow">高温高湿训练日，应将目标配速下调至6:30-7:00/km，并缩短距离至6-8km或采用跑走结合</span><span class="badge badge-yellow">建议携带手持水壶并提前补充电解质，若心率持续下降应立即停止并到阴凉处休息</span><span class="badge badge-yellow">步频需刻意练习提升至170spm以上，即使在慢跑中</span></td>
       </tr><tr>
         <td>2026-06-09</td>
-        <td style="max-width:300px">有氧动力跑 · 8.22km · 配速4:59 · 心率153 · 表现优秀，配速接近马拉松目标但在湿热雨中稳定跑完</td>
-        <td><span class="badge badge-green">负分段加速能力明显</span><span class="badge badge-green">心率漂移控制在5.7%，有氧效率优秀</span><span class="badge badge-green">步频接近180，经济性尚好</span></td>
-        <td><span class="badge badge-yellow">强化匀速节奏控制，避免单公里突然失速</span><span class="badge badge-yellow">雨天湿滑可略降步频稳定核心，但步频不低于175</span></td>
+        <td style="max-width:300px">目标马配渐进跑：8.22km @4:59/km，心率153bpm，接近马拉松目标配速，表现个人最佳。</td>
+        <td><span class="badge badge-green">成功完成与马拉松目标配速吻合的训练，心率反应良好</span><span class="badge badge-green">前慢后快的负分段策略，锻炼比赛中的后程发力能力</span><span class="badge badge-green">CV虽受第7km影响偏高，但其他分段波动小</span></td>
+        <td><span class="badge badge-yellow">避免类似第7km的异常降速，选择红绿灯少的路线保证训练连贯性</span><span class="badge badge-yellow">将步频从177spm提高至180-185spm，提升跑姿经济性，尤其在接近马配时</span></td>
       </tr>
     </table>
   </div>
@@ -385,19 +385,19 @@ tr:hover td{background:var(--row-hover)}
       <div class="ai-insight">
         <h4>身体状态评估</h4>
         <div class="body-assessment-level green">状态良好</div>
-        <p>身体状态优异：恢复接近满格、HRV稳定、睡眠质量极高，训练负荷比优化，完全适合继续高质量训练。但湿热天气警告仍在，需注意主动调整配速与补水。</p>
-        <ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7"><li>恢复：恢复率95%，允许高强度训练</li><li>HRV：最新值60ms处于基线63ms的正常范围内，无负荷过重迹象</li><li>睡眠：96分高评分，深睡比例28%，恢复支撑良好</li><li>负荷：短期/长期比1.1，处在最佳训练适应区间</li><li>热适应：6月11日在35℃下完成长距离，显示一定热适应能力，但6月10日32℃/97%湿度的失败提醒仍需谨慎</li></ul>
-        <div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：维持目前负荷节奏，不必急于加量；炎热天所有轻松跑心率严格控制在<145bpm，配速随之放慢；继续监测HRV，若连续低于53ms需减量；每日补水电解质，尤其在高温课表前</div>
+        <p>恢复充分，自主神经状态正常，睡眠质量优秀，训练负荷优化，整体身体状态适合高强度训练。</p>
+        <ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7"><li>恢复百分比95%，为重度训练做好准备</li><li>HRV基线63，今日60，在正常范围内波动，无连续偏低</li><li>睡眠得分96，深度睡眠比例28%，恢复优秀</li><li>训练负荷短/长期比1.1，处于优化区间</li></ul>
+        <div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：继续保持当前负荷趋势，避免突然加量超过20%；炎热天气训练时，务必监测晨起HRV，若连续两天低于53需降低强度</div>
       </div>
       
 
       
       <div class="ai-insight">
         <h4>训练模式分析</h4>
-        <p>上周训练模式为混合强度，偏重于有氧耐力与阈值刺激，但轻松跑失利拉低整体质量。整体强度偏向高端，无专门的恢复或低强度长跑比例稍低。</p>
-        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list"><span class="tag tag-strength">有氧长距离（15.5km@5:23）在高温下保持高稳定性，有氧底子强</span><span class="tag tag-strength">10km节奏跑展现出优秀的阈值速度与配速控制力</span><span class="tag tag-strength">步频基本稳定在177以上，跑步经济性良好</span></div></div>
-        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list"><span class="tag tag-risk">轻松跑失败暴露了对极端湿热天气配速调整不足，易导致无效训练或热伤害</span><span class="tag tag-risk">强度课（节奏跑）心率偏上（169bpm，主Z5），若频繁不降量，可能累积疲劳</span><span class="tag tag-risk">周跑量44km处于目标下限，需逐步提升至50km以上但不宜跳跃</span></div></div>
-        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list"><span class="tag tag-suggestion">严格遵循80/20分配：80%轻松跑 (配速≥5:30/km, 心率Z1-Z2)，20%质量课</span><span class="tag tag-suggestion">轻松跑尤其在湿热天，应主动降速至6:30+/km，心率绝对不超过140bpm</span><span class="tag tag-suggestion">长距离跑逐步延长至18-20km，保持Z2心率上限153bpm，避免跨入阈值</span><span class="tag tag-suggestion">每周安排1天完全休息或交叉训练，保证恢复</span></div></div>
+        <p>训练模式包含速度、阈值、有氧长距离和轻松跑，多元化较好，但湿热环境适应不足导致轻松跑崩溃，需强化热策略。</p>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list"><span class="tag tag-strength">高强度训练完成质量高，负分段能力突出，具备节奏控制潜力</span><span class="tag tag-strength">能够根据高温主动降低有氧跑配速，体现智能训练意识</span><span class="tag tag-strength">步频维持在较高水平（中高强度>177），姿态经济性较好</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list"><span class="tag tag-risk">湿热天气下缺乏有效降温与补水策略，易导致训练中断或热病风险</span><span class="tag tag-risk">轻松跑配速控制不稳定，当环境恶劣时容易跑崩，可能积累额外疲劳</span><span class="tag tag-risk">周跑量44km处于下限，未来需稳步提升以支撑马拉松准备期</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list"><span class="tag tag-suggestion">夏季训练务必加入主动降温措施：携带冰水、选择有树荫路线、必要时在室内跑步机进行强度课</span><span class="tag tag-suggestion">轻松跑严格以心率为导向（<136bpm），一旦心率持续下降即刻改为步行，避免硬撑</span><span class="tag tag-suggestion">接下来四周将周跑量逐步提升至50-55km，为下阶段打基础</span></div></div>
       </div>
       
     </div>
@@ -440,58 +440,58 @@ tr:hover td{background:var(--row-hover)}
         <td>周一 06-15</td>
         <td>休息</td>
         <td>-</td>
-        <td>无</td>
-        <td>无</td>
-        <td>昨日节奏跑强度大，完全休息一天促进肌肉修复和糖原补充。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-1');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-1"><dt>备注</dt><dd>可做轻度拉伸、泡沫轴放松。充分饮水，碳水正常摄入。</dd></div></td>
+        <td>-</td>
+        <td>-</td>
+        <td>完全休息，促进周日速度训练后的适应与恢复。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-1');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-1"><dt>热身</dt><dd>无</dd><dt>主课</dt><dd>无</dd><dt>冷身</dt><dd>无</dd><dt>备注</dt><dd>可进行20分钟泡沫轴放松或散步，补充营养与睡眠。</dd></div></td>
       </tr><tr class="">
         <td>周二 06-16</td>
         <td>轻松跑</td>
         <td>8km</td>
-        <td>5:30 — 5:50/km (Z2)</td>
-        <td>Z2 有氧耐力区 (136-145 bpm)</td>
-        <td>恢复性有氧耐力跑，激活身体但不积攒疲劳。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-2');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-2"><dt>热身</dt><dd>轻松跑2km，配速6:00-6:30，让心率平稳进入Z1-Z2</dd><dt>主课</dt><dd>继续5km配速5:30-5:50，心率保持在Z2下限区 (136-145)，触地轻盈</dd><dt>冷身</dt><dd>最后1km慢跑配速>6:30，心率降至<130</dd><dt>备注</dt><dd>注意早间湿度，若体感热则降速至6:00-6:20/km。步频维持175+。</dd></div></td>
+        <td>Z2 有氧耐力区 (6:03-5:04/km)；建议配速 5:50-6:10/km</td>
+        <td>Z1-Z2 (<153bpm)，目标平均心率 ~135bpm</td>
+        <td>低强度轻松跑，用于恢复与维持有氧能力，避免累积疲劳。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-2');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-2"><dt>热身</dt><dd>动态拉伸+慢跑1km @6:30/km</dd><dt>主课</dt><dd>6km 轻松跑 @5:50-6:10/km，心率控制在125-140bpm，保持鼻呼吸可交谈强度</dd><dt>冷身</dt><dd>慢跑1km @6:30/km，然后全身静态拉伸5分钟</dd><dt>备注</dt><dd>选平坦阴凉路线，若气温>30℃则缩短至6km总距离，配速放慢至6:20-6:40/km</dd></div></td>
       </tr><tr class="">
         <td>周三 06-17</td>
         <td>间歇跑</td>
-        <td>8km</td>
-        <td>快跑 3:50-4:00/km, 恢复 6:30-7:00/km</td>
-        <td>快跑 Z5 速度耐力区 (173-180 bpm), 恢复 Z1低于136</td>
-        <td>400m重复跑，刺激最大摄氧量和速度。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-3');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-3"><dt>热身</dt><dd>2km轻松跑 (6:00/km) + 动态拉伸+ 4x50m跨步</dd><dt>主课</dt><dd>8x400m @ 3:50-4:00/km (92-96秒/圈)，组间200m慢跑恢复 (6:30-7:00/km) 或步行休息等时长约1.5-2分钟</dd><dt>冷身</dt><dd>1.5km轻松跑 (6:30/km) 冷身</dd><dt>备注</dt><dd>严格按配速执行，避免前两组过快。心率每组顶峰允许到180+，但恢复到120以下再进行下一组。高温下适当延长间休。</dd></div></td>
+        <td>10km</td>
+        <td>6:30 — 7:00/km (Z1)</td>
+        <td>间歇段落 Z4-Z5 (163-180bpm)，恢复段 Z1-Z2</td>
+        <td>经典乳酸阈间歇，提升最大摄氧量速度与乳酸清除能力。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-3');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-3"><dt>热身</dt><dd>轻松慢跑2km @6:00/km + 动态拉伸 + 4x100m 渐加速</dd><dt>主课</dt><dd>5x1000m @4:10-4:20/km（对应心率170-178bpm），组间慢跑400m恢复（配速6:30-7:00/km），总5km快跑+2km慢跑恢复</dd><dt>冷身</dt><dd>轻松慢跑1km，全身拉伸</dd><dt>备注</dt><dd>间歇段落可通过手表200m分段警报监控，若掉速>5秒则应提前结束；携带手持水壶，组间小口补水</dd></div></td>
       </tr><tr class="">
         <td>周四 06-18</td>
         <td>轻松跑</td>
-        <td>10km</td>
-        <td>5:30 — 5:40/km (Z2)</td>
-        <td>Z2 有氧耐力区 (138-148 bpm)</td>
-        <td>中等距离有氧跑，促进恢复同时维持跑量。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-4');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-4"><dt>热身</dt><dd>自然进入目标配速，头1km 5:50</dd><dt>主课</dt><dd>8km 配速5:30-5:40，心率稳定在Z2中区，保持轻松谈话节奏</dd><dt>冷身</dt><dd>最后1km 渐进减速至6:30</dd><dt>备注</dt><dd>关注步频维持178-180，肩膀放松。</dd></div></td>
+        <td>6km</td>
+        <td>Z2 (6:03-5:04/km)，建议配速 5:50-6:20/km</td>
+        <td>Z1-Z2 (<153bpm)，平均心率 ~130bpm</td>
+        <td>轻量恢复跑，促进间歇训练后的新陈代谢与修复。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-4');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-4"><dt>热身</dt><dd>慢跑1km @6:30/km</dd><dt>主课</dt><dd>4km 轻松跑 @5:50-6:20/km，心率保持<140bpm</dd><dt>冷身</dt><dd>慢跑1km，拉伸5分钟</dd><dt>备注</dt><dd>可在草地或塑胶跑道上进行以减少冲击，高温下适当降低配速</dd></div></td>
       </tr><tr class="">
-        <td>周五 (端午节) 06-19</td>
+        <td>周五 06-19</td>
         <td>节奏跑</td>
         <td>10km</td>
-        <td>快跑 4:20-4:30/km, 其余轻松配速</td>
-        <td>快跑 Z4 乳酸阈区 (163-173 bpm)</td>
-        <td>阈值巡航跑，提升乳酸清除能力，模拟马拉松速度感。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-5');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-5"><dt>热身</dt><dd>3km 轻松跑 (5:40-6:00/km) + 动态拉伸</dd><dt>主课</dt><dd>5km 节奏跑 @ 4:20-4:30/km，保持配速均匀，心率控制在阈值上限（170bpm左右）</dd><dt>冷身</dt><dd>2km 轻松跑 (6:00-6:30/km)</dd><dt>备注</dt><dd>端午节假日，可利用早晨凉爽时段。节奏跑配速比上周10k更接近阈值，专注呼吸节奏。</dd></div></td>
+        <td>Z3-Z4 接近马拉松目标配速 (4:58/km)，建议 4:45-4:55/km</td>
+        <td>Z3-Z4 (153-173bpm)，目标心率 ~162-168bpm</td>
+        <td>马拉松专项节奏跑，强化目标配速下的代谢与经济性。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-5');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-5"><dt>热身</dt><dd>轻松慢跑2km @6:00/km + 4x100m 渐加速</dd><dt>主课</dt><dd>6km 节奏跑 @4:45-4:55/km，保持匀速，心率控制在162-168bpm，感知为“舒适地困难”</dd><dt>冷身</dt><dd>慢跑2km @6:00-6:30/km，拉伸</dd><dt>备注</dt><dd>端午节假期可清晨凉爽时段进行，确保前日碳水化合物充足；如遇高温，可拆分为2x3km中间慢跑500m</dd></div></td>
       </tr><tr class="">
-        <td>周六 (端午节) 06-20</td>
-        <td>休息</td>
-        <td>-</td>
-        <td>无</td>
-        <td>无</td>
-        <td>强度课（周三间歇+周五节奏跑）后充分休息，预防过度疲劳。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-6');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-6"><dt>备注</dt><dd>可做交叉训练如游泳、瑜伽，或完全放松。注意营养补充，为明日长距离储能。</dd></div></td>
-      </tr><tr class="">
-        <td>周日 (端午节) 06-21</td>
-        <td>LSD</td>
+        <td>周六 06-20</td>
+        <td>LSD长距离慢跑</td>
         <td>16km</td>
-        <td>5:30 — 5:45/km (Z2)</td>
-        <td>Z2 有氧耐力区上缘 (145-153 bpm)</td>
-        <td>长距离慢跑，夯实有氧基础，逐步接近半马距离。</td>
-        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-7');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-7"><dt>热身</dt><dd>2km 配速6:00-6:10 轻松启动</dd><dt>主课</dt><dd>12km 配速5:30-5:45，心率维持在145-153，后半程可自然升至153但不允许超155</dd><dt>冷身</dt><dd>2km 慢跑 6:30/km 结束</dd><dt>备注</dt><dd>利用假日晨间，充分补水，每5公里补水。步频不低于175，感受轻缓发力。</dd></div></td>
+        <td>Z2 有氧耐力区 (6:03-5:04/km)，建议 5:40-6:00/km</td>
+        <td>Z2 (136-153bpm)，全程平均心率 ~142bpm，后程不超155bpm</td>
+        <td>长距离耐力跑，发展毛细血管密度与脂肪氧化能力，为马拉松打下坚实基础。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-6');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-6"><dt>热身</dt><dd>步行+慢跑1km @6:30/km</dd><dt>主课</dt><dd>14km 稳定慢跑 @5:40-6:00/km，心率维持在140-150bpm，注意后程不加速，保存体力</dd><dt>冷身</dt><dd>慢跑1km，充分拉伸与筋膜放松</dd><dt>备注</dt><dd>携带能量胶1条于第8km补充，每5km补水一次；路线选有补给和树荫，避免暴晒</dd></div></td>
+      </tr><tr class="">
+        <td>周日 06-21</td>
+        <td>轻松跑</td>
+        <td>5km</td>
+        <td>Z1-Z2 (>6:03/km)，建议 6:10-6:40/km</td>
+        <td>Z1 (<136bpm)，平均心率 ~120bpm</td>
+        <td>极低强度恢复慢跑，排出LSD残留代谢废物，帮助身体吸收训练效果。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-7');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-7"><dt>热身</dt><dd>直接开始慢跑，前500m走路热身</dd><dt>主课</dt><dd>4km 超轻松慢跑 @6:10-6:40/km，心率<130bpm，可边跑边聊天</dd><dt>冷身</dt><dd>慢跑500m，全面拉伸与泡沫轴</dd><dt>备注</dt><dd>这一天作为主动恢复，不要追求距离或速度；若感疲惫可换成30分钟散步</dd></div></td>
       </tr>
   </table>
 
@@ -499,7 +499,7 @@ tr:hover td{background:var(--row-hover)}
   
   <div class="coach-advice" style="margin-top:20px">
     <h4>AI 教练建议</h4>
-    <p>当前身体状态与能力正处于上升期，上周节奏跑已经证明你有冲击330甚至更快的水准。但马拉松训练是长跑量积累和身体柔韧性的博弈。未来几周，请坚守80%低强度、20%高质量的原则。特别在高温高湿的日子里，把配速表放下，严格用心率指导轻松跑（<145bpm），哪怕配速掉到7分配也别急。长距离要稳住，间歇跑不用每组都拼力，细水长流。本周计划已帮你科学搭配了间歇、节奏和LSD三个高质量刺激点，配合充足恢复，相信周跑量52km能让你既提升能力又不透支。记得每日监测HRV与睡眠质量，一旦连续偏低，果断砍掉一节强度课。下一场比赛或者下一次测验时，你会感谢这阶段的耐心。</p>
+    <p>首马准备期第1周，身体状态正值巅峰。上周训练虽有湿热天气下的坎坷，但整体质量较高，尤其是接近马配的节奏跑和速度耐力跑都展现出扎实的能力。本周利用端午节三天假期，在周五安排节奏跑、周六LSD重点课，强化有氧与专项。间歇放在周三，周四和周日均为低强度恢复，确保吸收训练负荷。总跑量55km，完全符合45-60km区间。操作层面，务必关注高温应对：清晨开跑，穿戴透气，定时补水。若任何一天晨起HRV<53或睡眠<80分，则相应降为休息或缩短距离。节奏跑时意念集中于稳定的步频（182-185spm）和核心收紧，LSD中让心率决定配速，而非相反的“追速度”。坚持以上，为后续的专项期打下坚实基础。</p>
   </div>
   
 </div>

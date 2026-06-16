@@ -26,24 +26,23 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 **支持参数**：
 - `Workflow({name: "daily-review", args: {date: "20260525"}})` — 指定日期
-- `Workflow({name: "daily-review", args: {provider: "volcengine"}})` — 指定 LLM 提供商（跳过交互选择）
-- `Workflow({name: "daily-review", args: {date: "20260525", provider: "volcengine"}})` — 同时指定
+- `Workflow({name: "daily-review", args: {provider: "deepseek"}})` — 指定 LLM 提供商（跳过交互选择）
+- `Workflow({name: "daily-review", args: {date: "20260525", provider: "deepseek"}})` — 同时指定
 - 不带 args 默认当天 + 交互选择 LLM
 
 **流程概览（5 阶段）**：
 
 | 阶段 | Agent | 内容 |
 |------|-------|------|
-| 选择 LLM | 通用 agent | 交互选择本次使用的 LLM 提供商（deepseek/volcengine） |
+| 选择 LLM | 通用 agent | 使用 DeepSeek（默认无需选择） |
 | 数据采集 | 通用 agent | 运行 `node scripts/fetch.js`，返回日期 |
 | 深度分析 | 通用 agent | 运行 `node scripts/analyze.js --force --provider <name>` |
-| 数据验证 | haiku agent | 检查配速趋势方向、周跑量周期、数据一致性，输出结构化报告 |
+| 数据验证 | 通用 agent | 运行 `node scripts/validate.js --date <date>`，输出结构化 JSON |
 | 报告生成 | 通用 agent | 运行 `node scripts/report.js` + `open` |
 
-验证 agent 会检查：
-- 配速趋势标签（负分段加速/后程掉速）与实际首末公里配速方向是否一致
-- 周跑量统计是否在周一→周日周期内
-- bodyAssessment 中的 HRV/恢复/睡眠数值与原始数据是否一致
+验证脚本会检查：
+- TCX 配速趋势标签（负分段加速/后程掉速）与实际首末公里配速方向是否一致
+- weeklyPlan 首日日期与报告日期是否对齐
 
 **注意**：调用 workflow 时需在 prompt 中包含 `ultrawork` 关键词（系统要求）。
 
@@ -57,7 +56,7 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析、`--provider <name>` 指定 LLM 提供商。
 
-**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic`、`openai`、`qianfan`、`deepseek`、`volcengine` 五个 provider。`llm.providers` 映射存储命名提供商配置，`--provider <name>` 从中查找。支持 `apiKey` 直接写死或 `apiKeyEnv` 环境变量。主 LLM 限流时自动切换到 `fallback` 配置的备用模型。
+**LLM 配置**：在 `coros.config.json` 中设置 `llm` 节，支持 `anthropic`、`openai`、`qianfan`、`deepseek` 四个 provider。当前统一使用 DeepSeek（`deepseek-v4-pro`），`llm.providers` 映射存储命名提供商配置，`--provider <name>` 从中查找。支持 `apiKey` 直接写死或 `apiKeyEnv` 环境变量。主 LLM 限流时自动切换到 `fallback` 配置的备用模型。
 
 ## 数据存储
 
@@ -66,6 +65,16 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 - `data/tcx/{labelId}.tcx` — TCX 运动文件（GPS 轨迹 + 逐点心率）
 - `data/.crs-token/` — crs-connect 认证令牌（自动管理）
 - `coros.config.json` — crs-connect 凭据 + LLM 配置（不提交到 git）
+
+## 设计文档同步
+
+**每次代码变更后，必须检查 `doc/` 目录下的三份文档是否需要同步更新：**
+
+- `doc/system-design.md` — 系统架构图、数据流、模块职责表、外部依赖、配置管理
+- `doc/project-roadmap.md` — 变更日志、技术债务状态、关键指标
+- `doc/product-requirements.md` — 功能需求、验收标准、区间标准
+
+触发条件：新增/删除文件、修改模块职责、变更数据流/数据模型、调整 LLM 上下文、新增外部依赖、架构重构。变更完成后作为最后一步执行。
 
 
 ## 1. Think Before Coding

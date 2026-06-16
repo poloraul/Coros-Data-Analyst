@@ -5,6 +5,8 @@ import { fileURLToPath } from "node:url";
 import { MARATHON_DATE, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 import { calcPaceZones, calcHRZones, classifyPace, classifyHR } from "../lib/zones.js";
+import { assessRecovery } from "../lib/recovery.js";
+import { PHASE_TEMPLATES } from "../lib/training-templates.js";
 import { parseTCX } from "./tcx-analyzer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -29,21 +31,6 @@ function formatDate(d) {
 }
 
 // --- Rule-engine analysis (fallback when no AI analysis available) ---
-
-function assessRecovery(data) {
-  const hrvDays = data.hrv?.days || [];
-  const normalLow = data.hrv?.normalRange?.[0] || 50;
-  const recovery = data.recovery;
-  let consecutiveBelow = 0;
-  for (const day of hrvDays) { if (day.hrv < normalLow) consecutiveBelow++; else break; }
-  let level = "green";
-  const reasons = [];
-  if (consecutiveBelow >= 3) { level = "red"; reasons.push(`HRV连续${consecutiveBelow}天低于正常范围`); }
-  else if (consecutiveBelow >= 2) { level = "yellow"; reasons.push(`HRV连续${consecutiveBelow}天低于正常范围`); }
-  if (recovery?.percentage && recovery.percentage < 70) { level = "red"; reasons.push(`恢复度仅${recovery.percentage}%`); }
-  else if (recovery?.percentage && recovery.percentage < 85 && level === "green") { level = "yellow"; reasons.push(`恢复度${recovery.percentage}%偏低`); }
-  return { level, reasons, recoveryPct: recovery?.percentage, latestHRV: hrvDays[0]?.hrv, consecutiveBelow, baseline: data.hrv?.baseline, normalRange: data.hrv?.normalRange };
-}
 
 function reviewLatestWorkout(activity, thresholdPace, maxHR) {
   if (!activity) return null;
@@ -102,62 +89,7 @@ function generateRuleBasedPlan(data, recovery) {
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
   const todayDow = now.getDay() === 0 ? 7 : now.getDay(); // 1=Mon...7=Sun
 
-  const templates = {
-    "准备期": [
-      { type: "轻松跑", dist: 8, pace: "6:00-6:20", hr: "<135", desc: "有氧基础" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "恢复" },
-      { type: "中长距离", dist: 10, pace: "5:40-6:00", hr: "<145", desc: "有氧耐力" },
-      { type: "休息/交叉", dist: 0, pace: "-", hr: "-", desc: "恢复或力量" },
-      { type: "轻松跑+ST", dist: 8, pace: "5:50-6:10", hr: "<140", desc: "有氧+加速跑" },
-      { type: "LSD", dist: 14, pace: "6:00-6:30", hr: "<140", desc: "长距离慢跑" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "完全休息" },
-    ],
-    "基础期 I": [
-      { type: "轻松跑", dist: 8, pace: "6:00-6:20", hr: "<135", desc: "有氧基础" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "恢复" },
-      { type: "中长距离", dist: 10, pace: "5:40-6:00", hr: "<145", desc: "有氧耐力" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "恢复" },
-      { type: "轻松跑+ST", dist: 8, pace: "5:50-6:10", hr: "<140", desc: "有氧+加速跑" },
-      { type: "LSD", dist: 15, pace: "6:00-6:30", hr: "<140", desc: "长距离慢跑" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "完全休息" },
-    ],
-    "基础期 II": [
-      { type: "轻松跑", dist: 8, pace: "5:50-6:10", hr: "<135", desc: "有氧基础" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "恢复" },
-      { type: "节奏跑", dist: 10, pace: "5:10-5:30", hr: "145-160", desc: "阈值耐力" },
-      { type: "轻松跑", dist: 6, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "中长距离", dist: 10, pace: "5:40-6:00", hr: "<145", desc: "有氧耐力" },
-      { type: "LSD", dist: 18, pace: "5:50-6:20", hr: "<145", desc: "长距离慢跑" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "完全休息" },
-    ],
-    "强化期": [
-      { type: "轻松跑", dist: 8, pace: "5:50-6:10", hr: "<135", desc: "有氧基础" },
-      { type: "间歇", dist: 11, pace: "4:25-4:40(组)", hr: "165-175", desc: "5×1000m间歇" },
-      { type: "轻松跑", dist: 6, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "节奏跑", dist: 10, pace: "5:00-5:20", hr: "150-160", desc: "阈值耐力" },
-      { type: "轻松跑", dist: 6, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "MP长跑", dist: 16, pace: "5:00-5:10(MP)", hr: "150-160", desc: "马拉松配速跑" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "完全休息" },
-    ],
-    "巅峰期": [
-      { type: "轻松跑", dist: 8, pace: "5:50-6:10", hr: "<135", desc: "有氧基础" },
-      { type: "间歇", dist: 11, pace: "4:20-4:35(组)", hr: "165-178", desc: "5×1000m间歇" },
-      { type: "轻松跑", dist: 6, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "MP+节奏", dist: 12, pace: "4:55-5:15", hr: "150-162", desc: "MP+阈值组合" },
-      { type: "轻松跑", dist: 6, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "LSD", dist: 32, pace: "5:50-6:20", hr: "<150", desc: "最长距离LSD" },
-      { type: "休息", dist: 0, pace: "-", hr: "-", desc: "完全休息" },
-    ],
-    "减量期": [
-      { type: "轻松跑", dist: 6, pace: "6:00-6:20", hr: "<135", desc: "保持状态" },
-      { type: "轻松跑+ST", dist: 6, pace: "5:50-6:10", hr: "<140", desc: "保持状态" },
-      { type: "MP配速", dist: 8, pace: "4:55-5:05", hr: "150-158", desc: "比赛配速感" },
-      { type: "轻松跑", dist: 5, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "轻松跑", dist: 5, pace: "6:00-6:20", hr: "<130", desc: "恢复跑" },
-      { type: "轻松跑", dist: 3, pace: "6:00-6:20", hr: "<130", desc: "赛前激活" },
-      { type: "比赛日", dist: 42, pace: "4:58", hr: "比赛", desc: "首马330!" },
-    ],
-  };
+  const templates = PHASE_TEMPLATES;
 
   const template = templates[phase.name] || templates["准备期"];
   const days = [];
@@ -390,15 +322,32 @@ function generateHTML(data, aiAnalysis) {
     if (existsSync(tcxPath)) {
       try {
         const tps = parseTCX(tcxPath);
-        const startTime = tps.length > 0 ? new Date(tps[0].time).getTime() : 0;
-        secData = tps
+        // Filter valid trackpoints, then sort by time (TCX may have out-of-order data)
+        const validTps = tps
           .filter(tp => tp.speed > 0 && tp.hr > 0)
-          .map(tp => {
-            const elapsedSec = Math.round((new Date(tp.time).getTime() - startTime) / 1000);
-            const paceMinPerKm = 60 / tp.speed;
-            return { elapsedSec, paceMinPerKm, hr: tp.hr };
-          })
-          .filter(d => d.paceMinPerKm >= 3 && d.paceMinPerKm <= 15);
+          .sort((a, b) => new Date(a.time) - new Date(b.time));
+        // Find the longest contiguous block (no gaps > 5 min) to avoid cross-contamination
+        let bestSegStart = 0, bestSegLen = 0, bestSeg = [];
+        let curStart = 0, curLen = 1, curSeg = validTps.slice(0, 1);
+        for (let i = 1; i < validTps.length; i++) {
+          const gap = (new Date(validTps[i].time) - new Date(validTps[i - 1].time)) / 1000;
+          if (gap > 300) {
+            if (curLen > bestSegLen) { bestSegLen = curLen; bestSeg = curSeg; }
+            curSeg = [validTps[i]]; curLen = 1;
+          } else {
+            curSeg.push(validTps[i]); curLen++;
+          }
+        }
+        if (curLen > bestSegLen) bestSeg = curSeg;
+        // Build elapsed time from the best segment's first point
+        const segStart = bestSeg.length > 0 ? new Date(bestSeg[0].time).getTime() : 0;
+        secData = bestSeg
+          .filter(tp => { const p = 60 / tp.speed; return p >= 3 && p <= 15; })
+          .map(tp => ({
+            elapsedSec: Math.round((new Date(tp.time).getTime() - segStart) / 1000),
+            paceMinPerKm: 60 / tp.speed,
+            hr: tp.hr,
+          }));
         // Lightweight SMA-3 smoothing on HR to reduce burrs
         if (secData.length > 3) {
           const sma = [secData[0]];
@@ -429,7 +378,7 @@ function generateHTML(data, aiAnalysis) {
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${user.nickname || "COROS"} 训练复盘 ${data.fetchDate}</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="chart.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
@@ -1075,6 +1024,7 @@ new Chart(document.getElementById('secPaceHrChart'), {
     },
     scales: {
       x: { type: 'linear', title: { display: true, text: '运动时间' },
+        min: 0, max: ${Math.ceil((Math.max(...secData.map(d => d.elapsedSec)) + 30) / 60) * 60},
         ticks: { callback: function(v) {
           const m = Math.floor(v / 60);
           const s = Math.round(v % 60);
