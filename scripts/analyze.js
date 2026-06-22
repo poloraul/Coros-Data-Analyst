@@ -538,6 +538,15 @@ function buildLLMContext(data) {
     trainingLoad: d.trainingLoad,
     performance: d.performance,
     tcxSummary: summarizeTcxMetrics(d.tcxMetrics),
+    kmSplitSummary: d.tcxMetrics?.kmSplits
+      ? (() => {
+          const valid = d.tcxMetrics.kmSplits
+            // 过滤 GPS 噪声：3:50/km~15:00/km 为合理跑步/冷身范围（阈值配速4:18，Z6起点3:50），排除无效 paceStr
+            .filter((s) => s.paceSecPerKm >= 230 && s.paceSecPerKm <= 900 && s.paceStr && s.paceStr !== "-")
+            .map((s) => `KM${s.km}=${s.paceStr}(HR${s.avgHR})`);
+          return valid.length >= 2 ? valid.join(" ") : null;
+        })()
+      : null,
     weather: d.weather || null,
   }));
 
@@ -590,8 +599,8 @@ function buildLLMContext(data) {
         comment: loadEntries[0]?.comment,
       },
     },
-    paceZones: compressZones(calcPaceZones(fitness.thresholdPace).zones),
-    hrZones: compressZones(calcHRZones(LACTATE_THRESHOLD_HR, { useLTHR: true }).zones),
+    paceZones: compressZones(calcPaceZones(fitness.thresholdPace)?.zones),
+    hrZones: compressZones(calcHRZones(LACTATE_THRESHOLD_HR, { useLTHR: true })?.zones),
     workouts,
     today: {
       date: now.toISOString().slice(0, 10),
@@ -634,6 +643,114 @@ function saveAnalysisJSON(dateFile, context, analysisResult) {
   return outPath;
 }
 
+// --- System Prompt Builder ---
+
+const TRAINING_RULES = `
+优先级覆盖（最高优先，命中即锁定，忽略其他规则）：
+1. 若任意连续快速段（≤4:30/km）与慢速段（≥6:30/km）交替出现 ≥2 组 → 强制锁定"间歇跑"
+2. 若全程配速 CV>8% 且无上述快慢交替模式 → 强制判为"法特莱克/变速跑"
+
+训练阶段识别（按心率拐点+比例混合切割）：
+- 热身段：起跑至心率首次稳定进入目标区间的拐点；若拐点前距离>总里程25% → 标记"热身过长"
+- 主训练段：心率稳定在目标区间的连续段落（剔除GPS异常公里）
+- 冷身段：配速主动下降且心率下降>10bpm的末段
+- 若总里程≤6km，热身+冷身总占比不得超过40%，否则结构质量判为"fair"
+- 崩盘辨析：心率随配速下降=主动冷身；心率维持高位（Z3+）=体能衰竭
+- 无显著分段：配速全程均匀→标记"全程稳态"
+- 异常公里：配速<3:30或>10:00/km（非冷身段）→GPS噪声，不作为判断依据
+
+训练模式（基于kmSplitSummary + tcxSummary）：
+| 模式 | 特征 | CV | 备注 |
+|------|------|----|------|
+| 轻松跑 | Z1-Z2为主，漂移<8% | <6% | 配速均匀 |
+| 节奏跑 | Z3区域，稳定20-40min | <5% | |
+| 阈值跑 | Z4区间，后程可小幅掉速 | <5% | 整体稳定 |
+| 间歇跑 | 快慢交替，快速段Z4-Z6(≤4:30) ±5s，慢速段≥6:30恢复 | — | 即使GPS公里不连续/心率偏低，仍判为间歇跑 |
+| LSD | 距离≥15km，Z2-Z3 | — | 漂移>5%正常 |
+| 混合训练 | 负分段/多强度段落，无重复模式 | — | 有快慢重复→优先判间歇 |
+| 法特莱克 | 不规则速度波动，非固定周期 | — | 快速段变化较大 |
+
+特殊规则：
+- 间歇跑重点看快速段配速（而非全局均值），热身/冷身/恢复段会拉低均值
+- 光学心率滞后5-10s：快速段心率显示偏低是短间歇特征，非GPS漂移证据
+- 快速段(≤4:30) + 慢速段(≥6:30)同时出现，先怀疑间歇跑
+
+生物力学红线（触发即输出到improvements首条）：
+- 若步频<170spm（且配速>5:30/km）→ 下次轻松跑使用节拍器强制178bpm，缩小步幅5cm`;
+
+function buildSystemPrompt(context, { incremental = false } = {}) {
+  const zoneInfo = context.paceZones && context.hrZones
+    ? `你的乳酸阈心率${context.hrZones[3]?.range || "163-173bpm"}。训练区间见paceZones/hrZones数据。`
+    : "";
+
+  if (incremental) {
+    // 增量模式：仅分析新增训练，不生成全局字段
+    return `你是资深跑步教练（CSCS认证），专精马拉松训练和运动生理学。
+
+分析原则：
+1. 数据驱动：基于tcxSummary和kmSplitSummary做量化分析
+2. 目标导向：以首马3:30（配速4:58/km）为基准
+3. 具体可执行：改进建议必须给出具体配速/心率/步频数值
+4. 环境校正（解读心率时）：温度>22°C每升高1°C预期心率+1.5-2bpm；湿度>70%时系数翻倍
+
+${TRAINING_RULES}
+
+请只输出workoutReviews数组，不需要bodyAssessment/trainingPatternAnalysis/weeklyPlan/coachAdvice。
+
+输出严格JSON：
+{ "workoutReviews": [{
+    "date": "YYYY-MM-DD",
+    "trainingType": "轻松跑/节奏跑/间歇跑/阈值跑/LSD/混合训练/法特莱克",
+    "phaseBreakdown": { "warmup":"...", "main":"...", "cooldown":"...", "structureQuality":"excellent/good/fair/poor" },
+    "summary": "...",
+    "detailedAnalysis": "技术分析（100-200字）：引用kmSplitSummary和tcxSummary数据，分析配速趋势、心率漂移、区间分布、天气影响",
+    "positives": ["具体亮点（带数据支撑）"],
+    "improvements": ["改进建议（含具体配速/心率/步频数值）"]
+  }]
+}`;
+  }
+
+  // 全量模式：完整分析
+  return `你是资深跑步教练（CSCS认证），专精马拉松训练和运动生理学。
+
+分析原则：
+1. 数据驱动：基于tcxSummary的配速趋势、心率漂移、区间分布、步频数据做量化分析
+2. 目标导向：以首马3:30（配速4:58/km）为基准评价训练方向
+3. 具体可执行：改进建议必须给出具体配速范围、心率目标或步频要求
+4. 环境因素：结合天气数据分析对训练表现的影响
+5. 环境校正（解读心率时必须代入）：温度>22°C时每升高1°C预期心率增加1.5-2bpm；湿度>70%时系数翻倍；若本次温度较上次同类型升高≥5°C，心率上升≤8bpm不视为负面指标
+
+${TRAINING_RULES}
+
+训练哲学：二区训练+两极化训练（约80% Z1-Z2低强度、20% Z4-Z6高强度，最小化Z3灰色区）。${zoneInfo}
+
+训练安排偏好（两极化原则）：
+- **高质量课（Z4+）**：每周1-2次，周三/四。间歇跑(Z5-Z6)/阈值跑(Z4)/节奏跑(Z3-Z4)
+- **LSD**（Z2为主）：周六/日，15-22km
+- **轻松跑**（Z2）：其他训练日，配速比马配慢30-60s
+- **主动恢复**（Z1）：非训练日30-40min慢跑/散步
+- 节假日（见holidays数据）可安排高质量课或LSD
+
+周计划规则：
+1. weeklyPlan从报告日期（${context.today.date} ${context.today.dayOfWeek}）开始，dayIndex=1-7对应报告日起第几天
+2. 周跑量目标45-60km
+3. 示例排课：周一轻松跑→周二轻松跑→周三质量课→周四轻松跑/休息→周五轻松跑→周六LSD→周日休息/恢复
+
+输出严格JSON，必含字段：
+workoutReviews[].{date,trainingType,phaseBreakdown:{warmup,main,cooldown,structureQuality},summary,detailedAnalysis,positives[],improvements[]}
+bodyAssessment.{overallLevel,summary,details[],recommendations[]}
+trainingPatternAnalysis.{summary,strengths[],risks[],suggestions[]}
+weeklyPlan[].{dayIndex,dayName,date,type,totalDistance,paceZone,hrZone,description,详细计划:{warmup,main,cooldown,notes}}
+coachAdvice
+
+字段说明：
+- trainingType: 轻松跑/节奏跑/间歇跑/阈值跑/LSD/混合训练/法特莱克
+- structureQuality: excellent/good/fair/poor
+- detailedAnalysis: 100-200字技术分析
+- weeklyPlan[].type: 轻松跑/节奏跑/间歇/LSD/休息
+- overallLevel: green/yellow/red`;
+}
+
 // --- Main ---
 async function main() {
   const args = parseArgs();
@@ -650,6 +767,7 @@ async function main() {
   if (!existsSync(dataPath)) {
     console.error(`Data file not found: ${dataPath}`);
     console.error("Run 'node scripts/fetch.js' first to fetch data.");
+    console.error("STATUS:ERROR:data file not found");
     process.exit(1);
   }
 
@@ -675,7 +793,63 @@ async function main() {
           console.log("Use --force to re-analyze.");
           return;
         }
-        console.log("New activities detected since last analysis, re-analyzing...");
+        // Incremental mode: only analyze new activities, merge with existing
+        const existingAnalysis = existing;
+        const newDates = currentLabelIds.filter(d => !existingLabelIds.includes(d));
+        const knownDates = currentLabelIds.filter(d => existingLabelIds.includes(d));
+        console.log(`  New activities: ${newDates.length}, existing: ${knownDates.length}`);
+        if (newDates.length > 0 && knownDates.length > 0) {
+          try {
+            console.log("  Incremental mode: analyzing new activities only...");
+            // Build incremental context with only new workouts
+            const incrementalContext = JSON.parse(JSON.stringify(context));
+            incrementalContext.workouts = context.workouts.filter(w => newDates.includes(w.date));
+            // Recalculate weekly summary for new activities only
+            const newWorkoutDetails = (data.activityDetails || []).filter(d => newDates.includes(d.date));
+            incrementalContext.weeklySummary = {
+              totalKm: Math.round(newWorkoutDetails.reduce((s, d) => s + (d.distance || 0), 0) * 10) / 10,
+              runCount: newWorkoutDetails.length,
+              totalTL: Math.round(newWorkoutDetails.reduce((s, d) => s + (d.trainingLoad || 0), 0)),
+            };
+
+            const llm = createLLM(llmConfig);
+            const incSysPrompt = buildSystemPrompt(context, { incremental: true });
+
+            const newReviews = await llm.chatJSON(incSysPrompt, incrementalContext);
+            if (newReviews && newReviews.workoutReviews && newReviews.workoutReviews.length > 0) {
+              // Only proceed with incremental merge if existing analysis has global sections
+              const hasGlobals = existingAnalysis.analysis?.bodyAssessment
+                && existingAnalysis.analysis?.trainingPatternAnalysis
+                && existingAnalysis.analysis?.weeklyPlan;
+              if (!hasGlobals) {
+                console.log("  Existing analysis lacks global sections, triggering full analysis...");
+                // Don't return — fall through to full analysis below
+              } else {
+                // Merge: keep existing reviews for unchanged dates, append/prepend new ones
+                const existingReviews = existingAnalysis.analysis?.workoutReviews || [];
+                const mergedReviews = [
+                  ...newReviews.workoutReviews,
+                  ...existingReviews.filter(r => !newDates.includes(r.date)),
+                ];
+                const mergedAnalysis = {
+                  workoutReviews: mergedReviews,
+                  bodyAssessment: existingAnalysis.analysis.bodyAssessment,
+                  trainingPatternAnalysis: existingAnalysis.analysis.trainingPatternAnalysis,
+                  weeklyPlan: existingAnalysis.analysis.weeklyPlan,
+                  coachAdvice: existingAnalysis.analysis.coachAdvice || null,
+                };
+                console.log(`  Incremental analysis complete: ${newReviews.workoutReviews.length} reviews added.`);
+                saveAnalysisJSON(dateFile, context, mergedAnalysis);
+                return;
+              }
+            } else {
+              console.log("  Incremental analysis returned no results, falling back to full analysis...");
+            }
+          } catch (e) {
+            console.log(`  Incremental analysis failed (${e.message}), falling back to full analysis...`);
+          }
+        }
+        console.log("  Full re-analysis (all activities)...");
       } catch {
         console.log("Could not parse existing analysis, re-analyzing...");
       }
@@ -690,60 +864,7 @@ async function main() {
     try {
       console.log(`Initializing LLM (${llmConfig.provider}/${llmConfig.model})...`);
       const llm = createLLM(llmConfig);
-      const systemPrompt = `你是资深跑步教练（CSCS认证），专精马拉松训练和运动生理学。
-
-分析原则：
-1. 数据驱动：基于tcxSummary中的配速趋势、心率漂移、区间分布、步频数据做量化分析
-2. 目标导向：以首马3:30（配速4:58/km）为基准，评价训练方向
-3. 具体可执行：改进建议必须给出具体配速范围、心率目标或步频要求
-4. 环境因素：结合天气数据（温度、体感温度、湿度、天气描述）分析对训练表现的影响，高温高湿需调低期望，凉爽干燥利于发挥
-
-注意：
-1. weeklyPlan 是未来7天的训练计划，必须从报告日期当天（${context.today.date}，${context.today.dayOfWeek}）开始，dayIndex为1-7对应报告日期起的第几天，不能用下一个周一/周日起算。
-2. 这是一个正常训练周，周跑量目标45-60km。
-3. 训练安排偏好：
-   - 间歇跑、节奏跑等强度课放在周三或周四
-   - LSD（长距离慢跑）安排在周六或周日
-   - 其他日期安排轻松跑或休息
-4. 节假日安排：如果本周包含法定节假日（见holidays数据），节假日当天可以安排节奏跑、间歇跑或LSD等强度课，不必安排轻松跑或休息。
-
-请输出严格JSON格式：
-
-{
-  "workoutReviews": [
-    {
-      "date": "YYYY-MM-DD",
-      "summary": "训练概括（类型/距离/配速/表现）",
-      "detailedAnalysis": "技术分析（100-200字）：引用tcxSummary数据和天气条件，分析配速趋势、心率漂移、区间分布、天气影响",
-      "positives": ["具体亮点（需带数据支撑）"],
-      "improvements": ["改进建议（需含具体配速/心率/步频数值）"]
-    }
-  ],
-  "bodyAssessment": {
-    "overallLevel": "green/yellow/red",
-    "summary": "身体状态评估",
-    "details": ["分项评估"],
-    "recommendations": ["改善建议"]
-  },
-  "trainingPatternAnalysis": {
-    "summary": "训练模式评价",
-    "strengths": ["优势"],
-    "risks": ["风险"],
-    "suggestions": ["建议"]
-  },
-  "weeklyPlan": [{
-    "dayIndex": 1-7,
-    "dayName": "周一/周二...",
-    "date": "YYYY-MM-DD",
-    "type": "轻松跑/节奏跑/间歇/LSD/休息",
-    "totalDistance": 公里数,
-    "paceZone": "配速区间",
-    "hrZone": "心率区间",
-    "description": "训练说明",
-    "详细计划": {"warmup": "...", "main": "...", "cooldown": "...", "notes": "..."}
-  }],
-  "coachAdvice": "教练综合建议"
-}`;
+      const systemPrompt = buildSystemPrompt(context);
 
       const contextJson = JSON.stringify(context);
       console.log(`  Context size: ${(contextJson.length / 1024).toFixed(0)} KB`);
@@ -753,10 +874,50 @@ async function main() {
         saveAnalysisJSON(dateFile, context, analysisResult);
       } else {
         console.log("  LLM returned non-JSON response. Checking raw output...");
-        // Try again without jsonMode, get raw text
+        // Try fallback call, get raw text
         const raw = await llm.chat(systemPrompt, contextJson);
         if (raw) {
           console.log(`  Raw response (first 200 chars): ${raw.slice(0, 200)}`);
+          // Try to parse raw text as JSON — handle invisible chars, BOM, markdown fence
+          let clean = raw.trim();
+          // Remove BOM / zero-width chars
+          clean = clean.replace(/^[﻿​‌‍]+/, "");
+          // Remove markdown code fence
+          clean = clean.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+          // Try direct parse
+          let parsed = null;
+          try { parsed = JSON.parse(clean); } catch {}
+          if (!parsed) {
+            const first = clean.indexOf("{");
+            const last = clean.lastIndexOf("}");
+            if (first !== -1 && last > first) {
+              try { parsed = JSON.parse(clean.slice(first, last + 1)); } catch {}
+            }
+          }
+          if (parsed && parsed.workoutReviews) {
+            analysisResult = parsed;
+            console.log("  Parsed JSON from fallback response.");
+            saveAnalysisJSON(dateFile, context, analysisResult);
+          } else {
+            // Last resort: use jsonrepair for robust JSON fixing
+            try {
+              const { jsonrepair } = await import("jsonrepair");
+              const f3 = clean.indexOf("{");
+              const l3 = clean.lastIndexOf("}");
+              if (f3 !== -1 && l3 > f3) {
+                parsed = JSON.parse(jsonrepair(clean.slice(f3, l3 + 1)));
+              }
+            } catch (e) {
+              console.log(`  JSON repair failed: ${e.message.slice(0, 120)}`);
+            }
+            if (parsed && parsed.workoutReviews) {
+              analysisResult = parsed;
+              console.log("  Parsed JSON (repaired).");
+              saveAnalysisJSON(dateFile, context, analysisResult);
+            } else {
+              console.log("  Could not parse JSON from fallback response.");
+            }
+          }
         } else {
           console.log("  LLM returned no content at all.");
         }
@@ -769,7 +930,10 @@ async function main() {
   }
 }
 
-main().catch((e) => {
-  console.error(`Fatal error: ${e.message}`);
+main().then(() => {
+  console.log("STATUS:OK");
+  process.exit(0);
+}).catch((e) => {
+  console.error(`STATUS:ERROR:${e.message}`);
   process.exit(1);
 });

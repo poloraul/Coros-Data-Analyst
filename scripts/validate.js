@@ -31,10 +31,12 @@ let rawData, analysisData;
 
 if (!existsSync(rawPath)) {
   console.log(JSON.stringify({ issues: [{severity:"error",category:"missing",description:`原始数据 ${dateFile}.json 不存在`}], hasIssues: true, summary: "数据文件缺失" }));
+  console.error("STATUS:ERROR:原始数据文件缺失");
   process.exit(1);
 }
 if (!existsSync(analysisPath)) {
   console.log(JSON.stringify({ issues: [{severity:"error",category:"missing",description:`分析文件 ${dateFile}-analysis.json 不存在`}], hasIssues: true, summary: "分析文件缺失，需运行 analyze.js" }));
+  console.error("STATUS:ERROR:分析文件缺失");
   process.exit(1);
 }
 
@@ -43,6 +45,7 @@ try {
   analysisData = JSON.parse(readFileSync(analysisPath, "utf-8"));
 } catch (e) {
   console.log(JSON.stringify({ issues: [{severity:"error",category:"parse",description:`JSON 解析失败: ${e.message}`}], hasIssues: true, summary: "JSON 解析失败" }));
+  console.error("STATUS:ERROR:JSON解析失败");
   process.exit(1);
 }
 
@@ -94,3 +97,4 @@ console.log(JSON.stringify({
   hasIssues: issues.length > 0,
   summary: issues.length > 0 ? `发现 ${issues.length} 个问题` : "所有检查通过",
 }));
+console.error("STATUS:OK");

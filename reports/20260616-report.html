@@ -609,21 +609,49 @@ new Chart(document.getElementById('loadChart'), {
   }
 });
 
+// Z1-Z6 background stripe plugin
+Chart.register({
+  id: 'paceZones',
+  beforeDraw(chart) {
+    const stripes = chart.options.plugins?.paceZones?.stripes;
+    if (!stripes?.length) return;
+    const ctx = chart.ctx;
+    const yScale = chart.scales.y;
+    const area = chart.chartArea;
+    ctx.save();
+    for (const s of stripes) {
+      const y1 = s.slower != null ? yScale.getPixelForValue(s.slower) : area.bottom;
+      const y2 = s.faster != null ? yScale.getPixelForValue(s.faster) : area.top;
+      if (!isFinite(y1) || !isFinite(y2)) continue;
+      const top = Math.max(area.top, Math.min(y1, y2));
+      const bot = Math.min(area.bottom, Math.max(y1, y2));
+      if (top >= bot) continue;
+      ctx.fillStyle = s.color + '20';
+      ctx.fillRect(area.left, top, area.right - area.left, bot - top);
+    }
+    ctx.restore();
+  }
+});
+
 // Pace Chart
 function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+
 new Chart(document.getElementById('paceChart'), {
-  type: 'bar',
+  type: 'line',
   data: {
-    labels: ["06-09","06-10","06-11","06-14","06-14","06-15"],
+    labels: ["06-09","06-10","06-11","06-14","06-15"],
     datasets: [{
-      label: '平均配速',
-      data: [4.983333333333333,5.983333333333333,5.383333333333334,34.93333333333333,4.566666666666666,5.85],
-      backgroundColor: ["rgba(124,185,232,.75)","rgba(124,185,232,.75)","rgba(124,185,232,.75)","rgba(124,185,232,.75)","rgba(77,184,164,.75)","rgba(124,185,232,.75)"],
-      borderColor: ["rgba(90,158,199,1)","rgba(90,158,199,1)","rgba(90,158,199,1)","rgba(90,158,199,1)","rgba(60,150,130,1)","rgba(90,158,199,1)"],
-      borderWidth: 1.5, barPercentage: 0.6,
+      label: '训练配速',
+      data: [4.983333333333333,5.983333333333333,5.383333333333334,4.566666666666666,5.85],
+      showLine: false,
+      pointBackgroundColor: ["#f4c542","#4db8a4","#4db8a4","#e89898","#4db8a4"],
+      pointBorderColor: ["#f4c542","#4db8a4","#4db8a4","#e89898","#4db8a4"],
+      pointRadius: [14,14,14,14,14],
+      pointHoverRadius: [16,16,16,16,16],
+      pointBorderWidth: 1.5,
     }, {
       label: '阈值 ' + fmtPace(4.300) + '/km',
-      data: Array(6).fill(4.300),
+      data: Array(5).fill(4.300),
       type: 'line',
       borderColor: '#e89898', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false,
     }]
@@ -632,19 +660,41 @@ new Chart(document.getElementById('paceChart'), {
     responsive: true,
     plugins: {
       legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
-      tooltip: { callbacks: { label: function(ctx) {
-        if (ctx.dataset.type === 'line') return ctx.dataset.label;
-        const v = ctx.parsed.y;
-        const ratio = v / 4.300;
-        let zone = ratio > 1.15 ? 'E区' : ratio > 1.05 ? 'E-M区' : ratio > 0.98 ? 'T区' : 'I区';
-        return fmtPace(v) + '/km (' + zone + ', ' + Math.round(ratio * 100) + '%阈值)';
-      } } }
+      paceZones: { stripes: [{"slower":null,"faster":6.05,"color":"#7ec882","key":"Z1","name":"积极恢复区"},{"slower":6.05,"faster":5.066666666666666,"color":"#4db8a4","key":"Z2","name":"有氧耐力区"},{"slower":5.066666666666666,"faster":4.616666666666666,"color":"#f4c542","key":"Z3","name":"有氧动力区"},{"slower":4.616666666666666,"faster":4.216666666666667,"color":"#e89898","key":"Z4","name":"乳酸阈区"},{"slower":4.216666666666667,"faster":3.8333333333333335,"color":"#c07070","key":"Z5","name":"速度耐力区"},{"slower":3.8333333333333335,"faster":null,"color":"#d94f4f","key":"Z6","name":"无氧动力区"}] },
+      tooltip: { callbacks: {
+        label: function(ctx) {
+          if (ctx.datasetIndex === 1) return ctx.dataset.label;
+          const v = ctx.parsed.y;
+          const idx = ctx.dataIndex;
+          const zi = [2,1,1,3,1][idx];
+          const zLabel = ["Z1 积极恢复区","Z2 有氧耐力区","Z3 有氧动力区","Z4 乳酸阈区","Z5 速度耐力区","Z6 无氧动力区"][zi] || '';
+          const ratio = v / 4.300;
+          return ['配速 ' + fmtPace(v) + '/km · ' + zLabel + ' · ' + Math.round(ratio * 100) + '%阈值'];
+        },
+        afterLabel: function(ctx) {
+          if (ctx.datasetIndex === 1) return;
+          const idx = ctx.dataIndex;
+          const d = [{"dist":8.22,"time":"41:00","hr":153,"tl":156,"perf":"Best"},{"dist":9.75,"time":"58:27","hr":136,"tl":93,"perf":"Good"},{"dist":15.5,"time":"1:23:26","hr":147,"tl":164,"perf":"Good"},{"dist":10.68,"time":"48:47","hr":169,"tl":197,"perf":"Best"},{"dist":8.76,"time":"51:12","hr":124,"tl":42,"perf":"Good"}][idx];
+          if (!d) return;
+          const lines = [];
+          if (d.dist) lines.push('距离 ' + d.dist + 'km');
+          if (d.time) lines.push('时长 ' + d.time);
+          if (d.hr) lines.push('心率 ' + d.hr + 'bpm');
+          if (d.tl) lines.push('训练负荷 ' + d.tl);
+          if (d.perf && d.perf !== '-1') lines.push('表现 ' + d.perf);
+          return lines;
+        }
+      } }
     },
-    scales: { y: { reverse: true, title: { display: true, text: '配速 (越低越快)' },
-      ticks: { callback: function(v) { return fmtPace(v); } }
-    } }
+    scales: {
+      y: { reverse: true, min: 7.500, max: 3.500,
+        title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } }
+      }
+    }
   }
 });
+
 
 
 // Vertical crosshair plugin for per-second chart (Chart.js v4 compatible)

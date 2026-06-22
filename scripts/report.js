@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { MARATHON_DATE, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
-import { calcPaceZones, calcHRZones, classifyPace, classifyHR } from "../lib/zones.js";
+import { calcPaceZones, calcHRZones, classifyPace, classifyHR, ZONE_LABELS } from "../lib/zones.js";
 import { assessRecovery } from "../lib/recovery.js";
 import { PHASE_TEMPLATES } from "../lib/training-templates.js";
 import { parseTCX } from "./tcx-analyzer.js";
@@ -244,24 +244,34 @@ function generateHTML(data, aiAnalysis) {
   const loadRatios = loadEntries.map(e => e.loadRatio).reverse();
 
   // Pace chart data
-  const paceLabels = details.map(d => d.date.slice(5)).reverse();
   const tpSeconds = paceToSeconds(tp);
   const tpMinPerKm = tpSeconds / 60;
-  const avgPaceMinPerKm = details.map(d => paceToSeconds(d.avgPace) / 60).reverse();
-  const paceColors = avgPaceMinPerKm.map(p => {
-    const ratio = p / tpMinPerKm;
-    if (ratio > 1.15) return "rgba(124,185,232,.75)";
-    if (ratio > 1.05) return "rgba(77,184,164,.75)";
-    if (ratio > 0.98) return "rgba(244,197,66,.75)";
-    return "rgba(232,152,152,.75)";
+  const paceDetails = details.filter(d => {
+    const sec = paceToSeconds(d.avgPace);
+    return sec && (sec / 60) <= 15; // exclude non-running (avgPace > 15:00/km)
   });
-  const paceBorders = avgPaceMinPerKm.map(p => {
-    const ratio = p / tpMinPerKm;
-    if (ratio > 1.15) return "rgba(90,158,199,1)";
-    if (ratio > 1.05) return "rgba(60,150,130,1)";
-    if (ratio > 0.98) return "rgba(200,160,40,1)";
-    return "rgba(192,112,112,1)";
-  });
+  const paceLabels = paceDetails.map(d => d.date.slice(5)).reverse();
+  const avgPaceMinPerKm = paceDetails.map(d => paceToSeconds(d.avgPace) / 60).reverse();
+  const paceZoneIndices = paceDetails.map(d => classifyPace(paceToSeconds(d.avgPace), tpSeconds)).reverse();
+  const paceDotColors = paceZoneIndices.map(i => ZONE_LABELS[i].color);
+  const paceDotBorders = paceZoneIndices.map(i => ZONE_LABELS[i].color);
+  const paceDotRadii = paceDetails.map(d => {
+    const dist = d.distance || 1;
+    return Math.max(4, Math.min(14, 4 + dist * 1.8));
+  }).reverse();
+  // Tooltip details
+  const paceTooltipData = paceDetails.map(a => ({
+    dist: a.distance, time: a.workoutTime, hr: a.avgHR, tl: a.trainingLoad, perf: a.performance,
+  })).reverse();
+  // Z1-Z6 horizontal stripe boundaries for chart background
+  const paceZonesData = calcPaceZones(tp);
+  const zoneStripes = paceZonesData ? paceZonesData.zones.map((z, i) => ({
+    slower: z.slowerSec === Infinity ? null : z.slowerSec / 60,
+    faster: z.fasterSec === 0 ? null : z.fasterSec / 60,
+    color: ZONE_LABELS[i].color,
+    key: ZONE_LABELS[i].key,
+    name: ZONE_LABELS[i].name,
+  })) : [];
 
   // Sleep chart data — prefer dailyHealth (has absolute durations); fallback to sleep field
   const parseSleepTime = (str) => {
@@ -559,8 +569,9 @@ ${paceZones || hrZones ? `
 ${(() => {
   const a = details[0];
   // AI-based review
-  if (hasAI && aiWorkoutReviews.length > 0) {
-    const r = aiWorkoutReviews.find(r => r.date === a?.date) || aiWorkoutReviews[0];
+  const latestReview = hasAI && aiWorkoutReviews.length > 0 ? aiWorkoutReviews.find(r => r.date === a?.date) : null;
+  if (latestReview) {
+    const r = latestReview;
     if (!a) return '<p style="color:var(--muted)">暂无训练数据</p>';
     const paceRatio = paceToSeconds(a.avgPace) / paceToSeconds(tp);
     let intensityZone = "未知";
@@ -585,8 +596,21 @@ ${(() => {
   <div class="review-grid">
     <div class="ai-insight">
       <h4>训练概要</h4>
+      ${r.trainingType ? `<div style="margin-bottom:4px"><span class="badge badge-${r.trainingType === '轻松跑' || r.trainingType === 'LSD' ? 'green' : r.trainingType === '间歇跑' || r.trainingType === '阈值跑' ? 'yellow' : 'blue'}">${r.trainingType}</span></div>` : ''}
       <p>${r.summary || ""}</p>
       ${r.detailedAnalysis ? `<div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">${r.detailedAnalysis}</div>` : ""}
+      ${r.phaseBreakdown ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:.75rem;font-weight:600;color:var(--muted)">训练结构</span>
+          ${r.phaseBreakdown.structureQuality ? `<span class="badge badge-${r.phaseBreakdown.structureQuality === 'excellent' || r.phaseBreakdown.structureQuality === 'good' ? 'green' : 'yellow'}">质量:${r.phaseBreakdown.structureQuality}</span>` : ''}
+        </div>
+        <div style="font-size:.78rem;line-height:1.7">
+          ${r.phaseBreakdown.warmup ? `<div><span style="color:var(--muted)">热身:</span> ${r.phaseBreakdown.warmup}</div>` : ''}
+          ${r.phaseBreakdown.main ? `<div><span style="color:var(--muted)">主训练:</span> ${r.phaseBreakdown.main}</div>` : ''}
+          ${r.phaseBreakdown.cooldown ? `<div><span style="color:var(--muted)">冷身:</span> ${r.phaseBreakdown.cooldown}</div>` : ''}
+        </div>
+      </div>` : ''}
     </div>
     <div class="review-box">
       <h4>亮点</h4>
@@ -924,18 +948,46 @@ new Chart(document.getElementById('loadChart'), {
   }
 });
 
+// Z1-Z6 background stripe plugin
+Chart.register({
+  id: 'paceZones',
+  beforeDraw(chart) {
+    const stripes = chart.options.plugins?.paceZones?.stripes;
+    if (!stripes?.length) return;
+    const ctx = chart.ctx;
+    const yScale = chart.scales.y;
+    const area = chart.chartArea;
+    ctx.save();
+    for (const s of stripes) {
+      const y1 = s.slower != null ? yScale.getPixelForValue(s.slower) : area.bottom;
+      const y2 = s.faster != null ? yScale.getPixelForValue(s.faster) : area.top;
+      if (!isFinite(y1) || !isFinite(y2)) continue;
+      const top = Math.max(area.top, Math.min(y1, y2));
+      const bot = Math.min(area.bottom, Math.max(y1, y2));
+      if (top >= bot) continue;
+      ctx.fillStyle = s.color + '20';
+      ctx.fillRect(area.left, top, area.right - area.left, bot - top);
+    }
+    ctx.restore();
+  }
+});
+
 // Pace Chart
 function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+${paceLabels.length > 0 ? `
 new Chart(document.getElementById('paceChart'), {
-  type: 'bar',
+  type: 'line',
   data: {
     labels: ${JSON.stringify(paceLabels)},
     datasets: [{
-      label: '平均配速',
+      label: '训练配速',
       data: ${JSON.stringify(avgPaceMinPerKm)},
-      backgroundColor: ${JSON.stringify(paceColors)},
-      borderColor: ${JSON.stringify(paceBorders)},
-      borderWidth: 1.5, barPercentage: 0.6,
+      showLine: false,
+      pointBackgroundColor: ${JSON.stringify(paceDotColors)},
+      pointBorderColor: ${JSON.stringify(paceDotBorders)},
+      pointRadius: ${JSON.stringify(paceDotRadii)},
+      pointHoverRadius: ${JSON.stringify(paceDotRadii.map(r => r + 2))},
+      pointBorderWidth: 1.5,
     }, {
       label: '阈值 ' + fmtPace(${tpMinPerKm.toFixed(3)}) + '/km',
       data: Array(${paceLabels.length}).fill(${tpMinPerKm.toFixed(3)}),
@@ -947,19 +999,41 @@ new Chart(document.getElementById('paceChart'), {
     responsive: true,
     plugins: {
       legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
-      tooltip: { callbacks: { label: function(ctx) {
-        if (ctx.dataset.type === 'line') return ctx.dataset.label;
-        const v = ctx.parsed.y;
-        const ratio = v / ${tpMinPerKm.toFixed(3)};
-        let zone = ratio > 1.15 ? 'E区' : ratio > 1.05 ? 'E-M区' : ratio > 0.98 ? 'T区' : 'I区';
-        return fmtPace(v) + '/km (' + zone + ', ' + Math.round(ratio * 100) + '%阈值)';
-      } } }
+      paceZones: { stripes: ${JSON.stringify(zoneStripes)} },
+      tooltip: { callbacks: {
+        label: function(ctx) {
+          if (ctx.datasetIndex === 1) return ctx.dataset.label;
+          const v = ctx.parsed.y;
+          const idx = ctx.dataIndex;
+          const zi = ${JSON.stringify(paceZoneIndices)}[idx];
+          const zLabel = ${JSON.stringify(ZONE_LABELS.map(z => z.key + ' ' + z.name))}[zi] || '';
+          const ratio = v / ${tpMinPerKm.toFixed(3)};
+          return ['配速 ' + fmtPace(v) + '/km · ' + zLabel + ' · ' + Math.round(ratio * 100) + '%阈值'];
+        },
+        afterLabel: function(ctx) {
+          if (ctx.datasetIndex === 1) return;
+          const idx = ctx.dataIndex;
+          const d = ${JSON.stringify(paceTooltipData)}[idx];
+          if (!d) return;
+          const lines = [];
+          if (d.dist) lines.push('距离 ' + d.dist + 'km');
+          if (d.time) lines.push('时长 ' + d.time);
+          if (d.hr) lines.push('心率 ' + d.hr + 'bpm');
+          if (d.tl) lines.push('训练负荷 ' + d.tl);
+          if (d.perf && d.perf !== '-1') lines.push('表现 ' + d.perf);
+          return lines;
+        }
+      } }
     },
-    scales: { y: { reverse: true, title: { display: true, text: '配速 (越低越快)' },
-      ticks: { callback: function(v) { return fmtPace(v); } }
-    } }
+    scales: {
+      y: { reverse: true, min: ${(zoneStripes[0]?.slower ?? 7.5).toFixed(3)}, max: ${(zoneStripes[5]?.faster ?? 3.5).toFixed(3)},
+        title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } }
+      }
+    }
   }
 });
+` : ''}
 
 ${secData.length >= 10 ? `
 // Vertical crosshair plugin for per-second chart (Chart.js v4 compatible)
@@ -1147,6 +1221,7 @@ const dataPath = path.join(DATA_DIR, `${dateFile}.json`);
 if (!existsSync(dataPath)) {
   console.error(`Data file not found: ${dataPath}`);
   console.error(`Run 'node scripts/fetch.js' first.`);
+  console.error("STATUS:ERROR:data file not found");
   process.exit(1);
 }
 
@@ -1172,3 +1247,4 @@ mkdirSync(REPORT_DIR, { recursive: true });
 const outPath = path.join(REPORT_DIR, `${dateFile}-report.html`);
 writeFileSync(outPath, html, "utf-8");
 console.log(`Report saved to ${outPath}`);
+console.error("STATUS:OK");

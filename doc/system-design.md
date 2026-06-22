@@ -93,7 +93,7 @@ daily JSON（含 tcxMetrics）──> buildLLMContext() ──> 分析上下文�
                                        ├──> bodyStatus（恢复/HRV/睡眠/训练负荷）
                                        ├──> paceZones（压缩格式：仅 key/name/range）
                                        ├──> hrZones（压缩格式：仅 key/name/range）
-                                       ├──> workouts（训练详情 + tcxSummary 压缩摘要）
+                                       ├──> workouts（训练详情 + tcxSummary 压缩摘要 + kmSplitSummary 逐公里配速/心率）
                                        ├──> today / weeklySummary
                                        └──> holidays（thisWeek + upcomingNext4Weeks）
 ```
@@ -103,19 +103,23 @@ analyze.js 从 daily JSON 中直接读取 `tcxMetrics`，通过 `summarizeTcxMet
 - 调用 LLM 生成深度复盘与训练计划
 - 输出规则引擎 markdown（LLM 不可用时的降级方案）
 
-**Token 优化措施**（2026-06-15 更新）：
+**Token 优化措施**（2026-06-15 更新 / 2026-06-18 补充）：
 - `tcxSummary` 替代 `tcxMetrics`：原始 kmSplits 数组 → 一行文本摘要（~400 字符）
+- `kmSplitSummary`（2026-06-18 新增）：压缩逐公里配速+心率数据传递 LLM（`KM1=6:14(HR113) KM2=5:55(HR121)...`），支持训练阶段识别和模式分类
 - `compressZones()`：paceZones/hrZones 移除 color/short/pctOfThreshold 等 UI 字段
 - 移除过期 `upcomingRace` 硬编码
 - `holidays.upcoming` 从全量 13 条裁剪至未来 4 周
-- 上下文从 ~5KB 压缩至 ~4KB（-20%）
+- 上下文从 ~5KB 压缩至 ~4KB（-20%），新增 kmSplitSummary 后约 5-5.5KB
 
-**训练偏好**（已写入 system prompt）：
-- 间歇跑/节奏跑等强度课放在周三或周四
-- LSD 安排在周六或周日
+**训练哲学**（已写入 system prompt）：
+- 二区训练（Z2 有氧耐力区）：配速约 5:04-6:03/km，心率约 136-153bpm，是有氧基础的核心
+- 两极化训练（Polarized Training）：~80%低强度（Z1-Z2）+ ~20%高强度（Z4-Z6），最小化 Z3（灰色区）
+- 高质量课（Z4+）放在周三或周四
+- LSD（Z2为主）安排在周六或周日
+- 轻松跑（Z2纯有氧）安排在其他训练日
 - 节假日当天可安排强度课
 
-**分析去重**：调用 LLM 前检查 `YYYYMMDD-analysis.json` 是否已存在，对比 workouts 日期列表。如果数据未变，跳过 LLM 调用直接使用已有结果。`--force` 参数强制重新分析。
+**增量分析**（2026-06-18 更新）：仅分析新增活动的 workoutReviews，合并保留历史分析的全局字段（bodyAssessment/trainingPatternAnalysis/weeklyPlan）。`--force` 参数强制全量重新分析。
 
 ### 2.4 验证阶段（validate.js）
 
@@ -210,13 +214,13 @@ analysis JSON ──> AI 分析数据 ──> 配速区间自动推导 ──> �
     },
     paceZones: [{ key, name, range }],     // 压缩格式（6 区）
     hrZones: [{ key, name, range }],        // 压缩格式（6 区）
-    workouts: [{ date, distance, duration, avgPace, bestKm, avgHR, avgCadence, trainingLoad, performance, tcxSummary }],
+    workouts: [{ date, distance, duration, avgPace, bestKm, avgHR, avgCadence, trainingLoad, performance, tcxSummary, kmSplitSummary }],
     today: { date, dayOfWeek },
     weeklySummary: { totalKm, runCount, totalTL },
     holidays: { thisWeek, upcomingNext4Weeks: [{ date, name }] }
   },
   analysis: {
-    workoutReviews: [{ date, summary, detailedAnalysis, positives[], improvements[] }],
+    workoutReviews: [{ date, trainingType, phaseBreakdown: { warmup, main, cooldown, structureQuality }, summary, detailedAnalysis, positives[], improvements[] }],
     bodyAssessment: { overallLevel, summary, details[], recommendations[] },
     trainingPatternAnalysis: { summary, strengths[], risks[], suggestions[] },
     weeklyPlan: [{ dayIndex, dayName, date, type, totalDistance, paceZone, hrZone, description, 详细计划: { warmup, main, cooldown, notes } }],
@@ -230,6 +234,8 @@ analysis JSON ──> AI 分析数据 ──> 配速区间自动推导 ──> �
 - `holidays.upcomingNext4Weeks` 仅包含未来 4 周的节假日（而非全量至年底）
 - 已移除 `upcomingRace`（过期硬编码字段）
 - `workouts[].tcxSummary` 为压缩文本摘要（格式：`P=309s→302s 负分段加速 CV8.9%(fair); HR134→162漂移20.8%; Z:Z1-2 9% Z3-4 77% Z5 14% (主Z4); 步频176(>180:17%)`）
+- `workouts[].kmSplitSummary`（2026-06-18 新增）为逐公里配速+心率压缩文本，用于 LLM 训练阶段识别（热身/主训练/冷身）和训练模式分类（轻松跑/阈值跑/间歇跑/LSD 等）
+- `workoutReviews[].trainingType` 和 `workoutReviews[].phaseBreakdown`（2026-06-18 新增）为 LLM 分析新增的输出字段，`report.js` 可选渲染
 
 ### 4.3 TCX 解析模型
 

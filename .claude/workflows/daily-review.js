@@ -41,7 +41,7 @@ const fetchResult = await agent(
   `运行 COROS 数据采集脚本。
 
   执行: node scripts/fetch.js ${dateArg}
-  确认脚本 exit code 为 0。
+  查看 stderr 最后一行，若为 STATUS:OK 则成功，否则失败。
 
   采集完成后，获取本次数据的日期（YYYYMMDD 格式）。
   - 如果传入了 --date 参数，使用该日期
@@ -70,7 +70,7 @@ await agent(
   `运行训练分析脚本。
 
   执行: node scripts/analyze.js --force --date ${dateStr} --provider ${selectedProvider}
-  确认脚本 exit code 为 0。
+  查看 stderr 最后一行，若为 STATUS:OK 则成功，否则失败。
 
   预期输出：
   - 控制台打印详细的训练复盘 Markdown
@@ -86,7 +86,8 @@ const verifyResult = await agent(
   `运行数据一致性验证脚本。
 
   执行: node scripts/validate.js --date ${dateStr}
-  确认 exit code 为 0，获取输出的 JSON 结果。
+  查看 stderr 最后一行，若为 STATUS:OK 则成功，否则失败。
+  从 stdout 获取输出的 JSON 结果。
 
   将 JSON 中的 issues 数组、hasIssues 布尔值、summary 字符串直接返回。`,
   {
@@ -124,7 +125,9 @@ await agent(
 
   依次执行：
   1. node scripts/report.js --date ${dateStr}
+     查看 stderr 最后一行，若为 STATUS:OK 则成功
   2. open reports/${dateStr}-report.html
+     确认打开成功
 
   确认两个命令都成功执行。`,
   { label: "report" },

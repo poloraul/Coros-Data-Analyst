@@ -198,6 +198,27 @@ function parseFitnessOverview(text) {
   return Object.keys(r).length ? r : null;
 }
 
+/**
+ * Fallback: find the most recent fitness data from nearby daily JSON files.
+ * Used when queryFitnessAssessmentOverview returns null (transient API failure).
+ */
+function findRecentFitness(dateStr) {
+  const todayNum = parseInt(dateStr);
+  // Scan up to 7 days back
+  for (let daysBack = 1; daysBack <= 7; daysBack++) {
+    const pastDate = String(todayNum - daysBack);
+    const pastPath = path.join(DATA_DIR, `${pastDate}.json`);
+    try {
+      const pastData = JSON.parse(readFileSync(pastPath, "utf-8"));
+      if (pastData.fitness && pastData.fitness.vo2max) {
+        pastData.fitness._sourceDate = pastDate;
+        return pastData.fitness;
+      }
+    } catch { /* file not found or parse error, skip */ }
+  }
+  return null;
+}
+
 function parseTrainingSchedule(text) {
   if (!text) return [];
   const entries = [];
@@ -514,6 +535,13 @@ async function fetchAll(dateStr) {
 
   console.log("  [9/10] Fitness overview...");
   data.fitness = parseFitnessOverview(callTool("queryFitnessAssessmentOverview", {}));
+  if (!data.fitness) {
+    const fallback = findRecentFitness(today);
+    if (fallback) {
+      data.fitness = fallback;
+      console.log(`  Fitness data not available, using ${fallback._sourceDate} data`);
+    }
+  }
 
   console.log("  [10/10] Training schedule (this week)...");
   data.trainingSchedule = parseTrainingSchedule(callTool("queryTrainingSchedule", {
@@ -608,6 +636,14 @@ async function fetchIncremental(dateStr) {
       if (!isEmpty(parsed)) {
         existing[key] = parsed;
         filled++;
+      } else if (key === "fitness") {
+        // Transient API failure fallback: use recent fitness data
+        const fallback = findRecentFitness(today);
+        if (fallback) {
+          existing[key] = fallback;
+          filled++;
+          console.log(`    using ${fallback._sourceDate} fallback data`);
+        }
       }
     }
   }
@@ -635,10 +671,20 @@ async function fetchIncremental(dateStr) {
 
 const args = parseArgs();
 (async () => {
-  if (!args.full) {
-    const result = await fetchIncremental(args.date);
-    if (result) process.exit(0);
-    console.log("No existing data for today, performing full fetch...");
+  try {
+    if (!args.full) {
+      const result = await fetchIncremental(args.date);
+      if (result) {
+        console.log("STATUS:OK");
+        process.exit(0);
+      }
+      console.log("No existing data for today, performing full fetch...");
+    }
+    await fetchAll(args.date);
+    console.log("STATUS:OK");
+    process.exit(0);
+  } catch (e) {
+    console.error(`STATUS:ERROR:${e.message}`);
+    process.exit(1);
   }
-  await fetchAll(args.date);
 })();
