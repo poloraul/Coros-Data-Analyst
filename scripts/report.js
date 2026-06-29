@@ -606,9 +606,29 @@ ${(() => {
           ${r.phaseBreakdown.structureQuality ? `<span class="badge badge-${r.phaseBreakdown.structureQuality === 'excellent' || r.phaseBreakdown.structureQuality === 'good' ? 'green' : 'yellow'}">质量:${r.phaseBreakdown.structureQuality}</span>` : ''}
         </div>
         <div style="font-size:.78rem;line-height:1.7">
-          ${r.phaseBreakdown.warmup ? `<div><span style="color:var(--muted)">热身:</span> ${r.phaseBreakdown.warmup}</div>` : ''}
-          ${r.phaseBreakdown.main ? `<div><span style="color:var(--muted)">主训练:</span> ${r.phaseBreakdown.main}</div>` : ''}
-          ${r.phaseBreakdown.cooldown ? `<div><span style="color:var(--muted)">冷身:</span> ${r.phaseBreakdown.cooldown}</div>` : ''}
+          ${(() => {
+            // phaseBreakdown fields may be strings OR objects {distance, duration, characteristics}
+            const fmt = (v) => {
+              if (v == null) return null;
+              if (typeof v === "string") return v;
+              if (typeof v === "object") {
+                const parts = [];
+                if (v.distance) parts.push(v.distance);
+                if (v.duration) parts.push(v.duration);
+                if (v.characteristics) parts.push(v.characteristics);
+                return parts.join(" · ");
+              }
+              return String(v);
+            };
+            const w = fmt(r.phaseBreakdown.warmup);
+            const m = fmt(r.phaseBreakdown.main);
+            const c = fmt(r.phaseBreakdown.cooldown);
+            return [
+              w ? `<div><span style="color:var(--muted)">热身:</span> ${w}</div>` : "",
+              m ? `<div><span style="color:var(--muted)">主训练:</span> ${m}</div>` : "",
+              c ? `<div><span style="color:var(--muted)">冷身:</span> ${c}</div>` : "",
+            ].join("");
+          })()}
         </div>
       </div>` : ''}
     </div>
@@ -810,12 +830,17 @@ ${aiWorkoutReviews.length > 1 ? `
     ${aiWeeklyPlan.map(d => {
       const hasPrescription = d["详细计划"] && (d["详细计划"].warmup || d["详细计划"].main || d["详细计划"].cooldown || d["详细计划"].notes);
       const pId = "p-" + d.dayIndex;
+      // totalDistance may be a number (8) or a string ("8km") from the LLM.
+      // Parse to numeric so the "> 0" check works in both cases.
+      const distNum = typeof d.totalDistance === "string"
+        ? parseFloat(d.totalDistance.replace(/[^\d.]/g, ""))
+        : d.totalDistance;
       // Derive paceZone from detailed plan for consistency (overrides LLM's independent generation)
       const derivedPace = d["详细计划"] ? (derivePaceZone(d["详细计划"], tp) || d.paceZone || "-") : (d.paceZone || "-");
       return `<tr class="${d.type === "休息" ? "" : ""}">
         <td>${(d.dayName || "").replace(/（[^）]*）/g, "")} ${(d.date || "").slice(5)}${/比赛/i.test(d.dayName + d.type) ? ' <span class="badge badge-yellow">🏁 比赛日</span>' : ""}</td>
         <td>${d.type}</td>
-        <td>${d.totalDistance > 0 ? d.totalDistance + "km" : "-"}</td>
+        <td>${distNum > 0 ? distNum + "km" : "-"}</td>
         <td>${derivedPace}</td>
         <td>${d.hrZone || "-"}</td>
         <td>${d.description || "-"}</td>

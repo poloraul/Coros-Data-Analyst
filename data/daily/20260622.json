@@ -1,6 +1,6 @@
 {
   "fetchDate": "20260622",
-  "fetchedAt": "2026-06-22T02:02:29.351Z",
+  "fetchedAt": "2026-06-26T01:08:08.834Z",
   "userInfo": {
     "height": 176,
     "weight": 66.2,
@@ -92,102 +92,124 @@
   ],
   "activityDetails": [
     {
-      "elevationLoss": 4,
-      "workoutTime": "1:07:03",
-      "avgPace": "16:07",
-      "movingAvgPace": "13:51",
-      "adjustedPace": "16:06",
-      "bestKm": "14:16",
-      "performance": "-1",
-      "distance": 4.16,
-      "avgStrideLength": 0.66,
-      "avgHR": 90,
-      "avgCadence": 94,
-      "elevationGain": 3,
-      "calories": 207,
-      "labelId": "478341006845050980",
+      "elevationLoss": 15,
+      "workoutTime": "49:08",
+      "avgPace": "6:58",
+      "movingAvgPace": "6:58",
+      "adjustedPace": "6:56",
+      "bestKm": "5:47",
+      "performance": "Below Average",
+      "distance": 7.05,
+      "avgStrideLength": 0.91,
+      "avgHR": 126,
+      "avgCadence": 158,
+      "elevationGain": 18,
+      "calories": 455,
+      "trainingLoad": 47,
+      "labelId": "478359193347195579",
       "sportType": 100,
-      "date": "2026-06-20",
+      "date": "2026-06-21",
       "tcxMetrics": {
-        "totalDistanceMeters": 8160,
-        "totalKm": 8.16,
-        "trackpointsCount": 4027,
+        "totalDistanceMeters": 14050,
+        "totalKm": 14.05,
+        "trackpointsCount": 2955,
         "kmSplits": [
           {
             "km": 1,
-            "paceSecPerKm": 855,
-            "paceStr": "14:15",
-            "avgHR": 82,
-            "avgCadence": 108
+            "paceSecPerKm": 372,
+            "paceStr": "6:12",
+            "avgHR": 150,
+            "avgCadence": 172
           },
           {
             "km": 3,
-            "paceSecPerKm": 897,
-            "paceStr": "14:57",
-            "avgHR": 91,
-            "avgCadence": 107
+            "paceSecPerKm": 361,
+            "paceStr": "6:01",
+            "avgHR": 132,
+            "avgCadence": 172
           },
           {
             "km": 5,
-            "paceSecPerKm": 1021,
-            "paceStr": "17:01",
-            "avgHR": 96,
-            "avgCadence": 105
+            "paceSecPerKm": 348,
+            "paceStr": "5:48",
+            "avgHR": 134,
+            "avgCadence": 173
           },
           {
             "km": 7,
-            "paceSecPerKm": 1105,
-            "paceStr": "18:25",
-            "avgHR": 86,
-            "avgCadence": 107
+            "paceSecPerKm": 359,
+            "paceStr": "5:59",
+            "avgHR": 136,
+            "avgCadence": 172
+          },
+          {
+            "km": 9,
+            "paceSecPerKm": 360,
+            "paceStr": "6:00",
+            "avgHR": 135,
+            "avgCadence": 173
+          },
+          {
+            "km": 11,
+            "paceSecPerKm": 361,
+            "paceStr": "6:01",
+            "avgHR": 136,
+            "avgCadence": 174
+          },
+          {
+            "km": 13,
+            "paceSecPerKm": 741,
+            "paceStr": "12:21",
+            "avgHR": 96,
+            "avgCadence": 116
           }
         ],
         "hrDrift": {
-          "driftPct": 3.6,
-          "avgHRFirst": 85,
-          "avgHRLast": 88,
-          "evaluation": "good"
+          "driftPct": -22.5,
+          "avgHRFirst": 139,
+          "avgHRLast": 108,
+          "evaluation": "excellent"
         },
         "hrZones": {
-          "zone1Min": 40.4,
-          "zone2Min": 0.4,
-          "zone3Min": 0,
-          "zone4Min": 0,
+          "zone1Min": 6.5,
+          "zone2Min": 3.4,
+          "zone3Min": 28.3,
+          "zone4Min": 5.8,
           "zone5Min": 0,
-          "totalMin": 67.1,
-          "pctZ1Z2": 61,
-          "pctZ3Z4": 0,
+          "totalMin": 49.3,
+          "pctZ1Z2": 20,
+          "pctZ3Z4": 69,
           "pctZ5": 0,
-          "dominantZone": "Z1"
+          "dominantZone": "Z3"
         },
         "paceCV": {
-          "cvPct": 10.2,
-          "stdDevSec": 99,
+          "cvPct": 32.2,
+          "stdDevSec": 133,
           "evaluation": "poor"
         },
         "cadence": {
-          "avgCadence": 107,
-          "stdDev": 8,
-          "pctBelow170": 100,
+          "avgCadence": 157,
+          "stdDev": 26,
+          "pctBelow170": 29,
           "pctAbove180": 0
         },
         "elevation": {
-          "totalGain": 27,
-          "totalLoss": 28,
-          "minAlt": 4,
-          "maxAlt": 9
+          "totalGain": 38,
+          "totalLoss": 37,
+          "minAlt": 1,
+          "maxAlt": 6
         }
       },
       "weather": {
-        "tempMax": 29.6,
-        "tempMin": 24.5,
-        "feelsLikeMax": 36.3,
-        "feelsLikeMin": 28.2,
+        "tempMax": 28.1,
+        "tempMin": 22.7,
+        "feelsLikeMax": 33.1,
+        "feelsLikeMin": 26,
         "weatherCode": 63,
         "weatherDesc": "中雨",
-        "precipitation": 10.8,
-        "humidity": 94,
-        "windSpeed": 16.9
+        "precipitation": 19.9,
+        "humidity": 98,
+        "windSpeed": 10.9
       }
     },
     {
@@ -715,124 +737,103 @@
       }
     },
     {
-      "elevationLoss": 15,
-      "workoutTime": "49:08",
-      "avgPace": "6:58",
-      "movingAvgPace": "6:58",
-      "adjustedPace": "6:56",
-      "bestKm": "5:47",
-      "performance": "Below Average",
-      "distance": 7.05,
-      "avgStrideLength": 0.91,
-      "avgHR": 126,
-      "avgCadence": 158,
-      "elevationGain": 18,
-      "calories": 455,
-      "trainingLoad": 47,
-      "labelId": "478359193347195579",
+      "date": "2026-06-20",
+      "labelId": "478341006845050980",
       "sportType": 100,
-      "date": "2026-06-21",
+      "distance": 4.16,
+      "avgPace": "16:07",
+      "avgHR": 90,
+      "calories": 207,
+      "workoutTime": "1:07:03",
+      "movingAvgPace": "16:07",
+      "adjustedPace": "16:07",
+      "bestKm": null,
+      "performance": null,
+      "avgCadence": 107,
+      "avgStrideLength": null,
+      "elevationGain": null,
+      "elevationLoss": null,
+      "trainingLoad": null,
       "tcxMetrics": {
-        "totalDistanceMeters": 14050,
-        "totalKm": 14.05,
-        "trackpointsCount": 2955,
+        "totalDistanceMeters": 8160,
+        "totalKm": 8.16,
+        "trackpointsCount": 4027,
         "kmSplits": [
           {
             "km": 1,
-            "paceSecPerKm": 372,
-            "paceStr": "6:12",
-            "avgHR": 150,
-            "avgCadence": 172
+            "paceSecPerKm": 855,
+            "paceStr": "14:15",
+            "avgHR": 82,
+            "avgCadence": 108
           },
           {
             "km": 3,
-            "paceSecPerKm": 361,
-            "paceStr": "6:01",
-            "avgHR": 132,
-            "avgCadence": 172
+            "paceSecPerKm": 897,
+            "paceStr": "14:57",
+            "avgHR": 91,
+            "avgCadence": 107
           },
           {
             "km": 5,
-            "paceSecPerKm": 348,
-            "paceStr": "5:48",
-            "avgHR": 134,
-            "avgCadence": 173
+            "paceSecPerKm": 1021,
+            "paceStr": "17:01",
+            "avgHR": 96,
+            "avgCadence": 105
           },
           {
             "km": 7,
-            "paceSecPerKm": 359,
-            "paceStr": "5:59",
-            "avgHR": 136,
-            "avgCadence": 172
-          },
-          {
-            "km": 9,
-            "paceSecPerKm": 360,
-            "paceStr": "6:00",
-            "avgHR": 135,
-            "avgCadence": 173
-          },
-          {
-            "km": 11,
-            "paceSecPerKm": 361,
-            "paceStr": "6:01",
-            "avgHR": 136,
-            "avgCadence": 174
-          },
-          {
-            "km": 13,
-            "paceSecPerKm": 741,
-            "paceStr": "12:21",
-            "avgHR": 96,
-            "avgCadence": 116
+            "paceSecPerKm": 1105,
+            "paceStr": "18:25",
+            "avgHR": 86,
+            "avgCadence": 107
           }
         ],
         "hrDrift": {
-          "driftPct": -22.5,
-          "avgHRFirst": 139,
-          "avgHRLast": 108,
-          "evaluation": "excellent"
+          "driftPct": 3.6,
+          "avgHRFirst": 85,
+          "avgHRLast": 88,
+          "evaluation": "good"
         },
         "hrZones": {
-          "zone1Min": 6.5,
-          "zone2Min": 3.4,
-          "zone3Min": 28.3,
-          "zone4Min": 5.8,
+          "zone1Min": 40.4,
+          "zone2Min": 0.4,
+          "zone3Min": 0,
+          "zone4Min": 0,
           "zone5Min": 0,
-          "totalMin": 49.3,
-          "pctZ1Z2": 20,
-          "pctZ3Z4": 69,
+          "totalMin": 67.1,
+          "pctZ1Z2": 61,
+          "pctZ3Z4": 0,
           "pctZ5": 0,
-          "dominantZone": "Z3"
+          "dominantZone": "Z1"
         },
         "paceCV": {
-          "cvPct": 32.2,
-          "stdDevSec": 133,
+          "cvPct": 10.2,
+          "stdDevSec": 99,
           "evaluation": "poor"
         },
         "cadence": {
-          "avgCadence": 157,
-          "stdDev": 26,
-          "pctBelow170": 29,
+          "avgCadence": 107,
+          "stdDev": 8,
+          "pctBelow170": 100,
           "pctAbove180": 0
         },
         "elevation": {
-          "totalGain": 38,
-          "totalLoss": 37,
-          "minAlt": 1,
-          "maxAlt": 6
+          "totalGain": 27,
+          "totalLoss": 28,
+          "minAlt": 4,
+          "maxAlt": 9
         }
       },
       "weather": {
-        "tempMax": 28.1,
-        "tempMin": 22.7,
-        "feelsLikeMax": 33.1,
-        "feelsLikeMin": 26,
+        "tempMax": 29.6,
+        "tempMin": 24.5,
+        "feelsLikeMax": 36.3,
+        "feelsLikeMin": 28.2,
         "weatherCode": 63,
         "weatherDesc": "中雨",
-        "precipitation": 19.9,
-        "humidity": 98,
-        "windSpeed": 10.9
+        "precipitation": 10.8,
+        "humidity": 94,
+        "windSpeed": 16.9
       }
     }
   ],
@@ -901,8 +902,8 @@
     },
     {
       "date": "20260621",
-      "steps": 14857,
-      "calories": 761,
+      "steps": 14864,
+      "calories": 762,
       "exerciseMin": 49,
       "avgStress": 19,
       "sleepScore": 96,
@@ -911,6 +912,19 @@
       "lightSleep": "4h 56min",
       "remSleep": "2h 6min",
       "awakeTime": "12 min"
+    },
+    {
+      "date": "20260622",
+      "steps": 5958,
+      "calories": 185,
+      "exerciseMin": 1,
+      "avgStress": 15,
+      "sleepScore": 83,
+      "sleepTotal": "8h 25min",
+      "deepSleep": "1h 13min",
+      "lightSleep": "4h 50min",
+      "remSleep": "1h 53min",
+      "awakeTime": "4 min"
     }
   ],
   "sleep": [
@@ -990,15 +1004,31 @@
       "awakeRatio": 2,
       "awakeTimeMin": 12,
       "sleepWindow": "23:44 - 08:36"
+    },
+    {
+      "date": "2026-06-22",
+      "sleepScore": 80,
+      "mainSleep": "7h 56min",
+      "deepRatio": 15,
+      "lightRatio": 60,
+      "remRatio": 24,
+      "awakeRatio": 1,
+      "awakeTimeMin": 4,
+      "sleepWindow": "22:59 - 06:59"
     }
   ],
   "hrv": {
-    "baseline": 66,
+    "baseline": 67,
     "normalRange": [
-      55,
-      77
+      56,
+      78
     ],
     "days": [
+      {
+        "date": "2026-06-22",
+        "hrv": 104,
+        "evaluation": "Above normal"
+      },
       {
         "date": "2026-06-21",
         "hrv": 85,
@@ -1094,7 +1124,8 @@
     "pred5k": "20:32",
     "pred10k": "42:30",
     "predHalfMarathon": "1:34:40",
-    "predMarathon": "3:18:16"
+    "predMarathon": "3:18:16",
+    "_sourceDate": "20260618"
   },
   "trainingSchedule": []
 }

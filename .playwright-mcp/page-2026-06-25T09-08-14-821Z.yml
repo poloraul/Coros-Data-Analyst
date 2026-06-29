@@ -1,0 +1,21 @@
+- generic [ref=e2]:
+  - generic [ref=e4]:
+    - generic [ref=e5]:
+      - img [ref=e7]
+      - img [ref=e17]
+    - generic [ref=e19]:
+      - generic [ref=e22]: 获取您的个人信息数据
+      - generic [ref=e25]: 获取您的运动数据，其中【运动轨迹】属于个人敏感信息
+    - generic [ref=e26]: COROS 账号登录
+    - textbox "请输入手机号或邮箱" [ref=e31]: poloraul@126.com
+    - generic [ref=e33]:
+      - textbox "请输入密码" [ref=e36]: 19870810wy
+      - img [ref=e38] [cursor=pointer]
+    - generic [ref=e40] [cursor=pointer]: 忘记密码？
+    - generic [ref=e44]: 您已同意COROS的 隐私政策 和 服务条款
+    - generic [ref=e48]: 您已同意第三方在24小时内获取您的所有历史运动记录
+    - button "授权登录" [active] [ref=e49] [cursor=pointer]
+    - generic [ref=e53]: 请先阅读并同意协议
+  - generic [ref=e50] [cursor=pointer]:
+    - generic [ref=e51]: 仅支持COROS账号绑定
+    - generic [ref=e52]: 如何绑定？

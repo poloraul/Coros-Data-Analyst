@@ -38,44 +38,91 @@ function getAge(birthday) {
   return age;
 }
 
-function callTool(toolName, args, retries = 3) {
-  const argsJson = JSON.stringify(args);
-  const escaped = argsJson.replace(/'/g, "'\\''");
-  const cmd = `coros-mcp --issuer ${ISSUER} call-tool --tool ${toolName} --arguments-json '${escaped}'`;
-  for (let attempt = 1; attempt <= retries; attempt++) {
-    try {
-      const stdout = execSync(cmd, { encoding: "utf-8", timeout: 30000 });
-      const result = JSON.parse(stdout.trim());
-      if (result.isError) {
-        if (attempt < retries) {
-          const delay = attempt * 1500;
-          console.error(`  [WARN] ${toolName} returned error, retrying (${attempt}/${retries})...`);
-          execSync(`sleep ${delay / 1000}`, { encoding: "utf-8" });
-          continue;
-        }
-        console.error(`  [WARN] ${toolName} returned error after ${retries} attempts`);
-        return null;
-      }
-      if (result.content?.[0]?.text) {
-        let text = result.content[0].text;
-        if (text.startsWith('"') && text.endsWith('"')) {
-          try { text = JSON.parse(text); } catch { /* keep as-is */ }
-        }
-        return text;
-      }
-      return null;
-    } catch (e) {
-      if (attempt < retries) {
-        const delay = attempt * 1500;
-        console.error(`  [WARN] ${toolName} failed (${attempt}/${retries}), retrying in ${delay}ms...`);
-        execSync(`sleep ${delay / 1000}`, { encoding: "utf-8" });
-        continue;
-      }
-      console.error(`  [WARN] ${toolName} failed after ${retries} attempts: ${e.message.split("\n")[0]}`);
+// Direct MCP protocol caller — bypasses the coros-mcp CLI's
+// "mcp session id missing" bug (server returns no Mcp-Session-Id header
+// after initialize, but tools/call works fine without a session id).
+function readAccessToken() {
+  const tokenPath = process.env.COROS_MCP_TOKEN_PATH
+    || path.join(process.env.HOME, ".coros-mcp-skill-gateway-ts", "cn", "token.json");
+  try {
+    return JSON.parse(readFileSync(tokenPath, "utf8")).access_token;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function directMcpCall(toolName, args) {
+  const token = readAccessToken();
+  if (!token) {
+    console.error(`  [WARN] no COROS access token found`);
+    return null;
+  }
+  const mcpUrl = `${ISSUER}/mcp`;
+  const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream",
+    "Authorization": `Bearer ${token}`,
+  };
+  try {
+    // initialize
+    const initRes = await fetch(mcpUrl, {
+      method: "POST", headers,
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: 1, method: "initialize",
+        params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "coros-fetch", version: "1.0.0" } },
+      }),
+    });
+    if (!initRes.ok) {
+      console.error(`  [WARN] MCP init failed: ${initRes.status}`);
       return null;
     }
+    await initRes.text();
+    // notifications/initialized
+    await fetch(mcpUrl, {
+      method: "POST", headers,
+      body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+    });
+    // tools/call
+    const callRes = await fetch(mcpUrl, {
+      method: "POST", headers,
+      body: JSON.stringify({
+        jsonrpc: "2.0", id: 2, method: "tools/call",
+        params: { name: toolName, arguments: args },
+      }),
+    });
+    const callText = await callRes.text();
+    const json = JSON.parse(callText);
+    if (json.error) {
+      console.error(`  [WARN] MCP tool error: ${JSON.stringify(json.error).slice(0, 120)}`);
+      return null;
+    }
+    let text = json.result?.content?.[0]?.text || null;
+    // Unwrap JSON-encoded string (server wraps plain text in quotes)
+    if (text && text.startsWith('"') && text.endsWith('"')) {
+      try { text = JSON.parse(text); } catch { /* keep as-is */ }
+    }
+    return text;
+  } catch (e) {
+    console.error(`  [WARN] MCP call exception: ${e.message}`);
+    return null;
   }
-  return null;
+}
+
+function callTool(toolName, args, retries = 3) {
+  // First try direct MCP protocol (works around coros-mcp CLI bug)
+  return (async () => {
+    for (let attempt = 1; attempt <= retries; attempt++) {
+      const result = await directMcpCall(toolName, args);
+      if (result !== null) return result;
+      if (attempt < retries) {
+        const delay = attempt * 1500;
+        console.error(`  [WARN] ${toolName} failed, retrying in ${delay}ms (${attempt}/${retries})...`);
+        await new Promise(r => setTimeout(r, delay));
+      }
+    }
+    console.error(`  [WARN] ${toolName} failed after ${retries} attempts`);
+    return null;
+  })();
 }
 
 // --- Parsers ---
@@ -165,11 +212,16 @@ function parseHRV(text) {
   const bl = text.match(/Baseline:\s+(\d+)\s+ms/); if (bl) r.baseline = parseInt(bl[1]);
   const nr = text.match(/Normal Range:\s+(\d+)\s*-\s*(\d+)\s+ms/);
   if (nr) r.normalRange = [parseInt(nr[1]), parseInt(nr[2])];
-  const dayBlocks = text.split(/\n(?=\d{4}-\d{2}-\d{2}:)/);
+  // Only parse the "HRV Assessment" section — the "Sleep HRV Time Series"
+  // section also has date headers (one per day) but with timestamp/hrv
+  // entries, which would otherwise duplicate every date.
+  const assessmentStart = text.indexOf("HRV Assessment");
+  const section = assessmentStart >= 0 ? text.slice(assessmentStart) : text;
+  const dayBlocks = section.split(/\n(?=\d{4}-\d{2}-\d{2}:)/);
   for (const block of dayBlocks) {
     const dm = block.match(/^(\d{4}-\d{2}-\d{2}):/); if (!dm) continue;
-    const day = { date: dm[1] };
-    const hv = block.match(/HRV Avg:\s+(\d+)\s+ms/); if (hv) day.hrv = parseInt(hv[1]);
+    const hv = block.match(/HRV Avg:\s+(\d+)\s+ms/); if (!hv) continue;
+    const day = { date: dm[1], hrv: parseInt(hv[1]) };
     const ev = block.match(/—\s*(.+)/); if (ev) day.evaluation = ev[1].trim();
     r.days.push(day);
   }
@@ -269,11 +321,11 @@ function parseUserInfo(text) {
 
 // --- Incremental fetch ---
 
-function fetchActivityDetails(sportRecords) {
+async function fetchActivityDetails(sportRecords) {
   const details = [];
   for (const record of sportRecords) {
     if (record.labelId && record.sportType) {
-      const detailText = callTool("getActivityDetail", {
+      const detailText = await callTool("getActivityDetail", {
         labelId: record.labelId, sportType: record.sportType,
       });
       const detail = parseActivityDetail(detailText);
@@ -502,10 +554,10 @@ async function fetchAll(dateStr) {
   console.log("Fetching Coros data...");
 
   console.log("  [1/10] User info...");
-  data.userInfo = parseUserInfo(callTool("queryUserInfo", {}));
+  data.userInfo = parseUserInfo(await callTool("queryUserInfo", {}));
 
   console.log("  [2/10] Sport records (7 days)...");
-  const sportText = callTool("querySportRecords", {
+  const sportText = await callTool("querySportRecords", {
     startDate: startDate7, endDate: today,
     sportTypeCodes: [65535], minDistanceKm: null, maxDistanceKm: null,
     minDurationMinutes: null, maxDurationMinutes: null, maxAveragePace: null,
@@ -514,27 +566,27 @@ async function fetchAll(dateStr) {
   data.sportRecords = parseSportRecords(sportText);
 
   console.log("  [3/10] Activity details...");
-  data.activityDetails = fetchActivityDetails(data.sportRecords);
+  data.activityDetails = await fetchActivityDetails(data.sportRecords);
 
   console.log("  [4/10] Daily health (7 days)...");
-  data.dailyHealth = parseDailyHealth(callTool("queryDailyHealthData", { days: 7, timezone: TIMEZONE }));
+  data.dailyHealth = parseDailyHealth(await callTool("queryDailyHealthData", { days: 7, timezone: TIMEZONE }));
 
   console.log("  [5/10] Sleep data (7 days)...");
-  data.sleep = parseSleepData(callTool("querySleepData", {
+  data.sleep = parseSleepData(await callTool("querySleepData", {
     startDate: startDate7, endDate: today, days: 7, timezone: TIMEZONE,
   }));
 
   console.log("  [6/10] HRV (7 days)...");
-  data.hrv = parseHRV(callTool("queryHrvAssessment", { days: 7, timezone: TIMEZONE }));
+  data.hrv = parseHRV(await callTool("querySleepHrv", { days: 7, timezone: TIMEZONE }));
 
   console.log("  [7/10] Training load (7 days)...");
-  data.trainingLoad = parseTrainingLoad(callTool("queryTrainingLoadAssessment", { days: 7 }));
+  data.trainingLoad = parseTrainingLoad(await callTool("queryTrainingLoadAssessment", { days: 7 }));
 
   console.log("  [8/10] Recovery status...");
-  data.recovery = parseRecoveryStatus(callTool("queryRecoveryStatus", {}));
+  data.recovery = parseRecoveryStatus(await callTool("queryRecoveryStatus", {}));
 
   console.log("  [9/10] Fitness overview...");
-  data.fitness = parseFitnessOverview(callTool("queryFitnessAssessmentOverview", {}));
+  data.fitness = parseFitnessOverview(await callTool("queryFitnessAssessmentOverview", {}));
   if (!data.fitness) {
     const fallback = findRecentFitness(today);
     if (fallback) {
@@ -544,7 +596,7 @@ async function fetchAll(dateStr) {
   }
 
   console.log("  [10/10] Training schedule (this week)...");
-  data.trainingSchedule = parseTrainingSchedule(callTool("queryTrainingSchedule", {
+  data.trainingSchedule = parseTrainingSchedule(await callTool("queryTrainingSchedule", {
     startDate: weekStart, endDate: weekEnd, timezone: TIMEZONE,
   }));
 
@@ -589,7 +641,7 @@ async function fetchIncremental(dateStr) {
   const startDate7 = formatDate(new Date(Date.now() - 7 * 86400000));
 
   console.log("  [1/7] Sport records (7 days)...");
-  const sportText = callTool("querySportRecords", {
+  const sportText = await callTool("querySportRecords", {
     startDate: startDate7, endDate: today,
     sportTypeCodes: [65535], minDistanceKm: null, maxDistanceKm: null,
     minDurationMinutes: null, maxDurationMinutes: null, maxAveragePace: null,
@@ -598,7 +650,7 @@ async function fetchIncremental(dateStr) {
   const newRecords = parseSportRecords(sportText);
 
   console.log("  [2/7] Activity details...");
-  const newDetails = fetchActivityDetails(newRecords);
+  const newDetails = await fetchActivityDetails(newRecords);
 
   // Merge sport records
   const mergedRecords = mergeSportRecords(existing.sportRecords || [], newRecords);
@@ -616,7 +668,7 @@ async function fetchIncremental(dateStr) {
     { key: "fitness", tool: "queryFitnessAssessmentOverview", args: {}, parser: parseFitnessOverview, empty: null },
     { key: "recovery", tool: "queryRecoveryStatus", args: {}, parser: parseRecoveryStatus, empty: null },
     { key: "trainingLoad", tool: "queryTrainingLoadAssessment", args: { days: 7 }, parser: parseTrainingLoad, empty: [] },
-    { key: "hrv", tool: "queryHrvAssessment", args: { days: 7, timezone: TIMEZONE }, parser: parseHRV, empty: { baseline: null, normalRange: null, days: [] } },
+    { key: "hrv", tool: "querySleepHrv", args: { days: 7, timezone: TIMEZONE }, parser: parseHRV, empty: { baseline: null, normalRange: null, days: [] } },
     { key: "dailyHealth", tool: "queryDailyHealthData", args: { days: 7, timezone: TIMEZONE }, parser: parseDailyHealth, empty: [] },
     { key: "sleep", tool: "querySleepData", args: { startDate: formatDate(new Date(Date.now() - 7 * 86400000)), endDate: today, days: 7, timezone: TIMEZONE }, parser: parseSleepData, empty: [] },
   ];
@@ -631,7 +683,7 @@ async function fetchIncremental(dateStr) {
     };
     if (isEmpty(cur)) {
       console.log(`  [fill] ${key}...`);
-      const text = callTool(tool, args);
+      const text = await callTool(tool, args);
       const parsed = parser(text);
       if (!isEmpty(parsed)) {
         existing[key] = parsed;

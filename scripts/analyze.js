@@ -408,10 +408,13 @@ function generateMarkdownReport(data) {
 
 // --- TCX Metrics Summarizer ---
 
-function summarizeTcxMetrics(metrics) {
+function summarizeTcxMetrics(metrics, avgStrideLength, totalDistance) {
   if (!metrics) return null;
   const parts = [];
-  const splits = metrics.kmSplits || [];
+  const allSplits = metrics.kmSplits || [];
+  // 按实际 API 距离截断 km splits，防止 GPS 漂移导致超过实际距离的分段被计入
+  const maxKm = totalDistance > 0 ? Math.ceil(totalDistance) : Infinity;
+  const splits = totalDistance > 0 ? allSplits.filter(s => s.km <= maxKm) : allSplits;
 
   // Pace trend: first vs last km
   if (splits.length >= 2) {
@@ -463,6 +466,13 @@ function summarizeTcxMetrics(metrics) {
   // Elevation (only when significant)
   if (metrics.elevation && metrics.elevation.totalGain > 20) {
     parts.push(`爬升+${metrics.elevation.totalGain}m`);
+  }
+
+  // Running economy: stride length × cadence (from MCP data)
+  if (avgStrideLength && metrics.cadence?.avgCadence) {
+    const speedMps = avgStrideLength * metrics.cadence.avgCadence / 60; // m/s
+    const ecoLabel = speedMps >= 4.5 ? "经济性好" : speedMps >= 3.5 ? "经济性中等" : "经济性偏低";
+    parts.push(`步幅${avgStrideLength.toFixed(2)}m×步频${metrics.cadence.avgCadence}=${speedMps.toFixed(1)}m/s(${ecoLabel})`);
   }
 
   return parts.join("; ");
@@ -535,14 +545,18 @@ function buildLLMContext(data) {
     bestKm: d.bestKm,
     avgHR: d.avgHR,
     avgCadence: d.avgCadence,
+    avgStrideLength: d.avgStrideLength,
     trainingLoad: d.trainingLoad,
     performance: d.performance,
-    tcxSummary: summarizeTcxMetrics(d.tcxMetrics),
+    tcxSummary: summarizeTcxMetrics(d.tcxMetrics, d.avgStrideLength, d.distance),
     kmSplitSummary: d.tcxMetrics?.kmSplits
       ? (() => {
+          const maxKm = Math.ceil(d.distance || 0);
           const valid = d.tcxMetrics.kmSplits
             // 过滤 GPS 噪声：3:50/km~15:00/km 为合理跑步/冷身范围（阈值配速4:18，Z6起点3:50），排除无效 paceStr
             .filter((s) => s.paceSecPerKm >= 230 && s.paceSecPerKm <= 900 && s.paceStr && s.paceStr !== "-")
+            // 按实际 API 距离截断，防止 GPS 漂移导致超过实际距离的分段被 LLM 误用
+            .filter((s) => maxKm > 0 ? s.km <= maxKm : true)
             .map((s) => `KM${s.km}=${s.paceStr}(HR${s.avgHR})`);
           return valid.length >= 2 ? valid.join(" ") : null;
         })()
@@ -676,7 +690,14 @@ const TRAINING_RULES = `
 - 快速段(≤4:30) + 慢速段(≥6:30)同时出现，先怀疑间歇跑
 
 生物力学红线（触发即输出到improvements首条）：
-- 若步频<170spm（且配速>5:30/km）→ 下次轻松跑使用节拍器强制178bpm，缩小步幅5cm`;
+- 若步频<170spm（且配速>5:30/km）→ 下次轻松跑使用节拍器强制178bpm，缩小步幅5cm
+
+跑步经济性分析（基于avgStrideLength + cadence）：
+- 经济速度(m/s) = 步幅(m) × 步频(spm) / 60
+- 目标参考：配速5:00/km时步幅1.1-1.2m×步频180spm=3.3m/s；配速4:30/km时步幅1.2-1.3m×步频180spm=3.6-3.9m/s
+- 若经济速度偏低但步频达标→步幅不足，建议增加髂腰肌力量和跨步训练
+- 若经济速度偏低且步频也低→整体跑经济性差，需同时提升核心力量和步频意识
+- 若后程配速下降时步频不变但步幅缩短→髋屈肌疲劳，建议加强臀中肌和屈髋肌训练`;
 
 function buildSystemPrompt(context, { incremental = false } = {}) {
   const zoneInfo = context.paceZones && context.hrZones
@@ -732,9 +753,10 @@ ${TRAINING_RULES}
 - 节假日（见holidays数据）可安排高质量课或LSD
 
 周计划规则：
-1. weeklyPlan从报告日期（${context.today.date} ${context.today.dayOfWeek}）开始，dayIndex=1-7对应报告日起第几天
-2. 周跑量目标45-60km
-3. 示例排课：周一轻松跑→周二轻松跑→周三质量课→周四轻松跑/休息→周五轻松跑→周六LSD→周日休息/恢复
+1. weeklyPlan必须从报告日期（${context.today.date} ${context.today.dayOfWeek}）开始，按时间顺序连续7天，dayIndex=1对应报告日当天，dayIndex=7对应第7天；不要从"本周一"或"本周六"开始
+2. weeklyPlan[].date必须是 dayIndex 对应的实际日期（YYYY-MM-DD）
+3. 周跑量目标45-60km
+4. 示例排课：周一轻松跑→周二轻松跑→周三质量课→周四轻松跑/休息→周五轻松跑→周六LSD→周日休息/恢复
 
 输出严格JSON，必含字段：
 workoutReviews[].{date,trainingType,phaseBreakdown:{warmup,main,cooldown,structureQuality},summary,detailedAnalysis,positives[],improvements[]}
@@ -748,6 +770,7 @@ coachAdvice
 - structureQuality: excellent/good/fair/poor
 - detailedAnalysis: 100-200字技术分析
 - weeklyPlan[].type: 轻松跑/节奏跑/间歇/LSD/休息
+- weeklyPlan[].totalDistance: 数字（km 单位，无"km"后缀）；休息日=0
 - overallLevel: green/yellow/red`;
 }
 
@@ -868,7 +891,30 @@ async function main() {
 
       const contextJson = JSON.stringify(context);
       console.log(`  Context size: ${(contextJson.length / 1024).toFixed(0)} KB`);
-      analysisResult = await llm.chatJSON(systemPrompt, context);
+      // Required top-level fields for a complete analysis. If any are missing,
+      // retry — LLM responses are sometimes incomplete.
+      const REQUIRED_FIELDS = ["workoutReviews", "bodyAssessment", "trainingPatternAnalysis", "weeklyPlan", "coachAdvice"];
+      const MAX_ATTEMPTS = 3;
+      for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
+        analysisResult = await llm.chatJSON(systemPrompt, context);
+        if (analysisResult) {
+          const missing = REQUIRED_FIELDS.filter(k => !analysisResult[k]);
+          if (missing.length === 0) {
+            console.log(`  LLM returned all ${REQUIRED_FIELDS.length} fields (attempt ${attempt})`);
+            break;
+          }
+          console.log(`  Attempt ${attempt}: missing fields [${missing.join(", ")}], retrying...`);
+          if (attempt === MAX_ATTEMPTS) {
+            // Save what we have; downstream code uses || fallbacks
+            console.log(`  Giving up on missing fields after ${MAX_ATTEMPTS} attempts`);
+            break;
+          }
+          // Reset to retry
+          analysisResult = null;
+        } else {
+          break; // non-JSON, fall through to raw handling below
+        }
+      }
       if (analysisResult) {
         console.log("LLM analysis complete.");
         saveAnalysisJSON(dateFile, context, analysisResult);
@@ -877,7 +923,8 @@ async function main() {
         // Try fallback call, get raw text
         const raw = await llm.chat(systemPrompt, contextJson);
         if (raw) {
-          console.log(`  Raw response (first 200 chars): ${raw.slice(0, 200)}`);
+          console.log(`  Raw response length: ${raw.length} chars`);
+          console.log(`  Raw response first 200: ${raw.slice(0, 200)}`);
           // Try to parse raw text as JSON — handle invisible chars, BOM, markdown fence
           let clean = raw.trim();
           // Remove BOM / zero-width chars

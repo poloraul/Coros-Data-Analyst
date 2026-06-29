@@ -1,0 +1,3 @@
+[      66ms] [LOG] init @ https://opencn.coros.com/accset/i18n-v2.js?t=1683360298:117
+[   31548ms] [ERROR] Failed to load resource: the server responded with a status of 400 () @ https://mcpcn.coros.com/api/v1/coros/callback?code=rg1-b6f471579340a3c182077881e99d674e&state=6rCfa8HacX1UDrzAoCOwdp7hyO4I7biSI91cCfdVxxc:0
+[   31640ms] [ERROR] Failed to load resource: the server responded with a status of 401 () @ https://mcpcn.coros.com/favicon.ico:0

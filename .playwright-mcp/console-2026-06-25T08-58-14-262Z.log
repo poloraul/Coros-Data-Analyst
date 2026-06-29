@@ -1,0 +1,3 @@
+[     436ms] [LOG] init @ https://opencn.coros.com/accset/i18n-v2.js?t=1683360298:117
+[     597ms] [ERROR] Failed to load resource: the server responded with a status of 404 () @ https://opencn.coros.com/favicon.ico:0
+[   25421ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://1.1.1.3/favicon.ico:0
