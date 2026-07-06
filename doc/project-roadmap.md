@@ -93,6 +93,31 @@
 
 ## 4. 变更日志
 
+### 2026-07-06 功率数据采集与功能上线（v1.2）
+
+**背景**：COROS `get_activity_detail` 一直返回 `Average Power` 字段（如 7/5 跑步 204W、7/1 长距离 221W），但 `parseActivityDetail` 未提取该字段，导致功率数据从未进入分析链路。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `lib/power-utils.js` | 新建。`estimateFTP()`（最近 3 次有效户外跑加权 × 0.90）、`calcPowerZones()`（6 区分表）、`classifyPowerZone()`、`calcWkg()`、`calcPowerToHRRatio()` |
+| `scripts/fetch.js` | `parseActivityDetail` 新增 `avgPower` 字段提取（intKeys 正则 `/Average Power:\s+(\d+)\s+W/`） |
+| `scripts/analyze.js` | 导入 `lib/power-utils.js`；`buildLLMContext` 注入 `profile.ftpW/ftpWkg/ftpSampleSize/ftpConfidence`、workout 增 `avgPower/powerWkg/powerZone`、context 增 `powerZones`；`buildSystemPrompt` TRAINING_RULES 段后新增"跑步功率分析原则"6 条 |
+| `scripts/report.js` | 关键指标卡片新增"平均功率（最近跑步）"和"估算 FTP"；"配速 & 心率 & 功率区间参考"三列；最近跑步功率所在区间高亮 |
+
+**功能点**（F7.1-F7.5，详见 product-requirements.md § 功率区间）：
+
+- F7.1 功率采集补齐链路
+- F7.2 FTP 自动估算（high/medium/low/none 置信度）
+- F7.3 功率区间报告展示
+- F7.4 LLM 教练解读（功率/经济性建议）
+- F7.5 关键指标卡片（avgPower、W/kg、FTP）
+
+**数据约束**：仅 COROS 户外跑（sportType=100）含 avgPower；跑步无 NP/逐秒功率，高阶指标（VI/EF/W'bal）暂不支持。
+
+**验证**：当前 FTP 估算 191W / 2.89 W/kg（high 置信度，n=3），最近跑步 204W / 3.08 W/kg / Z5 速度耐力区。
+
 ### 2026-06-15 架构重构：死代码清理 + 共用模块 + Token 优化
 
 **改动**：

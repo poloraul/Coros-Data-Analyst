@@ -1,0 +1,550 @@
+{
+  "fetchDate": "20260703",
+  "generatedAt": "2026-07-03T02:26:41.486Z",
+  "context": {
+    "profile": {
+      "age": 38,
+      "height": 176,
+      "weight": 66.2,
+      "vo2max": 55,
+      "thresholdPace": "4:19",
+      "maxHR": 182
+    },
+    "goal": {
+      "targetTime": "3:30:00",
+      "targetPace": "4:58/km",
+      "marathonDate": "2026-12-06",
+      "weeksLeft": 23,
+      "currentPhase": "基础期 I",
+      "currentWeek": 2,
+      "phaseFocus": "有氧耐力、建立跑量",
+      "targetWeeklyKm": [
+        50,
+        65
+      ]
+    },
+    "bodyStatus": {
+      "recovery": {
+        "percentage": 100,
+        "level": "Heavy training allowed"
+      },
+      "hrv": {
+        "baseline": 71,
+        "normalRange": [
+          57,
+          85
+        ],
+        "latestValue": 73,
+        "latestEval": "Normal",
+        "consecutiveBelow": 0
+      },
+      "sleep": {
+        "latestScore": 59,
+        "deepRatio": 25
+      },
+      "trainingLoad": {
+        "shortTerm": 53,
+        "longTerm": 63,
+        "ratio": 0.84,
+        "comment": "Maintaining"
+      }
+    },
+    "paceZones": [
+      {
+        "key": "Z1",
+        "name": "积极恢复区",
+        "range": "> 6:05/km"
+      },
+      {
+        "key": "Z2",
+        "name": "有氧耐力区",
+        "range": "6:05/km — 5:05/km"
+      },
+      {
+        "key": "Z3",
+        "name": "有氧动力区",
+        "range": "5:05/km — 4:38/km"
+      },
+      {
+        "key": "Z4",
+        "name": "乳酸阈区",
+        "range": "4:38/km — 4:14/km"
+      },
+      {
+        "key": "Z5",
+        "name": "速度耐力区",
+        "range": "4:14/km — 3:51/km"
+      },
+      {
+        "key": "Z6",
+        "name": "无氧动力区",
+        "range": "< 3:51/km"
+      }
+    ],
+    "hrZones": [
+      {
+        "key": "Z1",
+        "name": "积极恢复区",
+        "range": "< 136 bpm"
+      },
+      {
+        "key": "Z2",
+        "name": "有氧耐力区",
+        "range": "136 — 153 bpm"
+      },
+      {
+        "key": "Z3",
+        "name": "有氧动力区",
+        "range": "153 — 163 bpm"
+      },
+      {
+        "key": "Z4",
+        "name": "乳酸阈区",
+        "range": "163 — 173 bpm"
+      },
+      {
+        "key": "Z5",
+        "name": "速度耐力区",
+        "range": "173 — 180 bpm"
+      },
+      {
+        "key": "Z6",
+        "name": "无氧动力区",
+        "range": "> 180 bpm"
+      }
+    ],
+    "workouts": [
+      {
+        "date": "2026-07-01",
+        "distance": 11.21,
+        "duration": "58:35",
+        "avgPace": "5:14",
+        "bestKm": "4:46",
+        "avgHR": 150,
+        "avgCadence": 177,
+        "avgStrideLength": 1.08,
+        "trainingLoad": 128,
+        "performance": "Good",
+        "tcxSummary": "负分段加速(5:49→4:53); CV7.2%(fair); HR145→135漂移-6.9%; Z:Z1-2 14% Z3-4 62% Z5 24% (主Z4); 步频177(>180:66%); 步幅1.08m×步频177=3.2m/s(经济性偏低)",
+        "kmSplitSummary": "KM1=5:49(HR119) KM3=4:53(HR141) KM4=4:54(HR154) KM5=4:53(HR155) KM6=4:48(HR155) KM7=4:56(HR153) KM8=4:54(HR158) KM9=4:54(HR165) KM10=4:52(HR168) KM11=4:53(HR166)",
+        "weather": {
+          "tempMax": 26.3,
+          "tempMin": 23.5,
+          "feelsLikeMax": 30.6,
+          "feelsLikeMin": 28,
+          "weatherCode": 63,
+          "weatherDesc": "中雨",
+          "precipitation": 20.1,
+          "humidity": 100,
+          "windSpeed": 7.7
+        }
+      },
+      {
+        "date": "2026-07-01",
+        "distance": 1.04,
+        "duration": "15:34",
+        "avgPace": "15:00",
+        "bestKm": "14:55",
+        "avgHR": 73,
+        "avgCadence": 99,
+        "avgStrideLength": 0.67,
+        "performance": "-1",
+        "tcxSummary": "HR71→73漂移2.8%; 步频107(>180:0%); 步幅0.67m×步频107=1.2m/s(经济性偏低)",
+        "kmSplitSummary": null,
+        "weather": {
+          "tempMax": 26.3,
+          "tempMin": 23.5,
+          "feelsLikeMax": 30.6,
+          "feelsLikeMin": 28,
+          "weatherCode": 63,
+          "weatherDesc": "中雨",
+          "precipitation": 20.1,
+          "humidity": 100,
+          "windSpeed": 7.7
+        }
+      },
+      {
+        "date": "2026-06-29",
+        "distance": 8.08,
+        "duration": "43:57",
+        "avgPace": "5:26",
+        "bestKm": "4:36",
+        "avgHR": 133,
+        "avgCadence": 178,
+        "avgStrideLength": 1.03,
+        "trainingLoad": 58,
+        "performance": "Normal",
+        "tcxSummary": "负分段加速(5:33→5:09); CV6.7%(fair); HR125→155漂移23.5%; Z:Z1-2 36% Z3-4 64% Z5 0% (主Z3); 步频178(>180:32%); 步幅1.03m×步频178=3.1m/s(经济性偏低)",
+        "kmSplitSummary": "KM1=5:33(HR119) KM3=5:52(HR122) KM4=5:41(HR127) KM5=5:32(HR131) KM6=5:32(HR133) KM7=5:17(HR137) KM8=5:09(HR143)",
+        "weather": {
+          "tempMax": 29.9,
+          "tempMin": 23.3,
+          "feelsLikeMax": 33.8,
+          "feelsLikeMin": 26.5,
+          "weatherCode": 51,
+          "weatherDesc": "小毛毛雨",
+          "precipitation": 0.4,
+          "humidity": 94,
+          "windSpeed": 12.7
+        }
+      },
+      {
+        "date": "2026-06-28",
+        "distance": 18.35,
+        "duration": "1:51:30",
+        "avgPace": "6:05",
+        "bestKm": "5:33",
+        "avgHR": 139,
+        "avgCadence": 176,
+        "avgStrideLength": 0.94,
+        "trainingLoad": 144,
+        "performance": "Below Average",
+        "tcxSummary": "后程掉速(5:35→6:16); KM8异常慢(+44s); CV7.7%(fair); HR141→122漂移-13.4%; Z:Z1-2 4% Z3-4 96% Z5 0% (主Z3); 步频176(>180:24%); 爬升+91m; 步幅0.94m×步频176=2.8m/s(经济性偏低)",
+        "kmSplitSummary": "KM1=5:35(HR143) KM2=5:40(HR131) KM5=6:01(HR140) KM6=5:54(HR146) KM7=6:06(HR143) KM8=6:44(HR134) KM9=5:54(HR146) KM10=5:47(HR149) KM11=5:54(HR140) KM12=6:26(HR141) KM13=6:41(HR132) KM14=5:48(HR142) KM15=5:58(HR140) KM16=6:03(HR136) KM17=5:60(HR135) KM18=5:59(HR137) KM19=6:16(HR133)",
+        "weather": {
+          "tempMax": 30.1,
+          "tempMin": 22,
+          "feelsLikeMax": 34.8,
+          "feelsLikeMin": 25.1,
+          "weatherCode": 51,
+          "weatherDesc": "小毛毛雨",
+          "precipitation": 0.3,
+          "humidity": 93,
+          "windSpeed": 13.2
+        }
+      },
+      {
+        "date": "2026-06-27",
+        "distance": 7.7,
+        "duration": "45:00",
+        "avgPace": "5:51",
+        "bestKm": "5:38",
+        "avgHR": 127,
+        "avgCadence": 173,
+        "avgStrideLength": 0.99,
+        "trainingLoad": 42,
+        "performance": "Normal",
+        "tcxSummary": "负分段加速(6:16→5:51); CV3.1%(good); HR120→132漂移9.9%; Z:Z1-2 34% Z3-4 66% Z5 0% (主Z3); 步频173(>180:1%); 爬升+35m; 步幅0.99m×步频173=2.9m/s(经济性偏低)",
+        "kmSplitSummary": "KM1=6:16(HR112) KM2=5:51(HR124) KM3=5:41(HR128) KM4=5:49(HR130) KM5=5:43(HR132) KM6=5:47(HR133) KM7=5:51(HR131)",
+        "weather": {
+          "tempMax": 29.8,
+          "tempMin": 20.9,
+          "feelsLikeMax": 34.9,
+          "feelsLikeMin": 24.6,
+          "weatherCode": 51,
+          "weatherDesc": "小毛毛雨",
+          "precipitation": 0.8,
+          "humidity": 97,
+          "windSpeed": 10.7
+        }
+      },
+      {
+        "date": "2026-06-27",
+        "duration": "39:42",
+        "avgHR": 87,
+        "trainingLoad": 2,
+        "tcxSummary": null,
+        "kmSplitSummary": null,
+        "weather": null
+      },
+      {
+        "date": "2026-06-26",
+        "distance": 12.01,
+        "duration": "1:04:33",
+        "avgPace": "5:22",
+        "bestKm": "4:16",
+        "avgHR": 138,
+        "avgCadence": 174,
+        "avgStrideLength": 1.07,
+        "trainingLoad": 103,
+        "performance": "Good",
+        "tcxSummary": "负分段加速(5:38→4:50); CV6.8%(fair); HR133→116漂移-13%; Z:Z1-2 13% Z3-4 73% Z5 13% (主Z3); 步频175(>180:43%); 爬升+76m; 步幅1.07m×步频175=3.1m/s(经济性偏低)",
+        "kmSplitSummary": "KM1=5:38(HR118) KM2=5:24(HR130) KM3=5:17(HR135) KM4=5:22(HR134) KM5=5:22(HR134) KM6=5:14(HR137) KM7=5:09(HR141) KM8=5:09(HR142) KM9=5:05(HR144) KM10=4:37(HR153) KM11=4:20(HR168) KM12=4:50(HR166)",
+        "weather": {
+          "tempMax": 28.9,
+          "tempMin": 19.2,
+          "feelsLikeMax": 33.4,
+          "feelsLikeMin": 22.2,
+          "weatherCode": 51,
+          "weatherDesc": "小毛毛雨",
+          "precipitation": 0.1,
+          "humidity": 100,
+          "windSpeed": 9.9
+        }
+      }
+    ],
+    "today": {
+      "date": "2026-07-03",
+      "dayOfWeek": "周五"
+    },
+    "weeklySummary": {
+      "totalKm": 20.3,
+      "runCount": 3,
+      "totalTL": 186
+    },
+    "holidays": {
+      "thisWeek": "",
+      "upcomingNext4Weeks": []
+    }
+  },
+  "analysis": {
+    "workoutReviews": [
+      {
+        "date": "2026-06-26",
+        "trainingType": "混合训练",
+        "phaseBreakdown": {
+          "warmup": 1,
+          "main": 11.01,
+          "cooldown": 0,
+          "structureQuality": "good"
+        },
+        "summary": "12km负分段加速跑，配速从5:38逐步提升至4:20，最后2km进入速度耐力区，刺激阈值和VO2max。平均心率138bpm，主区间Z3-Z4。步频174spm，步幅1.07m。环境温度28.9°C湿度100%导致心率偏高，实际生理负荷可控。",
+        "detailedAnalysis": "本课为典型的负分段渐进跑，前半程稳定在5:38-5:17，后半程加速至4:20，最后1km 4:50平稳收尾。从心率趋势看，前半段心率130左右属有氧动力区，进入快速段后心率上升至168bpm，达到无氧门槛，刺激乳酸清除能力。全程CV 6.8%因热身和加速段造成，但主训练段（KM2-9）配速波动极小，实际执行质量好。环境湿热（30°C+94%湿度）使心率人为升高15-20bpm，若校正后实际心率在Z2-Z3，符合强度要求。步频174略低但未触发红线，步幅1.07m配合步频表现经济性中等。",
+        "positives": [
+          "完美的负分段节奏，展现速度控制力",
+          "最后2km 4:37/4:20快速段质量高，VO2max得到有效刺激",
+          "在湿热环境中仍能完成高质量加速，体现坚强意志"
+        ],
+        "improvements": [
+          "步频可提升至178-180spm，优化跑步经济性",
+          "建议增加2km热身段，使心率更平稳过渡",
+          "湿热天气后注重补水和降温恢复"
+        ]
+      },
+      {
+        "date": "2026-06-27",
+        "trainingType": "轻松跑",
+        "phaseBreakdown": {
+          "warmup": 1,
+          "main": 6.7,
+          "cooldown": 0,
+          "structureQuality": "good"
+        },
+        "summary": "7.7km轻松跑，配速从6:16逐步收至5:51，平均心率127bpm处于Z1-Z2下缘，非常轻松。步频173spm，步幅0.99m。环境温度29.8°C湿度97%，心率仍较低，体现有氧基础尚可。",
+        "detailedAnalysis": "这是一次很好的恢复性轻松跑，配速在目标马配慢60s范围，心率全程未突破132bpm，即便高温高湿仍能控制住强度。前1km作为热身，随后平稳进入配速区间。步频173略低，但在轻松强度下无碍。心率漂移9.9%稍高，主要因温度影响，实际漂移应<5%。整个过程中没有明显掉速，负分段趋势自然，体现稳定的有氧耐力。",
+        "positives": [
+          "心率控制佳，即使在高温高湿下仍保持在Z1-Z2",
+          "轻松跑配速选择合理（比马配慢53s）",
+          "自然负分段，跑得轻松"
+        ],
+        "improvements": [
+          "步频可适当提升至178bpm，逐渐改善经济性",
+          "未来可增加距离至8-10km，继续积累有氧跑量"
+        ]
+      },
+      {
+        "date": "2026-06-28",
+        "trainingType": "LSD",
+        "phaseBreakdown": {
+          "warmup": 0,
+          "main": 18.35,
+          "cooldown": 0,
+          "structureQuality": "fair"
+        },
+        "summary": "18.35km长距离，后程明显掉速（5:35→6:16），平均配速6:05，心率139bpm。环境温度30.1°C湿度93%，体感炎热，掉速主因是热应激非体能衰竭。爬升91m增加难度。",
+        "detailedAnalysis": "本次LSD在极端湿热天气下进行，体感温度高达34°C，心率因环境因素被大幅推高。若按环境校正（30°C+93%湿度），实际生理心率应约在120-125bpm，处于标准有氧耐力区。掉速段（9-13km）心率并未继续攀升，反而随配速下降而降低，说明是主动慢下来而非心肺崩溃，这属于安全的热适应策略。但整体缺乏明确热身段，一开始配速就偏快（5:35心率143已进Z3），导致前期消耗偏大。后程步幅下降明显（步频保持176），提示髋屈肌疲劳积累。",
+        "positives": [
+          "完成了一次有意义的热适应长跑，增强耐热能力",
+          "能够感知身体信号主动降速，避免中暑风险",
+          "距离达到LSD标准，对耐力发展有益"
+        ],
+        "improvements": [
+          "下次LSD前2km应作为热身（6:30-6:00/km），控制初始心率在Z2下缘",
+          "炎热天气LSD可携带水壶、盐丸，每隔5km补水，防止脱水性心率上升",
+          "需加强臀中肌和屈髋肌力量，以减少后程步幅缩短（参考训练：蚌式开合、单腿硬拉）"
+        ]
+      },
+      {
+        "date": "2026-06-29",
+        "trainingType": "混合训练",
+        "phaseBreakdown": {
+          "warmup": 1,
+          "main": 7.08,
+          "cooldown": 0,
+          "structureQuality": "good"
+        },
+        "summary": "8km渐进跑，配速从5:33加速到5:09，心率从125攀升至155，Z3区间为主。步频178，步幅1.03m。环境温度29.9°C湿度94%，心率漂移显著（23.5%），但校正后仍处合理范围。",
+        "detailedAnalysis": "这是一次有控制的进阶有氧跑，前半段低强度，后半段进入Z3-Z4边界。前半程心率122-131，极度轻松；后半段配速提升至5:09，心率反应迅速，达到阈值下强度。心率漂移23.5%看似夸张，但结合天气（30°C+94%湿度），真实生理漂移应<8%，属于正常现象。步频178接近理想值，保持良好。整体运动感流畅，无掉速。",
+        "positives": [
+          "负分段节奏一气呵成，稳健提升",
+          "步频178接近目标，跑姿紧凑",
+          "在高温环境下仍能完成加速，体现有氧能力提升"
+        ],
+        "improvements": [
+          "该类跑可作为‘有氧提速跑’，建议保留但控制强度不超过Z4 30%",
+          "天气炎热时，注意配速可适当放宽（+5-10s/km）以保持心率在阈值下"
+        ]
+      },
+      {
+        "date": "2026-07-01",
+        "trainingType": "阈值跑",
+        "phaseBreakdown": {
+          "warmup": 1,
+          "main": 10.21,
+          "cooldown": 0,
+          "structureQuality": "good"
+        },
+        "summary": "11.2km阈值节奏跑，稳定在4:48-4:56/km（接近马配），心率推升至Z4-Z5。平均心率150，但环境26.3°C+100%湿度导致心率虚高，实际阈值为佳。步频177，步幅1.08m。",
+        "detailedAnalysis": "主训练段9km配速如刀切般稳定（4:48-4:56），显示出优秀的节奏控制。心率由155逐渐升至168，恰好进入乳酸阈值区，有效刺激乳酸清除能力。前1km 5:49作为热身，心率119，热身距离合适。末尾KM11 4:53心率166，没有掉速，完成度极高。环境高温高湿使心率偏高约15bpm，校正后实际阈值为155左右，完全符合节奏跑要求。步频177轻微偏低，可以考虑提高到180。经济速度3.2m/s与目标配速4:58/km要求接近，整体经济性尚可。",
+        "positives": [
+          "阈值配速段控制极稳，节奏感强",
+          "后程未减速，心率上升平稳，无衰竭迹象",
+          "与目标马配差距缩小，对3:30完赛信心增强"
+        ],
+        "improvements": [
+          "在湿热条件下，下次可将阈值配速上调5-8s（如5:02-5:05）以控制心率在Z4下限，避免过度负荷",
+          "可增加2km冷身慢跑，促进乳酸清除"
+        ]
+      }
+    ],
+    "bodyAssessment": {
+      "overallLevel": "green",
+      "summary": "身体状态良好，完全恢复，HRV稳定在正常区间，训练负荷维持在适宜水平。睡眠质量稍低（59分），但不影响当前训练。可以承受高质量训练。",
+      "details": [
+        "恢复百分比100%，无疲劳积累，允许进行高强度训练。",
+        "HRV 73位于基线71的正常范围（57-85），自主神经系统平衡。",
+        "睡眠分数59分，深度睡眠占比25%正常，建议近期增加睡眠时长至7.5-8小时以优化恢复。",
+        "训练负荷短/长比率0.84，属于维持状态，可以稍微增加负荷，但避免陡增。"
+      ],
+      "recommendations": [
+        "本周可安排一次高质量课（阈值跑或间歇跑），负荷允许。",
+        "关注睡眠，白天可小憩20分钟，夜间房间温度调低至22°C以下。",
+        "继续监测HRV，若连续2天低于57，则降低强度。"
+      ]
+    },
+    "trainingPatternAnalysis": {
+      "summary": "过去一周呈现‘以中等强度为主，轻松跑占比不足’的模式。虽然有LSD和节奏跑，但大部分跑步都落入Z3-Z4灰色区，缺乏纯Z2慢跑积累。两极化原则尚未落地，需要调整强度分布。",
+      "strengths": [
+        "具备完成长距离（18km）和接近马配阈值跑的能力，有氧耐力基础扎实。",
+        "能执行负分段策略，节奏感和速度控制良好。",
+        "在高温高湿环境下仍能稳定输出，热适应能力提升。"
+      ],
+      "risks": [
+        "中等强度跑（Z3）占比过高，可能导致交感神经长期过度激活，累积慢性疲劳。",
+        "轻松跑配速偏快（5:51 vs 目标轻松6:05-6:30），实际心率进入Z3，丧失恢复意义。",
+        "步频长期在174-177，未达到理想的180spm，影响跑步经济性。"
+      ],
+      "suggestions": [
+        "未来两周严格执行二区训练：所有非质量课心率控制在136-153bpm，配速6:05-6:30/km，别怕慢。",
+        "每周安排1次真正的阈值跑（如4x8min @4:19-4:30/km）或间歇跑，其余全部低强度。",
+        "加入步频训练：轻松跑时使用节拍器178-180bpm，逐渐改掉低步频习惯。",
+        "长距离跑（LSD）保持Z2上限心率，若天气热相应降配速，而不是硬扛。"
+      ]
+    },
+    "weeklyPlan": [
+      {
+        "dayIndex": 1,
+        "dayName": "周五",
+        "date": "2026-07-03",
+        "type": "轻松跑",
+        "totalDistance": 8,
+        "paceZone": "Z2",
+        "hrZone": "Z2",
+        "description": "8km低强度有氧跑，完全放松，为周末LSD储备体力。注意步频练习。",
+        "详细计划": {
+          "warmup": "1km（6:30-6:10/km），心率<130bpm",
+          "main": "6km（6:05-5:55/km），心率136-148bpm，全程使用节拍器178spm，缩小步幅",
+          "cooldown": "1km（6:30/km），自然放慢，心率回落至120以下",
+          "notes": "如体感温度>30°C，配速可再慢10-15s，不追心率；关注跑步姿势，落脚于髋正下方。"
+        }
+      },
+      {
+        "dayIndex": 2,
+        "dayName": "周六",
+        "date": "2026-07-04",
+        "type": "LSD",
+        "totalDistance": 20,
+        "paceZone": "Z2",
+        "hrZone": "Z2",
+        "description": "20km长距离有氧跑，建立基础耐力，模拟比赛后半程控速能力。",
+        "详细计划": {
+          "warmup": "2km（6:30-6:00/km），心率130-140bpm，作为预热",
+          "main": "17km（6:00-5:50/km），心率140-153bpm，保持均匀配速，每5km补水一次，带盐丸",
+          "cooldown": "1km（6:30/km），放松拉伸",
+          "notes": "若气温>28°C，配速上限放宽至6:15，心率不超153；后半程如出现明显掉速，优先降心率而非硬顶；跑后立即补水500ml+蛋白质补充。"
+        }
+      },
+      {
+        "dayIndex": 3,
+        "dayName": "周日",
+        "date": "2026-07-05",
+        "type": "休息",
+        "totalDistance": 0,
+        "paceZone": "",
+        "hrZone": "",
+        "description": "完全休息或主动恢复（散步30分钟），促进LSD后修复。",
+        "详细计划": {
+          "warmup": "",
+          "main": "",
+          "cooldown": "",
+          "notes": "可进行泡沫轴放松、拉伸；保证充足睡眠，饮食以碳水+蛋白恢复。"
+        }
+      },
+      {
+        "dayIndex": 4,
+        "dayName": "周一",
+        "date": "2026-07-06",
+        "type": "轻松跑",
+        "totalDistance": 8,
+        "paceZone": "Z2",
+        "hrZone": "Z2",
+        "description": "恢复性轻松跑，检查身体恢复状态。",
+        "详细计划": {
+          "warmup": "1km（6:30/km）",
+          "main": "6km（6:05-5:55/km），心率136-148bpm，维持步频178",
+          "cooldown": "1km（6:30/km）",
+          "notes": "核心关注身体状况，若晨脉比平时高5bpm以上，改为6km散步。"
+        }
+      },
+      {
+        "dayIndex": 5,
+        "dayName": "周二",
+        "date": "2026-07-07",
+        "type": "轻松跑",
+        "totalDistance": 10,
+        "paceZone": "Z2",
+        "hrZone": "Z2",
+        "description": "10km低强度跑，进一步积累跑量。",
+        "详细计划": {
+          "warmup": "1km（6:30/km）",
+          "main": "8km（6:05-5:55/km），心率136-153bpm，保持节奏舒适",
+          "cooldown": "1km（6:30/km）",
+          "notes": "若连日疲劳，可缩短至8km，不强行跑满。"
+        }
+      },
+      {
+        "dayIndex": 6,
+        "dayName": "周三",
+        "date": "2026-07-08",
+        "type": "阈值跑",
+        "totalDistance": 12,
+        "paceZone": "Z4",
+        "hrZone": "Z4",
+        "description": "阈值间歇训练：4x8min @4:19-4:30/km，刺激乳酸阈，提升马拉松配速巡航能力。",
+        "详细计划": {
+          "warmup": "2km轻松跑（6:10-5:50/km），动态拉伸，2x100m渐加速",
+          "main": "4组8分钟阈值配速（目标4:25/km，心率163-173bpm），组间慢跑2分钟（6:30/km）",
+          "cooldown": "2km慢跑（6:30/km），静态拉伸",
+          "notes": "阈值段全程控制配速稳定，不要前快后慢；若天气热配速可放宽至4:35；完成后再慢跑充分冷却。"
+        }
+      },
+      {
+        "dayIndex": 7,
+        "dayName": "周四",
+        "date": "2026-07-09",
+        "type": "休息",
+        "totalDistance": 0,
+        "paceZone": "",
+        "hrZone": "",
+        "description": "完全休息，深度恢复，为下个周期蓄能。",
+        "详细计划": {
+          "warmup": "",
+          "main": "",
+          "cooldown": "",
+          "notes": "保证睡眠，可进行轻度瑜伽或拉伸，禁止其他高强度运动。"
+        }
+      }
+    ],
+    "coachAdvice": "当前处于基础期第2周，首马目标3:30，配速4:58/km。你的有氧耐力基础不错，但训练强度分布需要优化。首先，必须增加‘慢跑’时间——约80%的跑量应在Z2心率（136-153bpm）完成，配速看表不如看心率，高温天气下允许配速降至6:30。你的LSD和阈值跑质量很高，但缺少恢复跑会导致灰色区堆积，长期可能抑制最大摄氧量提升。其次，步频提升至180spm是经济性进化的关键，轻松跑时专注节拍器，把步幅收小，让落地更轻盈。最后，睡眠得分59提示恢复不足，请设定晚上10:30前入睡，睡前1小时避免蓝光。总体而言，你走在正确的轨道上，微调后定能稳步迈向3:30。"
+  }
+}

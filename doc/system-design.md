@@ -184,7 +184,7 @@ analysis JSON ──> AI 分析数据 ──> 配速区间自动推导 ──> �
   fetchedAt: "ISO datetime",
   userInfo: { height, weight, birthday, gender, nickname },
   sportRecords: [{ index, sport, date, duration, distance, avgPace, avgHR, calories, labelId, sportType, startCoords }],
-  activityDetails: [{ labelId, sportType, date, distance, workoutTime, avgPace, movingAvgPace, adjustedPace, bestKm, avgHR, avgCadence, avgStrideLength, elevationGain, elevationLoss, calories, trainingLoad, performance, tcxPath?, tcxMetrics?, weather? }],
+  activityDetails: [{ labelId, sportType, date, distance, workoutTime, avgPace, movingAvgPace, adjustedPace, bestKm, avgHR, avgCadence, avgStrideLength, elevationGain, elevationLoss, calories, trainingLoad, performance, avgPower?, tcxPath?, tcxMetrics?, weather? }],
   dailyHealth: [{ date, steps, calories, exerciseMin, avgStress, sleepScore, sleepTotal, deepSleep, lightSleep, remSleep, awakeTime }],
   sleep: [{ date, sleepScore, mainSleep, deepRatio, lightRatio, remRatio, awakeRatio, awakeTimeMin, sleepWindow }],
   hrv: { baseline, normalRange: [low, high], days: [{ date, hrv, evaluation }] },
@@ -271,6 +271,23 @@ Trackpoint: { hr, distanceMeters, time, cadence, altitudeMeters, speed, lat, lon
 | Z4 | 乳酸阈区 | 163 ~ 173 bpm | 96-102% | LTHR × 1.02 |
 | Z5 | 速度耐力区 | 173 ~ 180 bpm | 103-106% | LTHR × 1.06 |
 | Z6 | 无氧动力区 | > 180 bpm | >106% | LTHR × 1.06 |
+
+### 5.3 功率区间（基于估算 FTP）
+
+功率区间系统使用 `lib/power-utils.js` 中的 `calcPowerZones()`。FTP 通过 `estimateFTP()` 从最近 3 次有效户外跑（≥5km）的 avgPower 加权平均 × 0.90 估算。
+
+| 区间 | 名称 | %FTP |
+|------|------|------|
+| Z1 | 积极恢复区 | <55% |
+| Z2 | 有氧耐力区 | 55-75% |
+| Z3 | 有氧动力区 | 75-90% |
+| Z4 | 乳酸阈区 | 90-105% |
+| Z5 | 速度耐力区 | 105-120% |
+| Z6 | 无氧动力区 | >120% |
+
+**数据源约束**：COROS `get_activity_detail` 仅返回单值 `Average Power`，**无逐秒功率**（`<Watts>` 标签在 TCX 文件中缺失）。因此不能计算 NP/VI/EF/W'bal 等高阶指标——所有功率功能仅基于 avgPower 单值。
+
+**FTP 置信度**：`estimateFTP()` 返回 `confidence: "high"|"medium"|"low"|"none"`，LLM 在 confidence 为 "low" 或 "none" 时不给出功率区间建议。
 
 ## 6. 外部依赖
 

@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { MARATHON_DATE, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 import { calcPaceZones, calcHRZones, classifyPace, classifyHR, ZONE_LABELS } from "../lib/zones.js";
+import { calcWkg, estimateFTP, classifyPowerZone, calcPowerZones, POWER_ZONE_DEFS } from "../lib/power-utils.js";
 import { assessRecovery } from "../lib/recovery.js";
 import { PHASE_TEMPLATES } from "../lib/training-templates.js";
 import { parseTCX } from "./tcx-analyzer.js";
@@ -233,6 +234,18 @@ function generateHTML(data, aiAnalysis) {
   const hrZones = calcHRZones(LACTATE_THRESHOLD_HR, { useLTHR: true });
   const hrMode = "lthr"; // 心率分类模式
 
+  // 功率指标（基于最近跑步历史估算 FTP）
+  const runningHistory = (data.activityDetails || [])
+    .filter(d => d.sportType === 100 && d.avgPower > 0 && (d.distance || 0) >= 5)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5)
+    .map(d => ({ date: d.date, distance: d.distance, avgPower: d.avgPower }));
+  const ftp = estimateFTP(runningHistory, user.weight);
+  const powerZones = ftp.ftpW ? calcPowerZones(ftp.ftpW) : null;
+  const latestRunWithPower = (data.activityDetails || []).find(d => d.sportType === 100 && d.avgPower > 0);
+  const latestWkg = latestRunWithPower ? calcWkg(latestRunWithPower.avgPower, user.weight) : null;
+  const latestPowerZone = (latestRunWithPower && ftp.ftpW) ? POWER_ZONE_DEFS[classifyPowerZone(latestRunWithPower.avgPower, ftp.ftpW)] : null;
+
   const hrvLabels = hrvDays.map(d => d.date.slice(5)).reverse();
   const hrvValues = hrvDays.map(d => d.hrv).reverse();
   const hrvBaseline = data.hrv?.baseline || 60;
@@ -295,7 +308,7 @@ function generateHTML(data, aiAnalysis) {
       };
     });
   };
-  const healthDays7 = buildSleepData().slice(0, 7);
+  const healthDays7 = buildSleepData().filter(s => s.sleepScore != null).slice(0, 7);
   const sleepLabels = healthDays7.map(s => {
     const d = s.date || "";
     return d.length === 8 ? d.slice(4, 6) + "/" + d.slice(6, 8) : d.slice(5);
@@ -499,16 +512,18 @@ tr:hover td{background:var(--row-hover)}
     <div class="card"><div class="label">训练负荷</div><div class="value"${loadWarning ? ' style="color:#c9a030"' : ""}>${totalTL}<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 ${loadRatio || "-"}（目标 0.8-1.3）${loadWarning ? " ⚠️偏高" : ""}</div></div>
     <div class="card"><div class="label">恢复状态</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub"><span class="recovery-indicator" style="background:${levelColors[recovery.level]}"></span>${levelLabels[recovery.level]}</div></div>
     <div class="card"><div class="label">最新HRV</div><div class="value" style="color:${hrvWarning ? levelColors.yellow : levelColors.green}">${latestHRV || "-"}<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:${hrvWarning ? levelColors.yellow : levelColors.green}"></span>${hrvWarning ? "偏低" : "正常"} | 基线 ${recovery.baseline || "-"}ms</div></div>
+    ${latestRunWithPower ? `<div class="card"><div class="label">平均功率（最近跑步）</div><div class="value">${latestRunWithPower.avgPower}<span style="font-size:.9rem">W</span></div><div class="sub">${latestWkg != null ? latestWkg + " W/kg" : ""}${latestPowerZone ? ` · ${latestPowerZone.key} ${latestPowerZone.name}` : ""}</div></div>` : ""}
+    ${ftp.ftpW ? `<div class="card"><div class="label">估算 FTP</div><div class="value">${ftp.ftpW}<span style="font-size:.9rem">W</span></div><div class="sub">${ftp.ftpWkg != null ? ftp.ftpWkg + " W/kg" : ""} · 置信度 ${ftp.confidence}（n=${ftp.sampleSize}）</div></div>` : ""}
   </div>
 </div>
 
-<!-- ==================== Zone Section: 配速 & 心率区间 ==================== -->
+<!-- ==================== Zone Section: 配速 & 心率 & 功率区间 ==================== -->
 ${paceZones || hrZones ? `
 <div class="section">
   <div class="section-header">
     <div class="section-title-row">
-      <div class="section-title">配速 &amp; 心率区间参考</div>
-      <span class="source-badge badge-rule">阈值配速 ${tp}/km · 乳酸阈心率 ${LACTATE_THRESHOLD_HR} bpm</span>
+      <div class="section-title">配速 &amp; 心率 &amp; 功率区间参考</div>
+      <span class="source-badge badge-rule">阈值配速 ${tp}/km · 乳酸阈心率 ${LACTATE_THRESHOLD_HR} bpm${ftp.ftpW ? ` · 估算 FTP ${ftp.ftpW}W` : ""}</span>
     </div>
   </div>
   <div class="charts-grid">
@@ -544,10 +559,27 @@ ${paceZones || hrZones ? `
         ${details[0] ? `<tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练心率 (${details[0].avgHR} bpm) 所属区间</td></tr>` : ""}
       </table>
     </div>
+    ${powerZones ? `
+    <div class="chart-box">
+      <h3>功率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>功率范围</th><th>%FTP</th></tr>
+        ${powerZones.map((z, i) => {
+          const isCurrent = latestRunWithPower ? classifyPowerZone(latestRunWithPower.avgPower, ftp.ftpW) === i : false;
+          return `<tr${isCurrent ? ' style="background:rgba(126,200,130,.08)"' : ""}>
+            <td><span class="badge" style="background:${z.color}22;color:${z.color};border:1px solid ${z.color}44">${z.key}</span></td>
+            <td>${z.name}</td>
+            <td><strong>${z.range}</strong></td>
+            <td>${z.pct}</td>
+          </tr>`;
+        }).join("")}
+        ${latestRunWithPower ? `<tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最近跑步功率 (${latestRunWithPower.avgPower}W) 所属区间</td></tr>` : ""}
+      </table>
+    </div>` : ""}
   </div>
   <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
     <strong>使用说明：</strong>
-    配速区间基于阈值配速（${tp}/km）按百分比计算；心率区间基于乳酸阈心率（${LACTATE_THRESHOLD_HR} bpm）计算。
+    配速区间基于阈值配速（${tp}/km）按百分比计算；心率区间基于乳酸阈心率（${LACTATE_THRESHOLD_HR} bpm）计算；功率区间基于估算 FTP（${ftp.ftpW || "—"}W，置信度 ${ftp.confidence}）计算。
     训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
     ${recovery.level !== "green" ? `<span style="color:${levelColors[recovery.level]}">⚠️ 当前恢复状态为"${levelLabels[recovery.level]}"，建议降低一档强度区间训练。</span>` : ""}
   </div>

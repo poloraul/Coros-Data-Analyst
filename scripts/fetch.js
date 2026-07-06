@@ -158,7 +158,7 @@ function parseActivityDetail(text) {
   const floatKeys = { distance: /Distance:\s+([\d.]+)\s+km/, avgStrideLength: /Average Stride Length:\s+([\d.]+)\s+m/ };
   const intKeys = { avgHR: /Average Heart Rate:\s+(\d+)\s+bpm/, avgCadence: /Average Cadence:\s+(\d+)\s+spm/,
     elevationGain: /Elevation Gain \/ Loss:\s+(\d+)\s+m/, calories: /Calories:\s+(\d+)\s+kcal/,
-    trainingLoad: /Training Load:\s+(\d+)/ };
+    trainingLoad: /Training Load:\s+(\d+)/, avgPower: /Average Power:\s+(\d+)\s+W/ };
   const elMatch = text.match(/Elevation Gain \/ Loss:\s+\d+\s+m\s*\/\s*(\d+)\s+m/);
   if (elMatch) d.elevationLoss = parseInt(elMatch[1]);
   for (const [k, re] of Object.entries(strKeys)) { const m = text.match(re); if (m) d[k] = k === "performance" ? m[1].trim() : m[1]; }

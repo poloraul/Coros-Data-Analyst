@@ -6,6 +6,7 @@ import { createLLM } from "../lib/llm.js";
 import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 import { calcPaceZones, calcHRZones } from "../lib/zones.js";
+import { calcWkg, estimateFTP, classifyPowerZone, calcPowerZones, POWER_ZONE_DEFS } from "../lib/power-utils.js";
 import { getHolidayAnnotations, getHolidaysInRange } from "../lib/holidays.js";
 import { PHASE_TEMPLATES } from "../lib/training-templates.js";
 
@@ -548,6 +549,7 @@ function buildLLMContext(data) {
     avgStrideLength: d.avgStrideLength,
     trainingLoad: d.trainingLoad,
     performance: d.performance,
+    avgPower: d.avgPower || null,
     tcxSummary: summarizeTcxMetrics(d.tcxMetrics, d.avgStrideLength, d.distance),
     kmSplitSummary: d.tcxMetrics?.kmSplits
       ? (() => {
@@ -564,6 +566,27 @@ function buildLLMContext(data) {
     weather: d.weather || null,
   }));
 
+  // Enrich each workout with derived power metrics
+  for (const w of workouts) {
+    w.powerWkg = calcWkg(w.avgPower, user.weight);
+  }
+
+  // Estimate FTP from recent running history (sportType=100 only, distance >= 5km)
+  const runningHistory = (data.activityDetails || [])
+    .filter(d => d.sportType === 100 && d.avgPower > 0 && (d.distance || 0) >= 5)
+    .sort((a, b) => b.date.localeCompare(a.date))
+    .slice(0, 5)
+    .map(d => ({ date: d.date, distance: d.distance, avgPower: d.avgPower }));
+  const ftp = estimateFTP(runningHistory, user.weight);
+  // Annotate each workout's powerZone
+  for (const w of workouts) {
+    if (w.avgPower && ftp.ftpW) {
+      w.powerZone = POWER_ZONE_DEFS[classifyPowerZone(w.avgPower, ftp.ftpW)].key;
+    } else {
+      w.powerZone = null;
+    }
+  }
+
   return {
     profile: {
       age: getAge(user.birthday),
@@ -572,6 +595,10 @@ function buildLLMContext(data) {
       vo2max: fitness.vo2max,
       thresholdPace: fitness.thresholdPace,
       maxHR,
+      ftpW: ftp.ftpW,
+      ftpWkg: ftp.ftpWkg,
+      ftpSampleSize: ftp.sampleSize,
+      ftpConfidence: ftp.confidence,
     },
     goal: {
       targetTime: "3:30:00",
@@ -615,6 +642,7 @@ function buildLLMContext(data) {
     },
     paceZones: compressZones(calcPaceZones(fitness.thresholdPace)?.zones),
     hrZones: compressZones(calcHRZones(LACTATE_THRESHOLD_HR, { useLTHR: true })?.zones),
+    powerZones: ftp.ftpW ? compressZones(calcPowerZones(ftp.ftpW)) : null,
     workouts,
     today: {
       date: now.toISOString().slice(0, 10),
@@ -697,7 +725,15 @@ const TRAINING_RULES = `
 - 目标参考：配速5:00/km时步幅1.1-1.2m×步频180spm=3.3m/s；配速4:30/km时步幅1.2-1.3m×步频180spm=3.6-3.9m/s
 - 若经济速度偏低但步频达标→步幅不足，建议增加髂腰肌力量和跨步训练
 - 若经济速度偏低且步频也低→整体跑经济性差，需同时提升核心力量和步频意识
-- 若后程配速下降时步频不变但步幅缩短→髋屈肌疲劳，建议加强臀中肌和屈髋肌训练`;
+- 若后程配速下降时步频不变但步幅缩短→髋屈肌疲劳，建议加强臀中肌和屈髋肌训练
+
+跑步功率分析原则（仅当数据包含 avgPower 时适用）：
+1. 跑步 avgPower 反映"在 X 配速区间维持的机械功率输出"——单值整数瓦特数
+2. W/kg 分级参考：> 3.0 业余精英级；2.5-3.0 高级跑者；2.0-2.5 中级；< 2.0 初阶
+3. 同一跑者"相同配速下功率越低"= 跑步经济性越好（效率提升）
+4. 间歇训练参考：Z4-Z5 重复段平均功率应稳定在 90-115% FTP 区间
+5. 当 ftpConfidence 为 "low" 或 "none" 时，功率解读应保守，**只描述观察**不给出功率区间建议
+6. powerZone 字段（Z1-Z6）已基于估算 FTP 自动标注，可直接引用`;
 
 function buildSystemPrompt(context, { incremental = false } = {}) {
   const zoneInfo = context.paceZones && context.hrZones

@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis 训练复盘 20260701</title>
+<script src="chart.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
+[data-theme="dark"]{--bg:#1a1b26;--card:#24283b;--border:#3b4261;--text:#a9b1d6;--text-strong:#c0caf5;--muted:#565f89;--accent:#9ece6a;--accent2:#e0af68;--accent3:#f7768e;--accent4:#7aa2f7;--shadow:rgba(0,0,0,.2);--row-hover:rgba(158,206,106,.06);--finding-border:rgba(59,66,97,.6)}
+body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:1200px;margin:0 auto;transition:background .3s,color .3s}
+h1{font-size:1.8rem;font-weight:800;color:var(--accent);margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.section{margin-bottom:36px}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:4px;height:18px;background:linear-gradient(135deg,var(--accent),#4db8a4);border-radius:2px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title-row{display:flex;align-items:center;gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.card .value{font-size:1.6rem;font-weight:800;color:var(--text-strong)}
+.card .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.chart-box h3{font-size:.85rem;font-weight:600;margin-bottom:10px;color:var(--muted)}
+.full-width{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--row-hover)}
+.recovery-indicator{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.7rem;font-weight:600;margin:2px}
+.badge-green{background:rgba(126,200,130,.2);color:#5aa65e}
+.badge-yellow{background:rgba(244,197,66,.2);color:#c9a030}
+.badge-red{background:rgba(232,152,152,.2);color:#c07070}
+.badge-blue{background:rgba(124,185,232,.2);color:#5a9ec7}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.review-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.review-box h4{font-size:.85rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.finding-item{font-size:.82rem;padding:4px 0;border-bottom:1px solid var(--finding-border)}
+.finding-item:last-child{border-bottom:none}
+.plan-today{background:rgba(77,184,164,.06)!important}
+[data-theme="dark"] .plan-today{background:rgba(158,206,106,.08)!important}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
+.theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
+/* New styles */
+.source-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;letter-spacing:.3px}
+.badge-ai{background:rgba(126,200,130,.15);color:#5aa65e;border:1px solid rgba(126,200,130,.3)}
+[data-theme="dark"] .badge-ai{background:rgba(158,206,106,.12);color:#9ece6a;border-color:rgba(158,206,106,.3)}
+.badge-rule{background:rgba(158,148,132,.15);color:#9e9484;border:1px solid rgba(158,148,132,.3)}
+[data-theme="dark"] .badge-rule{background:rgba(86,95,137,.15);color:#565f89;border-color:rgba(86,95,137,.3)}
+.ai-insight{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.ai-insight h4{font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--accent)}
+.ai-insight p{font-size:.85rem;line-height:1.7;margin-bottom:6px}
+.ai-insight .detail-text{font-size:.82rem;color:var(--text);line-height:1.8;white-space:pre-line}
+.coach-advice{background:linear-gradient(135deg,rgba(126,200,130,.08),rgba(77,184,164,.08));border:1px solid rgba(126,200,130,.2);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:20px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+[data-theme="dark"] .coach-advice{background:linear-gradient(135deg,rgba(158,206,106,.06),rgba(77,184,164,.06));border-color:rgba(158,206,106,.2)}
+.coach-advice h4{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--accent);display:flex;align-items:center;gap:6px}
+.coach-advice p{font-size:.88rem;line-height:1.8}
+.progress-bar-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);margin-bottom:14px;transition:background .3s,border-color .3s}
+.progress-bar-track{width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.progress-bar-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.prescription-toggle{cursor:pointer;color:var(--accent);font-size:.75rem;text-decoration:underline;user-select:none}
+.prescription-detail{display:none;margin-top:8px;padding:10px 12px;background:rgba(126,200,130,.04);border-radius:8px;font-size:.78rem;line-height:1.7}
+.prescription-detail.open{display:block}
+[data-theme="dark"] .prescription-detail{background:rgba(158,206,106,.06)}
+.prescription-detail dt{font-weight:600;color:var(--muted);margin-top:4px}
+.prescription-detail dt:first-child{margin-top:0}
+.prescription-detail dd{margin-left:0;margin-bottom:4px}
+.body-assessment-level{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;margin-bottom:8px}
+.body-assessment-level.green{background:rgba(126,200,130,.15);color:#5aa65e}
+.body-assessment-level.yellow{background:rgba(244,197,66,.15);color:#c9a030}
+.body-assessment-level.red{background:rgba(232,152,152,.15);color:#c07070}
+[data-theme="dark"] .body-assessment-level.green{background:rgba(158,206,106,.12);color:#9ece6a}
+[data-theme="dark"] .body-assessment-level.yellow{background:rgba(224,175,104,.12);color:#e0af68}
+[data-theme="dark"] .body-assessment-level.red{background:rgba(247,118,142,.12);color:#f7768e}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:500}
+.tag-strength{background:rgba(126,200,130,.12);color:#5aa65e}
+.tag-risk{background:rgba(232,152,152,.12);color:#c07070}
+.tag-suggestion{background:rgba(124,185,232,.12);color:#5a9ec7}
+[data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
+[data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
+[data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div>
+    <h1>Jarvis 训练复盘</h1>
+    <p class="subtitle">20260701 | Jarvis | 距首马 23 周 (基础期 I) | 目标 3:30:00</p>
+  </div>
+  <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+</div>
+
+<!-- ==================== Section 1: 个人训练关键指标 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">个人训练关键指标</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">VO2max</div><div class="value">55</div><div class="sub">阈值配速 4:18/km</div></div>
+    <div class="card"><div class="label">全马预测</div><div class="value">3:18:19</div><div class="sub">目标 3:30:00</div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">23<span style="font-size:.9rem">周</span></div><div class="sub">基础期 I W2 | 有氧耐力、建立跑量</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value">9.1<span style="font-size:.9rem">km</span></div><div class="sub">目标 50-65km<br><span style="font-size:.65rem;color:var(--muted)">周期 06/29~07/05</span></div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">526<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 0.85（目标 0.8-1.3）</div></div>
+    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">100%</div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>良好</div></div>
+    <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#7ec882">77<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>正常 | 基线 71ms</div></div>
+  </div>
+</div>
+
+<!-- ==================== Zone Section: 配速 & 心率区间 ==================== -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">配速 &amp; 心率区间参考</div>
+      <span class="source-badge badge-rule">阈值配速 4:18/km · 乳酸阈心率 170 bpm</span>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>配速区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>配速范围</th><th>%阈值</th></tr>
+        <tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>> 6:03/km</strong></td>
+            <td><71%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>6:03/km — 5:04/km</strong></td>
+            <td>71-85%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>5:04/km — 4:37/km</strong></td>
+            <td>86-93%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>4:37/km — 4:13/km</strong></td>
+            <td>94-102%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>4:13/km — 3:50/km</strong></td>
+            <td>103-112%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>< 3:50/km</strong></td>
+            <td>>112%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练配速 (15:00/km) 所属区间</td></tr>
+      </table>
+    </div>
+    <div class="chart-box">
+      <h3>心率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>心率范围</th><th>%参考</th></tr>
+        <tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>< 136 bpm</strong></td>
+            <td><80%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>136 — 153 bpm</strong></td>
+            <td>80-90%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>153 — 163 bpm</strong></td>
+            <td>91-95%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>163 — 173 bpm</strong></td>
+            <td>96-102%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>173 — 180 bpm</strong></td>
+            <td>103-106%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>> 180 bpm</strong></td>
+            <td>>106%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练心率 (73 bpm) 所属区间</td></tr>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
+    <strong>使用说明：</strong>
+    配速区间基于阈值配速（4:18/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算。
+    训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
+    
+  </div>
+</div>
+
+
+<!-- ==================== Section 2: 最近一次训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近一次训练分析（2026-07-01）</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+
+  <div class="cards" style="margin-bottom:16px">
+    <div class="card"><div class="label">距离/时间</div><div class="value">1.04<span style="font-size:.9rem">km</span></div><div class="sub">15:34</div></div>
+    <div class="card"><div class="label">配速</div><div class="value">15:00<span style="font-size:.9rem">/km</span></div><div class="sub">最快 14:55 | 轻松跑 (E区)</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">73<span style="font-size:.9rem">bpm</span></div><div class="sub">40% HRmax</div></div>
+    <div class="card"><div class="label">步频</div><div class="value">99<span style="font-size:.9rem">spm</span></div><div class="sub">低于180目标81spm</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">-<span style="font-size:.9rem">TL</span></div><div class="sub">-1</div></div>
+    <div class="card"><div class="label">天气</div><div class="value" style="font-size:1.2rem">中雨</div><div class="sub">26.5°C 体感30.7°C 湿度100%</div></div>
+  </div>
+  
+  <div class="chart-box full-width" style="margin-bottom:16px;height:300px;display:flex;flex-direction:column">
+    <h3>逐秒配速 & 心率</h3>
+    <canvas id="secPaceHrChart" style="flex:1;min-height:0"></canvas>
+  </div>
+
+  <div class="review-grid">
+    <div class="ai-insight">
+      <h4>训练概要</h4>
+      <div style="margin-bottom:4px"><span class="badge badge-green">轻松跑</span></div>
+      <p>距离过短，无有效训练结构。</p>
+      <div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">本次仅完成1.04km，耗时15分34秒（配速15:00/km）。平均心率73bpm，步频99极其低下，步幅仅0.67m。全程心率漂移2.8%，但因距离太短无参考意义。在暴雨（中雨，湿度100%）下进行的极短慢走/跑，不构成有效跑步训练负荷，可视为主动恢复或热身。</div>
+      
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:.75rem;font-weight:600;color:var(--muted)">训练结构</span>
+          <span class="badge badge-yellow">质量:poor</span>
+        </div>
+        <div style="font-size:.78rem;line-height:1.7">
+          <div><span style="color:var(--muted)">热身:</span> 0.0km</div><div><span style="color:var(--muted)">主训练:</span> 0.0km</div><div><span style="color:var(--muted)">冷身:</span> 0.0km</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-box">
+      <h4>亮点</h4>
+      <div class="finding-item" style="color:#5aa65e">在大雨天气下保持了运动习惯，意志力可嘉。</div>
+      <h4 style="margin-top:12px">改进方向</h4>
+      <div class="finding-item" style="color:#c9a030">跑步训练单次时长建议不少于30分钟或距离不少于5公里，才能对心肺系统产生有效刺激。</div><div class="finding-item" style="color:#c9a030">若今日为主观感觉疲劳的主动恢复日，该距离和强度可以接受，但不应计入周跑量目标。</div>
+    </div>
+  </div>
+
+
+  <div style="margin-top:16px">
+    <div class="section-title" style="font-size:.95rem">其他近期训练（近7天）</div>
+    <table>
+      <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
+      <tr>
+        <td>2026-06-29</td>
+        <td style="max-width:300px">负分段加速，但整体配速过快，偏离了有氧训练目标，心率漂移显著。</td>
+        <td><span class="badge badge-green">展现负分段能力，后程控制力较强。</span><span class="badge badge-green">步频178spm处于理想范围。</span></td>
+        <td><span class="badge badge-yellow">轻松跑或基础有氧跑应将心率严格控制在153bpm（Z2上限）以下，本次66%时间处于Z3-4，建议下次同类型训练将配速放慢至5:45-6:10/km。</span><span class="badge badge-yellow">热身段比例过长，建议控制在总里程的15-20%（约1.5公里内），可先在原地做动态热身再开表。</span></td>
+      </tr><tr>
+        <td>2026-06-28</td>
+        <td style="max-width:300px">后程掉速明显，高温高湿下执行，整体配速偏快于心率目标，步幅缩水揭示肌肉耐力不足。</td>
+        <td><span class="badge badge-green">在30°C高温高湿环境下完成了长距离，心肺耐受力值得肯定。</span><span class="badge badge-green">步频176稳定，未出现因疲劳而降低步频的错误代偿。</span></td>
+        <td><span class="badge badge-yellow">长距离跑后程步幅下降是髋屈肌/臀肌疲劳信号，每周需增加1-2次针对性力量训练（如弓箭步、臀桥、单腿硬拉）。</span><span class="badge badge-yellow">心率虽然经环境校正后尚可，但配速波动大，下次LSD尝试定速跑，目标配速5:50-6:10/km，磨合稳定的全马配速感。</span></td>
+      </tr><tr>
+        <td>2026-06-27</td>
+        <td style="max-width:300px">标准的有氧跑，但在高温下心率和配速匹配显示有氧基础良好。</td>
+        <td><span class="badge badge-green">高温下维持了平稳配速和良好心率控制，结构清晰。</span><span class="badge badge-green">负分段加速体现良好热身效果和控速能力。</span></td>
+        <td><span class="badge badge-yellow">步频173略低，建议下次轻松跑开启节拍器设定178bpm，通过缩小步幅来维持低强度，提高经济性。</span></td>
+      </tr><tr>
+        <td>2026-06-26</td>
+        <td style="max-width:300px">渐进式加速的节奏跑，末端触及速度耐力区间，展现出良好的速耐潜力。</td>
+        <td><span class="badge badge-green">渐进式节奏跑执行得体，从有氧底进乳酸阈，训练效率极高。</span><span class="badge badge-green">在湿度100%的天气下完成末段冲刺，意志力和体能储备良好。</span></td>
+        <td><span class="badge badge-yellow">下一次同类节奏跑，可尝试将核心段（如6-8公里）稳定在4:40-4:55/km（Z3-Z4上部），提升乳酸清除能力，末段再考虑加速。</span></td>
+      </tr><tr>
+        <td>2026-06-25</td>
+        <td style="max-width:300px">配速和心率高度稳定的有氧跑，跑姿经济性良好但强度略高于轻松跑标准。</td>
+        <td><span class="badge badge-green">心率漂移极小，心率-配速耦合度极高，有氧效率好。</span><span class="badge badge-green">步频和节奏几乎锁定巡航状态，跑姿极其经济稳定。</span></td>
+        <td><span class="badge badge-yellow">请勿沉迷于配速数字的“舒适区”，必须将轻松跑配速放慢至6:03/km以上或心率控制在Z2中下方（136-145bpm），避免灰色区（Z3）过度累积导致疲劳和效果边际递减。</span><span class="badge badge-yellow">维持当前步频和姿态，通过刻意降低步幅来实现减速，保护现有跑姿经济性。</span></td>
+      </tr><tr>
+        <td>2026-06-24</td>
+        <td style="max-width:300px">近乎完美的稳态有氧训练，心率配速双稳定，步频异常数据需注意。</td>
+        <td><span class="badge badge-green">展现了教科书的巡航控制能力，配速和心率的稳定度为近期训练最佳。</span><span class="badge badge-green">雨中完成高质量训练，心理韧性和技术稳定性强。</span></td>
+        <td><span class="badge badge-yellow">需确认步频传感器状态，避免错误数据干扰步态分析。</span><span class="badge badge-yellow">步幅偏小的问题长期存在，开始加入每周2次的跳绳和原地高抬腿练习。</span></td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- ==================== Section 3: 最近7天训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近7天训练分析</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>HRV 7日趋势</h3>
+      <canvas id="hrvChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>训练负荷趋势</h3>
+      <canvas id="loadChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>最近训练配速 vs 阈值</h3>
+      <canvas id="paceChart"></canvas>
+    </div>
+    
+    <div class="chart-box">
+      <h3>睡眠质量趋势（近7天）</h3>
+      <canvas id="sleepChart"></canvas>
+    </div>
+    
+  </div>
+
+  <!-- Workouts Table -->
+  
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">近期训练一览（近7天）</div>
+    <table>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
+      <tr>
+        <td>2026-06-29</td>
+        <td>8.08km</td>
+        <td>5:26/km</td>
+        <td>133bpm (73%)</td>
+        <td>178spm</td>
+        <td>58TL</td>
+        <td>Normal</td>
+        <td>小毛毛雨 29.9°C</td>
+      </tr><tr>
+        <td>2026-06-28</td>
+        <td>18.35km</td>
+        <td>6:05/km</td>
+        <td>139bpm (76%)</td>
+        <td>176spm</td>
+        <td>144TL</td>
+        <td>Below Average</td>
+        <td>小毛毛雨 30.1°C</td>
+      </tr><tr>
+        <td>2026-06-27</td>
+        <td>7.7km</td>
+        <td>5:51/km</td>
+        <td>127bpm (70%)</td>
+        <td>173spm</td>
+        <td>42TL</td>
+        <td>Normal</td>
+        <td>小毛毛雨 29.8°C</td>
+      </tr><tr>
+        <td>2026-06-27</td>
+        <td>undefinedkm</td>
+        <td>undefined/km</td>
+        <td>87bpm (48%)</td>
+        <td>-spm</td>
+        <td>2TL</td>
+        <td>-</td>
+        <td>- °C</td>
+      </tr><tr>
+        <td>2026-06-26</td>
+        <td>12.01km</td>
+        <td>5:22/km</td>
+        <td>138bpm (76%)</td>
+        <td>174spm</td>
+        <td>103TL</td>
+        <td>Good</td>
+        <td>小毛毛雨 28.9°C</td>
+      </tr><tr>
+        <td>2026-06-25</td>
+        <td>10.83km</td>
+        <td>5:22/km</td>
+        <td>136bpm (75%)</td>
+        <td>179spm</td>
+        <td>78TL</td>
+        <td>Best</td>
+        <td>小毛毛雨 25.7°C</td>
+      </tr><tr>
+        <td>2026-06-24</td>
+        <td>11.74km</td>
+        <td>6:12/km</td>
+        <td>133bpm (73%)</td>
+        <td>158spm</td>
+        <td>99TL</td>
+        <td>Good</td>
+        <td>中雨 24.8°C</td>
+      </tr>
+    </table>
+  </div>
+  
+
+  <!-- Recovery Detail Cards -->
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">恢复指标</div>
+    <div class="cards">
+      <div class="card"><div class="label">恢复度</div><div class="value" style="color:#7ec882">100%</div><div class="sub">Heavy training allowed</div></div>
+      <div class="card"><div class="label">HRV连续偏低</div><div class="value">0<span style="font-size:.9rem">天</span></div><div class="sub">正常</div></div>
+      <div class="card"><div class="label">睡眠(最新)</div><div class="value">94</div><div class="sub">23:23 - 07:07</div></div>
+      <div class="card"><div class="label">负荷比</div><div class="value">0.85</div><div class="sub">Maintaining</div></div>
+      <div class="card"><div class="label">预计完全恢复</div><div class="value" style="color:#7ec882">完全恢复</div><div class="sub">Heavy training allowed</div></div>
+    </div>
+  </div>
+
+  <!-- AI Body Assessment & Training Pattern -->
+  
+  <div style="margin-top:14px">
+    <div class="analysis-grid">
+      
+      <div class="ai-insight">
+        <h4>身体状态评估</h4>
+        <div class="body-assessment-level yellow">需要关注</div>
+        <p>跑者拥有良好的有氧底子和稳定性，但存在明显的“灰色区依赖”（Z3训练过多）和力量短板（步幅小、后程掉速）。体能状态允许承担高质量训练。</p>
+        <ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7"><li>恢复与负荷：HRV值77正常，睡眠评分96优秀，训练负荷比0.85适中，身体完全恢复，可接受高强度课。</li><li>有氧基础：从心率漂移和稳态能力看，有氧效率较高。6月25日和24日两次训练展现出极佳的心率配速耦合。</li><li>强度分布问题：回顾近一周，超过70%的训练时间花费在Z3有氧动力区，这违背了80/20两极化原则，长期将导致平台期或过度训练。</li><li>步幅短板：多个训练中步幅在1.0-1.07m，而步频已达178达标线。配速目标4:58/km需要步幅至少1.12-1.15m，目前跑步经济性主要受限于髋屈/臀肌力量。</li><li>长距离耐力：LSD后程出现典型髋屈肌疲劳（步频稳而步幅掉），提示力量不足可能成为全马后半程的最大威胁。</li></ul>
+        <div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：每周二和周五加入15-20分钟的跑步专项力量训练，重点：保加利亚分腿蹲、单腿臀桥、平板支撑侧移。；立即调整配速感：所有冠以“轻松跑”或“有氧跑”的训练，强制配速禁止快于5:50/km，心率禁超153bpm（凉爽天气）。；利用本周高质量训练日安排一次阈值跑（见周计划），检验并刺激乳酸代谢能力。</div>
+      </div>
+      
+
+      
+      <div class="ai-insight">
+        <h4>训练模式分析</h4>
+        <p>跑者习惯使用“明显比轻松跑快、但未达阈值刺激”的Z3灰色区进行日常训练，形成了看似稳定但实际上低效的训练模式。这极有可能导致有氧能力提升缓慢并累积隐性疲劳。</p>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list"><span class="tag tag-strength">体感控速能力出色，能在未看表的情况下将配速维持在极窄区间。</span><span class="tag tag-strength">步频习惯良好（178spm左右），为提速打下稳定框架。</span><span class="tag tag-strength">高温高湿环境下依然能保持较低的名义心率水平，心肺耐热性优秀。</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list"><span class="tag tag-risk">灰色区（Z3）过度积压：大量训练时间处于既不低也不高的强度，无法获得低强度“跑透毛细血管”的好处，也无法获得高强度（乳酸阈刺激）的好处，大幅增加全马后半程掉速风险。</span><span class="tag tag-risk">力量基础薄弱：步幅受限于力量而非心肺，全马3:30需要4:58/km配速维持42km，若步幅无法在疲劳时保持1.1m+，将导致配速崩塌。</span><span class="tag tag-risk">光学心率数据在间歇或高步频下可能出现滞后或误差，虽然目前训练尚未涉足，但后续高质量课需留意。</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list"><span class="tag tag-suggestion">严格执行两极化：未来3周内，将每日 ‘感觉不错跑’ 的习惯改为‘真的慢跑（>5:50/km）’或‘高质量阈值间歇课’，砍掉中间地带。</span><span class="tag tag-suggestion">设定清晰节奏：轻松跑日佩戴节拍器178bpm，步频维持不变，主动缩步幅降速至6:00-6:20/km，练习把心率压住。</span><span class="tag tag-suggestion">力量训练需在周度计划中固定下来，作为与跑步同等重要的必修课，而不是可选的附加项。</span></div></div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+<!-- ==================== Section 4: 下一阶段训练计划 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">下一阶段训练计划</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Phase info + Progress bar -->
+  <div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span style="font-size:.85rem;font-weight:600">基础期 I (W2) — 有氧耐力、建立跑量</span>
+      <span style="font-size:.8rem;color:var(--muted)">目标 50-65km/周</span>
+    </div>
+    <div class="progress-bar-container" style="margin-bottom:0">
+      <div class="progress-bar-labels">
+        <span>近7天已完成 68.7km</span>
+        <span>100%</span>
+        <span>目标 65km</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:100%;background:#7ec882"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Plan Table -->
+  
+  <table>
+    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>详细计划</th></tr>
+    <tr class="">
+        <td>周三 07-01</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>身体恢复与力量训练日</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-1');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-1"><dt>热身</dt><dd>无</dd><dt>主课</dt><dd>休息，可进行30-40分钟散步或泡沫轴放松。</dd><dt>冷身</dt><dd>无</dd><dt>备注</dt><dd>今日已完成1km极慢跑，可作为热身或直接休息。结合身体评估，将力量训练挪至今晚：3组弓箭步各12次; 3组臀桥20次; 平板支撑3组60秒。</dd></div></td>
+      </tr><tr class="">
+        <td>周四 07-02</td>
+        <td>节奏跑</td>
+        <td>12km</td>
+        <td>5:50 — 6:10/km (Z2-Z1)</td>
+        <td>Z3-Z4下部</td>
+        <td>高原节奏跑：训练乳酸清除能力</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-2');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-2"><dt>热身</dt><dd>2公里轻松慢跑，配速5:50-6:10，心率升至135。</dd><dt>主课</dt><dd>8公里节奏跑，配速锁定在4:50-4:55（切记宁慢勿快），心率目标160-168bpm。</dd><dt>冷身</dt><dd>2公里慢跑冷身，配速6:20-6:40。</dd><dt>备注</dt><dd>这是调整灰色区依赖后的首次高质量课，核心段配速比全马目标配速快5-8秒，目的是让身体在略高于全马强度下舒适地处理乳酸。全程保持步频178-182。</dd></div></td>
+      </tr><tr class="">
+        <td>周五 07-03</td>
+        <td>轻松跑</td>
+        <td>8km</td>
+        <td>5:50 — 6:10/km (Z2-Z1)</td>
+        <td>Z2下部</td>
+        <td>极度放松跑，刻意压速</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-3');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-3"><dt>热身</dt><dd>前1公里配速6:20</dd><dt>主课</dt><dd>6公里，配速5:50-6:10，心率严格控制不超148bpm（若天气炎热允许上浮至155bpm）。若心率超标，宁可降配速至6:30。</dd><dt>冷身</dt><dd>1公里配速6:30-7:00</dd><dt>备注</dt><dd>开启节拍器178bpm，将平常步幅缩短5cm来达到减速目的，体会骨盆稳定性。这次训练的价值是‘主动恢复’，而不是有氧刺激。</dd></div></td>
+      </tr><tr class="">
+        <td>周六 07-04</td>
+        <td>LSD</td>
+        <td>18km</td>
+        <td>6:05 — 6:20/km (Z1)</td>
+        <td>Z2</td>
+        <td>长距离有氧耐力跑，结合力量跑</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-4');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-4"><dt>热身</dt><dd>前2公里很慢的预热，配速6:05-6:20。</dd><dt>主课</dt><dd>15公里定速巡航，配速稳定在5:50-5:55，心率保持在Z2区（136-153bpm）。</dd><dt>冷身</dt><dd>最后1公里放松跑，配速6:30。</dd><dt>备注</dt><dd>目标练习用更经济的步幅，有意识地体会每公里第13-16公里时髋部的发力感，避免本周之前LSD后程步幅缩水。本次携带补给，每5公里喝少量水。</dd></div></td>
+      </tr><tr class="">
+        <td>周日 07-05</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>完全休息或交叉训练</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-5');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-5"><dt>热身</dt><dd>无</dd><dt>主课</dt><dd>40分钟游泳或1小时散步。不建议跑步。</dd><dt>冷身</dt><dd>无</dd><dt>备注</dt><dd>LSD后让肌肉糖原和微细损伤完全恢复，保证下周吃下跑量。可做15分钟深度拉伸（髂腰肌、腘绳肌、臀肌）。</dd></div></td>
+      </tr><tr class="">
+        <td>周一 07-06</td>
+        <td>轻松跑</td>
+        <td>10km</td>
+        <td>5:45 — 6:10/km (Z2-Z1)</td>
+        <td>Z2</td>
+        <td>恢复性有氧跑</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-6');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-6"><dt>热身</dt><dd>1公里配速6:20</dd><dt>主课</dt><dd>8公里，配速5:45-6:10，心率<153bpm。</dd><dt>冷身</dt><dd>1公里步行/慢跑</dd><dt>备注</dt><dd>持续用节拍器178bpm，专注于屈髋和后蹬而不是单纯‘伸小腿’。保持步频，缩小步幅5cm。</dd></div></td>
+      </tr><tr class="">
+        <td>周二 07-07</td>
+        <td>间歇</td>
+        <td>9km</td>
+        <td>4:05 — 7:00/km (Z5-Z1)</td>
+        <td>Z5-Z6 / Z1恢复</td>
+        <td>短间歇力量课，激活快肌神经</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-7');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-7"><dt>热身</dt><dd>2公里慢跑 + 3组50米高抬腿跨步</dd><dt>主课</dt><dd>8组 * 400米（配速4:05-4:10/km，心率冲刺至Z5），组间慢跑200米恢复（配速6:30-7:00，心率降至Z2）。</dd><dt>冷身</dt><dd>慢跑1.5公里冷身至心率<120</dd><dt>备注</dt><dd>通过短间歇练习速度和跑姿经济性，关键是每组400米的速度要一致，不能前快后慢。重点强化蹬地和送髋动作，提升步幅。</dd></div></td>
+      </tr>
+  </table>
+
+  <!-- Coach Advice -->
+  
+  <div class="coach-advice" style="margin-top:20px">
+    <h4>AI 教练建议</h4>
+    <p>你目前的体能和心肺底子完全可以支撑3:30的目标，但当前最大的威胁不是你的有氧能力，而是训练结构缺乏两极化以及核心力量不足。
+
+接下来三周给你的强制要求：
+
+1. 轻松跑就是要慢到心率和配速‘难看’。停止用5:20-5:30配速跑你的常规有氧课。在马拉松备赛中，你的所有‘轻松跑’必须敢于跑6:00/km甚至更慢。这是在为你12周后的高强度课建立深度恢复和毛细血管网络。
+
+2. 步幅是硬杠杠。你把步频已经优化得不错了，但幅度是限制你跑进5:00/km的短板。必须每周完成我们安排的那些力量课，将臀中肌和髂腰肌视为新的发动机。
+
+3. 每周至少要有一次刺痛感。周三或周四的课需要进入Z4-Z5，让你的身体记住什么是‘难受’，从而推动乳酸曲线的右移。
+
+保持信心，你的耐热性和稳定性指标都很优异。修正灰色区和步幅，全马3:30只是起点。</p>
+  </div>
+  
+</div>
+
+<script>
+// HRV Chart
+new Chart(document.getElementById('hrvChart'), {
+  type: 'line',
+  data: {
+    labels: ["06-25","06-26","06-27","06-28","06-29","06-30","07-01"],
+    datasets: [{
+      label: 'HRV',
+      data: [66,82,61,68,97,82,77],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: .3, pointRadius: 4,
+    }, {
+      label: '基线',
+      data: Array(7).fill(71),
+      borderColor: '#9e9484', borderDash: [5, 5], pointRadius: 0, fill: false,
+    }, {
+      label: '正常下限',
+      data: Array(7).fill(57),
+      borderColor: '#e89898', borderDash: [3, 3], pointRadius: 0, fill: false,
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: false } } }
+});
+
+// Training Load Chart
+new Chart(document.getElementById('loadChart'), {
+  type: 'bar',
+  data: {
+    labels: ["06-25","06-26","06-27","06-28","06-29","06-30","07-01"],
+    datasets: [{
+      label: '短期负荷',
+      data: [61,67,64,75,73,63,54],
+      backgroundColor: 'rgba(124,185,232,.7)',
+      yAxisID: 'y',
+      order: 2,
+    }, {
+      label: '长期负荷',
+      data: [64,65,65,67,66,65,63],
+      backgroundColor: 'rgba(196,166,216,.5)',
+      yAxisID: 'y',
+      order: 3,
+    }, {
+      label: '负荷比',
+      type: 'line',
+      data: [0.95,1.03,0.98,1.11,1.1,0.96,0.85],
+      borderColor: 'rgba(232,152,152,.9)',
+      backgroundColor: 'rgba(232,152,152,.9)',
+      pointBackgroundColor: 'rgba(232,152,152,.9)',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.3,
+      yAxisID: 'y1',
+      order: 1,
+      fill: false,
+    }, {
+      label: '平衡线 (1.0)',
+      type: 'line',
+      data: Array(7).fill(1.0),
+      borderColor: 'rgba(150,150,150,.5)',
+      borderWidth: 1.5,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      yAxisID: 'y1',
+      order: 3,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'TL', font: { size: 10 } }
+      },
+      y1: {
+        beginAtZero: false,
+        position: 'right',
+        min: 0.7,
+        max: 1.5,
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: '负荷比', font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// Z1-Z6 background stripe plugin
+Chart.register({
+  id: 'paceZones',
+  beforeDraw(chart) {
+    const stripes = chart.options.plugins?.paceZones?.stripes;
+    if (!stripes?.length) return;
+    const ctx = chart.ctx;
+    const yScale = chart.scales.y;
+    const area = chart.chartArea;
+    ctx.save();
+    for (const s of stripes) {
+      const y1 = s.slower != null ? yScale.getPixelForValue(s.slower) : area.bottom;
+      const y2 = s.faster != null ? yScale.getPixelForValue(s.faster) : area.top;
+      if (!isFinite(y1) || !isFinite(y2)) continue;
+      const top = Math.max(area.top, Math.min(y1, y2));
+      const bot = Math.min(area.bottom, Math.max(y1, y2));
+      if (top >= bot) continue;
+      ctx.fillStyle = s.color + '20';
+      ctx.fillRect(area.left, top, area.right - area.left, bot - top);
+    }
+    ctx.restore();
+  }
+});
+
+// Pace Chart
+function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+
+new Chart(document.getElementById('paceChart'), {
+  type: 'line',
+  data: {
+    labels: ["06-24","06-25","06-26","06-27","06-28","06-29","07-01"],
+    datasets: [{
+      label: '训练配速',
+      data: [6.2,5.366666666666666,5.366666666666666,5.85,6.083333333333333,5.433333333333334,15],
+      showLine: false,
+      pointBackgroundColor: ["#7ec882","#4db8a4","#4db8a4","#4db8a4","#7ec882","#4db8a4","#7ec882"],
+      pointBorderColor: ["#7ec882","#4db8a4","#4db8a4","#4db8a4","#7ec882","#4db8a4","#7ec882"],
+      pointRadius: [14,14,14,14,14,14,5.872],
+      pointHoverRadius: [16,16,16,16,16,16,7.872],
+      pointBorderWidth: 1.5,
+    }, {
+      label: '阈值 ' + fmtPace(4.300) + '/km',
+      data: Array(7).fill(4.300),
+      type: 'line',
+      borderColor: '#e89898', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      paceZones: { stripes: [{"slower":null,"faster":6.05,"color":"#7ec882","key":"Z1","name":"积极恢复区"},{"slower":6.05,"faster":5.066666666666666,"color":"#4db8a4","key":"Z2","name":"有氧耐力区"},{"slower":5.066666666666666,"faster":4.616666666666666,"color":"#f4c542","key":"Z3","name":"有氧动力区"},{"slower":4.616666666666666,"faster":4.216666666666667,"color":"#e89898","key":"Z4","name":"乳酸阈区"},{"slower":4.216666666666667,"faster":3.8333333333333335,"color":"#c07070","key":"Z5","name":"速度耐力区"},{"slower":3.8333333333333335,"faster":null,"color":"#d94f4f","key":"Z6","name":"无氧动力区"}] },
+      tooltip: { callbacks: {
+        label: function(ctx) {
+          if (ctx.datasetIndex === 1) return ctx.dataset.label;
+          const v = ctx.parsed.y;
+          const idx = ctx.dataIndex;
+          const zi = [0,1,1,1,0,1,0][idx];
+          const zLabel = ["Z1 积极恢复区","Z2 有氧耐力区","Z3 有氧动力区","Z4 乳酸阈区","Z5 速度耐力区","Z6 无氧动力区"][zi] || '';
+          const ratio = v / 4.300;
+          return ['配速 ' + fmtPace(v) + '/km · ' + zLabel + ' · ' + Math.round(ratio * 100) + '%阈值'];
+        },
+        afterLabel: function(ctx) {
+          if (ctx.datasetIndex === 1) return;
+          const idx = ctx.dataIndex;
+          const d = [{"dist":11.74,"time":"1:12:54","hr":133,"tl":99,"perf":"Good"},{"dist":10.83,"time":"58:05","hr":136,"tl":78,"perf":"Best"},{"dist":12.01,"time":"1:04:33","hr":138,"tl":103,"perf":"Good"},{"dist":7.7,"time":"45:00","hr":127,"tl":42,"perf":"Normal"},{"dist":18.35,"time":"1:51:30","hr":139,"tl":144,"perf":"Below Average"},{"dist":8.08,"time":"43:57","hr":133,"tl":58,"perf":"Normal"},{"dist":1.04,"time":"15:34","hr":73,"perf":"-1"}][idx];
+          if (!d) return;
+          const lines = [];
+          if (d.dist) lines.push('距离 ' + d.dist + 'km');
+          if (d.time) lines.push('时长 ' + d.time);
+          if (d.hr) lines.push('心率 ' + d.hr + 'bpm');
+          if (d.tl) lines.push('训练负荷 ' + d.tl);
+          if (d.perf && d.perf !== '-1') lines.push('表现 ' + d.perf);
+          return lines;
+        }
+      } }
+    },
+    scales: {
+      y: { reverse: true, min: 7.500, max: 3.500,
+        title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } }
+      }
+    }
+  }
+});
+
+
+
+// Vertical crosshair plugin for per-second chart (Chart.js v4 compatible)
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterDraw: function(chart) {
+    const active = chart.tooltip?.active;
+    if (active && active.length) {
+      const ctx = chart.ctx;
+      const x = active[0].element.x;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chart.scales.y.top);
+      ctx.lineTo(x, chart.scales.y.bottom);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#9e9484';
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+Chart.register(crosshairPlugin);
+// Per-second Pace & HR Chart
+new Chart(document.getElementById('secPaceHrChart'), {
+  type: 'line',
+  data: {
+    datasets: [{
+      label: '配速',
+      data: [{"x":1,"y":14.31980906921241},{"x":2,"y":14.423076923076923},{"x":3,"y":14.492753623188406},{"x":4,"y":14.527845036319613},{"x":5,"y":14.563106796116504},{"x":6,"y":14.563106796116504},{"x":7,"y":14.563106796116504},{"x":8,"y":14.457831325301203},{"x":9,"y":14.354066985645934},{"x":10,"y":14.150943396226415},{"x":11,"y":13.953488372093023},{"x":12,"y":13.92111368909513},{"x":13,"y":13.856812933025404},{"x":14,"y":13.856812933025404},{"x":15,"y":13.824884792626728},{"x":16,"y":13.544018058690746},{"x":17,"y":13.274336283185843},{"x":18,"y":13.215859030837004},{"x":19,"y":13.157894736842106},{"x":20,"y":13.157894736842106},{"x":21,"y":13.129102844638949},{"x":22,"y":13.129102844638949},{"x":23,"y":13.129102844638949},{"x":24,"y":13.071895424836601},{"x":25,"y":12.987012987012987},{"x":26,"y":12.987012987012987},{"x":27,"y":12.958963282937365},{"x":28,"y":12.958963282937365},{"x":29,"y":12.931034482758621},{"x":30,"y":12.931034482758621},{"x":31,"y":12.931034482758621},{"x":32,"y":12.931034482758621},{"x":33,"y":12.903225806451612},{"x":34,"y":12.903225806451612},{"x":35,"y":12.903225806451612},{"x":36,"y":12.903225806451612},{"x":37,"y":12.903225806451612},{"x":38,"y":12.903225806451612},{"x":39,"y":12.903225806451612},{"x":40,"y":12.903225806451612},{"x":41,"y":12.903225806451612},{"x":42,"y":12.987012987012987},{"x":43,"y":13.071895424836601},{"x":44,"y":13.129102844638949},{"x":45,"y":13.157894736842106},{"x":46,"y":13.157894736842106},{"x":47,"y":13.157894736842106},{"x":48,"y":13.157894736842106},{"x":49,"y":13.157894736842106},{"x":50,"y":13.186813186813188},{"x":51,"y":13.186813186813188},{"x":52,"y":13.215859030837004},{"x":53,"y":13.215859030837004},{"x":54,"y":13.215859030837004},{"x":55,"y":13.215859030837004},{"x":56,"y":13.245033112582782},{"x":57,"y":13.245033112582782},{"x":58,"y":13.274336283185843},{"x":59,"y":13.274336283185843},{"x":60,"y":13.303769401330378},{"x":61,"y":13.303769401330378},{"x":62,"y":13.333333333333334},{"x":63,"y":13.333333333333334},{"x":64,"y":13.333333333333334},{"x":65,"y":13.333333333333334},{"x":66,"y":13.333333333333334},{"x":67,"y":13.333333333333334},{"x":68,"y":13.363028953229398},{"x":69,"y":13.363028953229398},{"x":70,"y":13.392857142857142},{"x":71,"y":13.392857142857142},{"x":72,"y":13.422818791946309},{"x":73,"y":13.422818791946309},{"x":74,"y":13.452914798206278},{"x":75,"y":13.452914798206278},{"x":76,"y":13.452914798206278},{"x":77,"y":13.452914798206278},{"x":78,"y":13.452914798206278},{"x":79,"y":13.452914798206278},{"x":80,"y":13.48314606741573},{"x":81,"y":13.48314606741573},{"x":82,"y":13.513513513513512},{"x":83,"y":13.513513513513512},{"x":84,"y":13.513513513513512},{"x":85,"y":13.513513513513512},{"x":86,"y":13.513513513513512},{"x":87,"y":13.48314606741573},{"x":88,"y":13.48314606741573},{"x":89,"y":13.48314606741573},{"x":90,"y":13.48314606741573},{"x":91,"y":13.452914798206278},{"x":92,"y":13.452914798206278},{"x":93,"y":13.422818791946309},{"x":94,"y":13.422818791946309},{"x":95,"y":13.392857142857142},{"x":96,"y":13.392857142857142},{"x":97,"y":13.363028953229398},{"x":98,"y":13.363028953229398},{"x":99,"y":13.363028953229398},{"x":100,"y":13.363028953229398},{"x":101,"y":13.333333333333334},{"x":102,"y":13.333333333333334},{"x":103,"y":13.333333333333334},{"x":104,"y":13.333333333333334},{"x":105,"y":13.303769401330378},{"x":106,"y":13.303769401330378},{"x":107,"y":13.274336283185843},{"x":108,"y":13.274336283185843},{"x":109,"y":13.274336283185843},{"x":110,"y":13.274336283185843},{"x":111,"y":13.274336283185843},{"x":112,"y":13.274336283185843},{"x":113,"y":13.274336283185843},{"x":114,"y":13.303769401330378},{"x":115,"y":13.303769401330378},{"x":116,"y":13.333333333333334},{"x":117,"y":13.333333333333334},{"x":118,"y":13.392857142857142},{"x":119,"y":13.422818791946309},{"x":120,"y":13.48314606741573},{"x":121,"y":13.544018058690746},{"x":122,"y":13.605442176870747},{"x":123,"y":13.66742596810934},{"x":124,"y":13.761467889908255},{"x":125,"y":13.824884792626728},{"x":126,"y":13.888888888888888},{"x":127,"y":13.953488372093023},{"x":128,"y":14.018691588785046},{"x":129,"y":14.084507042253522},{"x":130,"y":14.150943396226415},{"x":131,"y":14.218009478672986},{"x":240,"y":15},{"x":241,"y":14.92537313432836},{"x":242,"y":14.888337468982629},{"x":243,"y":14.814814814814815},{"x":244,"y":14.814814814814815},{"x":245,"y":14.77832512315271},{"x":246,"y":14.77832512315271},{"x":247,"y":14.74201474201474},{"x":248,"y":14.74201474201474},{"x":249,"y":14.74201474201474},{"x":250,"y":14.74201474201474},{"x":251,"y":14.74201474201474},{"x":252,"y":14.74201474201474},{"x":253,"y":14.74201474201474},{"x":254,"y":14.74201474201474},{"x":255,"y":14.74201474201474},{"x":256,"y":14.74201474201474},{"x":257,"y":14.74201474201474},{"x":258,"y":14.74201474201474},{"x":259,"y":14.74201474201474},{"x":260,"y":14.74201474201474},{"x":261,"y":14.74201474201474},{"x":262,"y":14.74201474201474},{"x":263,"y":14.705882352941176},{"x":264,"y":14.705882352941176},{"x":265,"y":14.705882352941176},{"x":266,"y":14.705882352941176},{"x":267,"y":14.705882352941176},{"x":268,"y":14.705882352941176},{"x":269,"y":14.66992665036675},{"x":270,"y":14.66992665036675},{"x":271,"y":14.634146341463415},{"x":272,"y":14.5985401459854},{"x":273,"y":14.563106796116504},{"x":274,"y":14.527845036319613},{"x":275,"y":14.457831325301203},{"x":276,"y":14.423076923076923},{"x":277,"y":14.388489208633093},{"x":278,"y":14.388489208633093},{"x":279,"y":14.354066985645934},{"x":280,"y":14.31980906921241},{"x":281,"y":14.285714285714285},{"x":282,"y":14.251781472684085},{"x":283,"y":14.218009478672986},{"x":284,"y":14.184397163120567},{"x":285,"y":14.150943396226415},{"x":286,"y":14.117647058823529},{"x":287,"y":14.051522248243561},{"x":288,"y":14.018691588785046},{"x":289,"y":13.986013986013987},{"x":290,"y":13.986013986013987},{"x":291,"y":13.953488372093023},{"x":292,"y":13.953488372093023},{"x":293,"y":13.953488372093023},{"x":294,"y":13.953488372093023},{"x":295,"y":13.92111368909513},{"x":296,"y":13.856812933025404},{"x":297,"y":13.793103448275863},{"x":298,"y":13.729977116704806},{"x":299,"y":13.636363636363635},{"x":300,"y":13.544018058690746},{"x":301,"y":13.452914798206278},{"x":302,"y":13.392857142857142},{"x":303,"y":13.333333333333334},{"x":304,"y":13.333333333333334},{"x":305,"y":13.303769401330378},{"x":306,"y":13.333333333333334},{"x":307,"y":13.363028953229398},{"x":308,"y":13.422818791946309},{"x":309,"y":13.48314606741573},{"x":310,"y":13.574660633484163},{"x":311,"y":13.636363636363635},{"x":312,"y":13.698630136986301},{"x":313,"y":13.729977116704806},{"x":314,"y":13.761467889908255},{"x":315,"y":13.761467889908255},{"x":316,"y":13.793103448275863},{"x":317,"y":13.793103448275863},{"x":318,"y":13.793103448275863},{"x":319,"y":13.793103448275863},{"x":320,"y":13.793103448275863},{"x":321,"y":13.761467889908255},{"x":322,"y":13.761467889908255},{"x":323,"y":13.729977116704806},{"x":324,"y":13.729977116704806},{"x":325,"y":13.729977116704806},{"x":326,"y":13.761467889908255},{"x":327,"y":13.761467889908255},{"x":328,"y":13.793103448275863},{"x":329,"y":13.824884792626728},{"x":330,"y":13.888888888888888},{"x":331,"y":13.953488372093023},{"x":332,"y":14.018691588785046},{"x":333,"y":14.051522248243561},{"x":334,"y":14.117647058823529},{"x":335,"y":14.184397163120567},{"x":336,"y":14.251781472684085},{"x":337,"y":14.285714285714285},{"x":338,"y":14.354066985645934},{"x":339,"y":14.388489208633093},{"x":340,"y":14.423076923076923},{"x":341,"y":14.457831325301203},{"x":342,"y":14.492753623188406},{"x":343,"y":14.492753623188406},{"x":344,"y":14.527845036319613},{"x":345,"y":14.527845036319613},{"x":346,"y":14.563106796116504},{"x":347,"y":14.5985401459854},{"x":348,"y":14.634146341463415},{"x":349,"y":14.66992665036675},{"x":350,"y":14.705882352941176},{"x":351,"y":14.705882352941176},{"x":352,"y":14.74201474201474},{"x":353,"y":14.74201474201474},{"x":354,"y":14.74201474201474},{"x":355,"y":14.705882352941176},{"x":356,"y":14.66992665036675},{"x":357,"y":14.634146341463415},{"x":358,"y":14.5985401459854},{"x":359,"y":14.563106796116504},{"x":360,"y":14.563106796116504},{"x":361,"y":14.527845036319613},{"x":362,"y":14.527845036319613},{"x":363,"y":14.492753623188406},{"x":364,"y":14.492753623188406},{"x":365,"y":14.457831325301203},{"x":366,"y":14.492753623188406},{"x":367,"y":14.492753623188406},{"x":368,"y":14.492753623188406},{"x":369,"y":14.492753623188406},{"x":370,"y":14.492753623188406},{"x":371,"y":14.492753623188406},{"x":372,"y":14.527845036319613},{"x":373,"y":14.527845036319613},{"x":374,"y":14.563106796116504},{"x":375,"y":14.5985401459854},{"x":376,"y":14.66992665036675},{"x":377,"y":14.705882352941176},{"x":378,"y":14.74201474201474},{"x":379,"y":14.77832512315271},{"x":380,"y":14.814814814814815},{"x":381,"y":14.851485148514852},{"x":382,"y":14.851485148514852},{"x":383,"y":14.851485148514852},{"x":384,"y":14.851485148514852},{"x":385,"y":14.814814814814815},{"x":386,"y":14.851485148514852},{"x":387,"y":14.851485148514852},{"x":388,"y":14.851485148514852},{"x":389,"y":14.814814814814815},{"x":390,"y":14.77832512315271},{"x":391,"y":14.74201474201474},{"x":392,"y":14.66992665036675},{"x":393,"y":14.5985401459854},{"x":394,"y":14.527845036319613},{"x":395,"y":14.457831325301203},{"x":396,"y":14.423076923076923},{"x":397,"y":14.354066985645934},{"x":398,"y":14.31980906921241},{"x":399,"y":14.285714285714285},{"x":400,"y":14.285714285714285},{"x":401,"y":14.251781472684085},{"x":402,"y":14.218009478672986},{"x":403,"y":14.150943396226415},{"x":404,"y":14.051522248243561},{"x":405,"y":13.953488372093023},{"x":406,"y":13.824884792626728},{"x":407,"y":13.698630136986301},{"x":408,"y":13.605442176870747},{"x":409,"y":13.48314606741573},{"x":410,"y":13.422818791946309},{"x":411,"y":13.333333333333334},{"x":412,"y":13.274336283185843},{"x":413,"y":13.186813186813188},{"x":414,"y":13.129102844638949},{"x":415,"y":13.071895424836601},{"x":416,"y":13.043478260869566},{"x":417,"y":13.015184381778742},{"x":418,"y":13.015184381778742},{"x":419,"y":12.987012987012987},{"x":420,"y":12.958963282937365},{"x":421,"y":12.931034482758621},{"x":422,"y":12.903225806451612},{"x":423,"y":12.847965738758031},{"x":424,"y":12.793176972281449},{"x":425,"y":12.738853503184714},{"x":426,"y":12.684989429175474},{"x":427,"y":12.631578947368421},{"x":428,"y":12.552301255230125},{"x":429,"y":12.474012474012476},{"x":430,"y":12.422360248447205},{"x":431,"y":12.345679012345679},{"x":432,"y":12.320328542094456},{"x":433,"y":12.269938650306749},{"x":434,"y":12.269938650306749},{"x":435,"y":12.244897959183673},{"x":436,"y":12.244897959183673},{"x":437,"y":12.244897959183673},{"x":438,"y":12.244897959183673},{"x":439,"y":12.244897959183673},{"x":440,"y":12.269938650306749},{"x":441,"y":12.269938650306749},{"x":442,"y":12.269938650306749},{"x":443,"y":12.269938650306749},{"x":444,"y":12.269938650306749},{"x":445,"y":12.244897959183673},{"x":446,"y":12.244897959183673},{"x":447,"y":12.219959266802444},{"x":448,"y":12.219959266802444},{"x":449,"y":12.219959266802444},{"x":450,"y":12.244897959183673},{"x":451,"y":12.269938650306749},{"x":452,"y":12.295081967213115},{"x":453,"y":12.320328542094456},{"x":454,"y":12.320328542094456},{"x":455,"y":12.320328542094456},{"x":456,"y":12.320328542094456},{"x":457,"y":12.320328542094456},{"x":458,"y":12.320328542094456},{"x":459,"y":12.295081967213115},{"x":460,"y":12.295081967213115},{"x":461,"y":12.295081967213115},{"x":462,"y":12.320328542094456},{"x":463,"y":12.320328542094456},{"x":464,"y":12.345679012345679},{"x":465,"y":12.345679012345679},{"x":466,"y":12.371134020618557},{"x":467,"y":12.371134020618557},{"x":468,"y":12.396694214876034},{"x":469,"y":12.396694214876034},{"x":470,"y":12.422360248447205},{"x":471,"y":12.448132780082986},{"x":472,"y":12.448132780082986},{"x":473,"y":12.448132780082986},{"x":474,"y":12.448132780082986},{"x":475,"y":12.448132780082986},{"x":476,"y":12.422360248447205},{"x":477,"y":12.371134020618557},{"x":478,"y":12.320328542094456},{"x":479,"y":12.244897959183673},{"x":480,"y":12.195121951219512},{"x":481,"y":12.14574898785425},{"x":482,"y":12.121212121212121},{"x":483,"y":12.072434607645876},{"x":484,"y":12.048192771084336},{"x":485,"y":12.024048096192384},{"x":486,"y":12},{"x":487,"y":11.976047904191617},{"x":488,"y":11.952191235059763},{"x":489,"y":11.928429423459244},{"x":490,"y":11.928429423459244},{"x":491,"y":11.928429423459244},{"x":492,"y":11.928429423459244},{"x":493,"y":11.928429423459244},{"x":494,"y":11.928429423459244},{"x":495,"y":11.928429423459244},{"x":496,"y":11.952191235059763},{"x":497,"y":11.952191235059763},{"x":498,"y":11.976047904191617},{"x":499,"y":11.976047904191617},{"x":500,"y":11.976047904191617},{"x":501,"y":11.952191235059763},{"x":502,"y":11.952191235059763},{"x":503,"y":11.928429423459244},{"x":504,"y":11.928429423459244},{"x":505,"y":11.904761904761905},{"x":506,"y":11.904761904761905},{"x":507,"y":11.881188118811881},{"x":508,"y":11.881188118811881},{"x":509,"y":11.857707509881424},{"x":510,"y":11.857707509881424},{"x":511,"y":11.834319526627219},{"x":512,"y":11.811023622047244},{"x":513,"y":11.787819253438114},{"x":514,"y":11.787819253438114},{"x":515,"y":11.787819253438114},{"x":516,"y":11.787819253438114},{"x":517,"y":11.764705882352942},{"x":518,"y":11.764705882352942},{"x":519,"y":11.741682974559685},{"x":520,"y":11.741682974559685},{"x":521,"y":11.741682974559685},{"x":522,"y":11.764705882352942},{"x":523,"y":11.764705882352942},{"x":524,"y":11.764705882352942},{"x":525,"y":11.764705882352942},{"x":526,"y":11.787819253438114},{"x":527,"y":11.787819253438114},{"x":528,"y":11.787819253438114},{"x":529,"y":11.787819253438114},{"x":530,"y":11.811023622047244},{"x":531,"y":11.811023622047244},{"x":532,"y":11.834319526627219},{"x":533,"y":11.834319526627219},{"x":534,"y":11.857707509881424},{"x":535,"y":11.881188118811881},{"x":536,"y":11.904761904761905},{"x":537,"y":11.928429423459244},{"x":538,"y":11.952191235059763},{"x":539,"y":11.976047904191617},{"x":540,"y":12},{"x":541,"y":12.024048096192384},{"x":542,"y":12.072434607645876},{"x":543,"y":12.096774193548388},{"x":544,"y":12.170385395537526},{"x":545,"y":12.219959266802444},{"x":546,"y":12.295081967213115},{"x":547,"y":12.345679012345679},{"x":548,"y":12.396694214876034},{"x":549,"y":12.448132780082986},{"x":550,"y":12.474012474012476},{"x":551,"y":12.5},{"x":552,"y":12.526096033402922},{"x":553,"y":12.552301255230125},{"x":554,"y":12.605042016806724},{"x":555,"y":12.631578947368421},{"x":556,"y":12.684989429175474},{"x":557,"y":12.711864406779661},{"x":558,"y":12.76595744680851},{"x":559,"y":12.793176972281449},{"x":560,"y":12.847965738758031},{"x":561,"y":12.875536480686694},{"x":562,"y":12.931034482758621},{"x":563,"y":12.987012987012987},{"x":564,"y":13.043478260869566},{"x":565,"y":13.071895424836601},{"x":566,"y":13.100436681222707},{"x":567,"y":13.129102844638949},{"x":568,"y":13.157894736842106},{"x":569,"y":13.186813186813188},{"x":570,"y":13.215859030837004},{"x":571,"y":13.245033112582782},{"x":572,"y":13.274336283185843},{"x":573,"y":13.303769401330378},{"x":574,"y":13.333333333333334},{"x":575,"y":13.363028953229398},{"x":576,"y":13.392857142857142},{"x":577,"y":13.422818791946309},{"x":578,"y":13.452914798206278},{"x":579,"y":13.48314606741573},{"x":580,"y":13.513513513513512},{"x":581,"y":13.544018058690746},{"x":582,"y":13.574660633484163},{"x":583,"y":13.574660633484163},{"x":584,"y":13.605442176870747},{"x":585,"y":13.636363636363635},{"x":586,"y":13.636363636363635},{"x":587,"y":13.605442176870747},{"x":588,"y":13.574660633484163},{"x":589,"y":13.513513513513512},{"x":590,"y":13.48314606741573},{"x":591,"y":13.452914798206278},{"x":592,"y":13.452914798206278},{"x":593,"y":13.422818791946309},{"x":594,"y":13.392857142857142},{"x":595,"y":13.363028953229398},{"x":596,"y":13.363028953229398},{"x":597,"y":13.333333333333334},{"x":598,"y":13.333333333333334},{"x":599,"y":13.333333333333334},{"x":600,"y":13.363028953229398},{"x":601,"y":13.363028953229398},{"x":602,"y":13.422818791946309},{"x":603,"y":13.452914798206278},{"x":604,"y":13.513513513513512},{"x":605,"y":13.574660633484163},{"x":606,"y":13.636363636363635},{"x":607,"y":13.66742596810934},{"x":608,"y":13.698630136986301},{"x":609,"y":13.698630136986301},{"x":610,"y":13.698630136986301},{"x":611,"y":13.66742596810934},{"x":612,"y":13.66742596810934},{"x":613,"y":13.636363636363635},{"x":614,"y":13.636363636363635},{"x":615,"y":13.636363636363635},{"x":616,"y":13.66742596810934},{"x":617,"y":13.698630136986301},{"x":618,"y":13.729977116704806},{"x":619,"y":13.761467889908255},{"x":620,"y":13.761467889908255},{"x":621,"y":13.729977116704806},{"x":622,"y":13.729977116704806},{"x":623,"y":13.698630136986301},{"x":624,"y":13.698630136986301},{"x":625,"y":13.698630136986301},{"x":626,"y":13.761467889908255},{"x":627,"y":13.793103448275863},{"x":628,"y":13.824884792626728},{"x":629,"y":13.856812933025404},{"x":630,"y":13.888888888888888},{"x":631,"y":13.888888888888888},{"x":632,"y":13.888888888888888},{"x":633,"y":13.888888888888888},{"x":634,"y":13.888888888888888},{"x":635,"y":13.888888888888888},{"x":636,"y":13.888888888888888},{"x":637,"y":13.888888888888888},{"x":638,"y":13.888888888888888},{"x":639,"y":13.888888888888888},{"x":640,"y":13.888888888888888},{"x":641,"y":13.856812933025404},{"x":642,"y":13.856812933025404},{"x":643,"y":13.856812933025404},{"x":644,"y":13.856812933025404},{"x":645,"y":13.856812933025404},{"x":646,"y":13.888888888888888},{"x":647,"y":13.92111368909513},{"x":648,"y":13.953488372093023},{"x":649,"y":13.986013986013987},{"x":650,"y":14.018691588785046},{"x":651,"y":14.051522248243561},{"x":652,"y":14.084507042253522},{"x":653,"y":14.084507042253522},{"x":654,"y":14.117647058823529},{"x":655,"y":14.117647058823529},{"x":656,"y":14.117647058823529},{"x":657,"y":14.117647058823529},{"x":658,"y":14.084507042253522},{"x":659,"y":14.051522248243561},{"x":660,"y":14.051522248243561},{"x":661,"y":14.051522248243561},{"x":662,"y":14.084507042253522},{"x":663,"y":14.117647058823529},{"x":664,"y":14.150943396226415},{"x":665,"y":14.150943396226415},{"x":666,"y":14.150943396226415},{"x":667,"y":14.150943396226415},{"x":668,"y":14.117647058823529},{"x":669,"y":14.084507042253522},{"x":670,"y":14.084507042253522},{"x":671,"y":14.051522248243561},{"x":672,"y":14.051522248243561},{"x":673,"y":14.051522248243561},{"x":674,"y":14.084507042253522},{"x":675,"y":14.084507042253522},{"x":676,"y":14.117647058823529},{"x":677,"y":14.117647058823529},{"x":678,"y":14.084507042253522},{"x":679,"y":14.051522248243561},{"x":680,"y":14.018691588785046},{"x":681,"y":13.953488372093023},{"x":682,"y":13.92111368909513},{"x":683,"y":13.888888888888888},{"x":684,"y":13.856812933025404},{"x":685,"y":13.824884792626728},{"x":686,"y":13.793103448275863},{"x":687,"y":13.761467889908255},{"x":688,"y":13.729977116704806},{"x":689,"y":13.698630136986301},{"x":690,"y":13.698630136986301},{"x":691,"y":13.66742596810934},{"x":692,"y":13.66742596810934},{"x":693,"y":13.636363636363635},{"x":694,"y":13.636363636363635},{"x":695,"y":13.605442176870747},{"x":696,"y":13.605442176870747},{"x":697,"y":13.574660633484163},{"x":698,"y":13.605442176870747},{"x":699,"y":13.636363636363635},{"x":700,"y":13.66742596810934},{"x":701,"y":13.698630136986301},{"x":702,"y":13.729977116704806},{"x":703,"y":13.729977116704806},{"x":704,"y":13.729977116704806},{"x":705,"y":13.729977116704806},{"x":706,"y":13.729977116704806},{"x":707,"y":13.698630136986301},{"x":708,"y":13.729977116704806},{"x":709,"y":13.729977116704806},{"x":710,"y":13.761467889908255},{"x":711,"y":13.793103448275863},{"x":712,"y":13.824884792626728},{"x":713,"y":13.824884792626728},{"x":714,"y":13.824884792626728},{"x":715,"y":13.793103448275863},{"x":716,"y":13.793103448275863},{"x":717,"y":13.761467889908255},{"x":718,"y":13.793103448275863},{"x":719,"y":13.793103448275863},{"x":720,"y":13.824884792626728},{"x":721,"y":13.856812933025404},{"x":722,"y":13.888888888888888},{"x":723,"y":13.888888888888888},{"x":724,"y":13.888888888888888},{"x":725,"y":13.888888888888888},{"x":726,"y":13.92111368909513},{"x":727,"y":13.953488372093023},{"x":728,"y":13.986013986013987},{"x":729,"y":14.018691588785046},{"x":730,"y":14.051522248243561},{"x":731,"y":14.051522248243561},{"x":732,"y":14.051522248243561},{"x":733,"y":14.018691588785046},{"x":734,"y":14.018691588785046},{"x":735,"y":14.018691588785046},{"x":736,"y":14.051522248243561},{"x":737,"y":14.051522248243561},{"x":738,"y":14.084507042253522},{"x":739,"y":14.084507042253522},{"x":740,"y":14.084507042253522},{"x":741,"y":14.084507042253522},{"x":742,"y":14.084507042253522},{"x":743,"y":14.084507042253522},{"x":744,"y":14.084507042253522},{"x":745,"y":14.084507042253522},{"x":746,"y":14.084507042253522},{"x":747,"y":14.084507042253522},{"x":748,"y":14.084507042253522},{"x":749,"y":14.051522248243561},{"x":750,"y":14.018691588785046},{"x":751,"y":13.986013986013987},{"x":752,"y":13.953488372093023},{"x":753,"y":13.92111368909513},{"x":754,"y":13.953488372093023},{"x":755,"y":13.986013986013987},{"x":756,"y":14.051522248243561},{"x":757,"y":14.084507042253522},{"x":758,"y":14.150943396226415},{"x":759,"y":14.184397163120567},{"x":760,"y":14.251781472684085},{"x":761,"y":14.285714285714285},{"x":762,"y":14.31980906921241},{"x":763,"y":14.31980906921241},{"x":764,"y":14.31980906921241},{"x":765,"y":14.31980906921241},{"x":766,"y":14.31980906921241},{"x":767,"y":14.285714285714285},{"x":768,"y":14.285714285714285},{"x":769,"y":14.285714285714285},{"x":770,"y":14.285714285714285},{"x":771,"y":14.285714285714285},{"x":772,"y":14.285714285714285},{"x":773,"y":14.285714285714285},{"x":774,"y":14.285714285714285},{"x":775,"y":14.251781472684085},{"x":776,"y":14.218009478672986},{"x":777,"y":14.150943396226415},{"x":778,"y":14.117647058823529},{"x":779,"y":14.051522248243561},{"x":780,"y":13.986013986013987},{"x":781,"y":13.92111368909513},{"x":782,"y":13.888888888888888},{"x":783,"y":13.824884792626728},{"x":784,"y":13.824884792626728},{"x":785,"y":13.824884792626728},{"x":786,"y":13.856812933025404},{"x":787,"y":13.856812933025404},{"x":788,"y":13.888888888888888},{"x":789,"y":13.888888888888888},{"x":790,"y":13.888888888888888},{"x":791,"y":13.888888888888888},{"x":792,"y":13.92111368909513},{"x":793,"y":13.953488372093023},{"x":794,"y":13.986013986013987},{"x":795,"y":14.018691588785046},{"x":796,"y":14.051522248243561},{"x":797,"y":14.084507042253522},{"x":798,"y":14.084507042253522},{"x":799,"y":14.084507042253522},{"x":800,"y":14.084507042253522},{"x":801,"y":14.051522248243561},{"x":802,"y":14.051522248243561},{"x":803,"y":14.051522248243561},{"x":804,"y":14.051522248243561},{"x":805,"y":14.018691588785046},{"x":806,"y":13.986013986013987},{"x":807,"y":13.92111368909513},{"x":808,"y":13.888888888888888},{"x":809,"y":13.824884792626728},{"x":810,"y":13.793103448275863},{"x":811,"y":13.761467889908255},{"x":812,"y":13.761467889908255},{"x":813,"y":13.761467889908255},{"x":814,"y":13.793103448275863},{"x":815,"y":13.793103448275863},{"x":816,"y":13.824884792626728},{"x":817,"y":13.856812933025404},{"x":818,"y":13.92111368909513},{"x":819,"y":13.953488372093023},{"x":820,"y":13.986013986013987},{"x":821,"y":13.986013986013987},{"x":822,"y":14.018691588785046},{"x":823,"y":14.018691588785046},{"x":824,"y":14.051522248243561},{"x":825,"y":14.084507042253522},{"x":826,"y":14.150943396226415},{"x":827,"y":14.184397163120567},{"x":828,"y":14.251781472684085},{"x":829,"y":14.285714285714285},{"x":830,"y":14.388489208633093},{"x":831,"y":14.457831325301203},{"x":832,"y":14.527845036319613},{"x":833,"y":14.5985401459854},{"x":834,"y":12.320328542094456},{"x":835,"y":10.657193605683837},{"x":836,"y":11.47227533460803},{"x":837,"y":12.396694214876034},{"x":838,"y":9.67741935483871},{"x":839,"y":7.936507936507937},{"x":885,"y":13.071895424836601},{"x":886,"y":12.396694214876034},{"x":887,"y":11.764705882352942},{"x":888,"y":9.950248756218905},{"x":889,"y":8.608321377331421},{"x":890,"y":9.036144578313253},{"x":891,"y":9.493670886075948},{"x":892,"y":10.152284263959391},{"x":893,"y":10.88929219600726},{"x":894,"y":11.194029850746269},{"x":895,"y":11.49425287356322},{"x":896,"y":11.811023622047244},{"x":897,"y":12.121212121212121},{"x":898,"y":12.396694214876034},{"x":899,"y":12.684989429175474},{"x":900,"y":12.875536480686694},{"x":901,"y":13.071895424836601},{"x":902,"y":13.186813186813188},{"x":903,"y":13.303769401330378},{"x":904,"y":13.452914798206278},{"x":905,"y":13.605442176870747},{"x":906,"y":13.793103448275863},{"x":907,"y":13.986013986013987},{"x":908,"y":14.117647058823529},{"x":909,"y":14.251781472684085},{"x":910,"y":14.354066985645934},{"x":911,"y":14.423076923076923},{"x":912,"y":14.492753623188406},{"x":913,"y":14.563106796116504},{"x":914,"y":14.634146341463415},{"x":915,"y":14.705882352941176},{"x":916,"y":14.74201474201474},{"x":917,"y":14.77832512315271},{"x":918,"y":14.77832512315271},{"x":919,"y":14.74201474201474},{"x":920,"y":14.705882352941176},{"x":921,"y":14.66992665036675},{"x":922,"y":14.66992665036675},{"x":923,"y":14.634146341463415},{"x":924,"y":14.634146341463415},{"x":925,"y":14.634146341463415},{"x":926,"y":14.5985401459854},{"x":927,"y":14.563106796116504},{"x":928,"y":14.527845036319613},{"x":929,"y":14.492753623188406},{"x":930,"y":14.492753623188406},{"x":931,"y":14.457831325301203}],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: 0, pointRadius: 0,
+      yAxisID: 'y',
+    }, {
+      label: '心率',
+      data: [{"x":1,"y":75},{"x":2,"y":75},{"x":3,"y":75},{"x":4,"y":75},{"x":5,"y":75},{"x":6,"y":75},{"x":7,"y":77},{"x":8,"y":78},{"x":9,"y":79},{"x":10,"y":78},{"x":11,"y":77},{"x":12,"y":75},{"x":13,"y":74},{"x":14,"y":74},{"x":15,"y":73},{"x":16,"y":73},{"x":17,"y":73},{"x":18,"y":73},{"x":19,"y":73},{"x":20,"y":73},{"x":21,"y":73},{"x":22,"y":73},{"x":23,"y":73},{"x":24,"y":73},{"x":25,"y":73},{"x":26,"y":74},{"x":27,"y":74},{"x":28,"y":74},{"x":29,"y":75},{"x":30,"y":75},{"x":31,"y":75},{"x":32,"y":75},{"x":33,"y":75},{"x":34,"y":74},{"x":35,"y":74},{"x":36,"y":74},{"x":37,"y":74},{"x":38,"y":73},{"x":39,"y":73},{"x":40,"y":73},{"x":41,"y":73},{"x":42,"y":73},{"x":43,"y":72},{"x":44,"y":72},{"x":45,"y":72},{"x":46,"y":72},{"x":47,"y":72},{"x":48,"y":72},{"x":49,"y":72},{"x":50,"y":72},{"x":51,"y":72},{"x":52,"y":72},{"x":53,"y":72},{"x":54,"y":72},{"x":55,"y":72},{"x":56,"y":72},{"x":57,"y":72},{"x":58,"y":72},{"x":59,"y":71},{"x":60,"y":71},{"x":61,"y":71},{"x":62,"y":70},{"x":63,"y":70},{"x":64,"y":70},{"x":65,"y":70},{"x":66,"y":70},{"x":67,"y":70},{"x":68,"y":70},{"x":69,"y":70},{"x":70,"y":70},{"x":71,"y":70},{"x":72,"y":70},{"x":73,"y":70},{"x":74,"y":70},{"x":75,"y":70},{"x":76,"y":70},{"x":77,"y":70},{"x":78,"y":70},{"x":79,"y":70},{"x":80,"y":71},{"x":81,"y":71},{"x":82,"y":71},{"x":83,"y":71},{"x":84,"y":72},{"x":85,"y":72},{"x":86,"y":72},{"x":87,"y":72},{"x":88,"y":72},{"x":89,"y":72},{"x":90,"y":72},{"x":91,"y":72},{"x":92,"y":72},{"x":93,"y":72},{"x":94,"y":72},{"x":95,"y":72},{"x":96,"y":72},{"x":97,"y":72},{"x":98,"y":72},{"x":99,"y":72},{"x":100,"y":71},{"x":101,"y":71},{"x":102,"y":71},{"x":103,"y":72},{"x":104,"y":72},{"x":105,"y":72},{"x":106,"y":72},{"x":107,"y":73},{"x":108,"y":73},{"x":109,"y":73},{"x":110,"y":73},{"x":111,"y":73},{"x":112,"y":73},{"x":113,"y":73},{"x":114,"y":73},{"x":115,"y":73},{"x":116,"y":72},{"x":117,"y":72},{"x":118,"y":72},{"x":119,"y":72},{"x":120,"y":71},{"x":121,"y":71},{"x":122,"y":71},{"x":123,"y":71},{"x":124,"y":71},{"x":125,"y":71},{"x":126,"y":71},{"x":127,"y":71},{"x":128,"y":71},{"x":129,"y":71},{"x":130,"y":71},{"x":131,"y":71},{"x":240,"y":71},{"x":241,"y":70},{"x":242,"y":70},{"x":243,"y":70},{"x":244,"y":69},{"x":245,"y":69},{"x":246,"y":68},{"x":247,"y":68},{"x":248,"y":68},{"x":249,"y":68},{"x":250,"y":68},{"x":251,"y":68},{"x":252,"y":67},{"x":253,"y":67},{"x":254,"y":67},{"x":255,"y":67},{"x":256,"y":67},{"x":257,"y":67},{"x":258,"y":67},{"x":259,"y":67},{"x":260,"y":68},{"x":261,"y":69},{"x":262,"y":69},{"x":263,"y":69},{"x":264,"y":70},{"x":265,"y":70},{"x":266,"y":70},{"x":267,"y":70},{"x":268,"y":70},{"x":269,"y":70},{"x":270,"y":70},{"x":271,"y":70},{"x":272,"y":70},{"x":273,"y":71},{"x":274,"y":72},{"x":275,"y":73},{"x":276,"y":73},{"x":277,"y":74},{"x":278,"y":74},{"x":279,"y":74},{"x":280,"y":75},{"x":281,"y":75},{"x":282,"y":75},{"x":283,"y":75},{"x":284,"y":75},{"x":285,"y":75},{"x":286,"y":75},{"x":287,"y":75},{"x":288,"y":75},{"x":289,"y":75},{"x":290,"y":75},{"x":291,"y":75},{"x":292,"y":75},{"x":293,"y":75},{"x":294,"y":75},{"x":295,"y":75},{"x":296,"y":75},{"x":297,"y":74},{"x":298,"y":74},{"x":299,"y":74},{"x":300,"y":74},{"x":301,"y":74},{"x":302,"y":74},{"x":303,"y":74},{"x":304,"y":74},{"x":305,"y":74},{"x":306,"y":74},{"x":307,"y":74},{"x":308,"y":73},{"x":309,"y":73},{"x":310,"y":73},{"x":311,"y":73},{"x":312,"y":73},{"x":313,"y":73},{"x":314,"y":73},{"x":315,"y":73},{"x":316,"y":73},{"x":317,"y":74},{"x":318,"y":74},{"x":319,"y":74},{"x":320,"y":74},{"x":321,"y":74},{"x":322,"y":74},{"x":323,"y":73},{"x":324,"y":73},{"x":325,"y":73},{"x":326,"y":73},{"x":327,"y":72},{"x":328,"y":72},{"x":329,"y":72},{"x":330,"y":72},{"x":331,"y":72},{"x":332,"y":72},{"x":333,"y":72},{"x":334,"y":72},{"x":335,"y":71},{"x":336,"y":71},{"x":337,"y":71},{"x":338,"y":71},{"x":339,"y":71},{"x":340,"y":71},{"x":341,"y":71},{"x":342,"y":72},{"x":343,"y":72},{"x":344,"y":72},{"x":345,"y":72},{"x":346,"y":72},{"x":347,"y":72},{"x":348,"y":72},{"x":349,"y":72},{"x":350,"y":72},{"x":351,"y":71},{"x":352,"y":71},{"x":353,"y":71},{"x":354,"y":71},{"x":355,"y":71},{"x":356,"y":71},{"x":357,"y":71},{"x":358,"y":71},{"x":359,"y":71},{"x":360,"y":71},{"x":361,"y":72},{"x":362,"y":72},{"x":363,"y":72},{"x":364,"y":72},{"x":365,"y":72},{"x":366,"y":72},{"x":367,"y":71},{"x":368,"y":71},{"x":369,"y":71},{"x":370,"y":71},{"x":371,"y":71},{"x":372,"y":72},{"x":373,"y":72},{"x":374,"y":72},{"x":375,"y":72},{"x":376,"y":72},{"x":377,"y":71},{"x":378,"y":71},{"x":379,"y":71},{"x":380,"y":71},{"x":381,"y":71},{"x":382,"y":71},{"x":383,"y":71},{"x":384,"y":71},{"x":385,"y":71},{"x":386,"y":71},{"x":387,"y":71},{"x":388,"y":72},{"x":389,"y":72},{"x":390,"y":72},{"x":391,"y":72},{"x":392,"y":73},{"x":393,"y":73},{"x":394,"y":73},{"x":395,"y":74},{"x":396,"y":75},{"x":397,"y":76},{"x":398,"y":76},{"x":399,"y":77},{"x":400,"y":77},{"x":401,"y":77},{"x":402,"y":77},{"x":403,"y":77},{"x":404,"y":78},{"x":405,"y":78},{"x":406,"y":78},{"x":407,"y":78},{"x":408,"y":78},{"x":409,"y":79},{"x":410,"y":79},{"x":411,"y":78},{"x":412,"y":78},{"x":413,"y":78},{"x":414,"y":78},{"x":415,"y":78},{"x":416,"y":78},{"x":417,"y":78},{"x":418,"y":78},{"x":419,"y":78},{"x":420,"y":78},{"x":421,"y":78},{"x":422,"y":78},{"x":423,"y":78},{"x":424,"y":78},{"x":425,"y":78},{"x":426,"y":78},{"x":427,"y":78},{"x":428,"y":78},{"x":429,"y":78},{"x":430,"y":78},{"x":431,"y":78},{"x":432,"y":78},{"x":433,"y":78},{"x":434,"y":77},{"x":435,"y":77},{"x":436,"y":77},{"x":437,"y":76},{"x":438,"y":76},{"x":439,"y":76},{"x":440,"y":76},{"x":441,"y":76},{"x":442,"y":76},{"x":443,"y":76},{"x":444,"y":76},{"x":445,"y":75},{"x":446,"y":75},{"x":447,"y":74},{"x":448,"y":74},{"x":449,"y":74},{"x":450,"y":74},{"x":451,"y":74},{"x":452,"y":74},{"x":453,"y":74},{"x":454,"y":74},{"x":455,"y":74},{"x":456,"y":74},{"x":457,"y":74},{"x":458,"y":74},{"x":459,"y":74},{"x":460,"y":74},{"x":461,"y":74},{"x":462,"y":74},{"x":463,"y":73},{"x":464,"y":73},{"x":465,"y":73},{"x":466,"y":73},{"x":467,"y":73},{"x":468,"y":73},{"x":469,"y":74},{"x":470,"y":74},{"x":471,"y":74},{"x":472,"y":75},{"x":473,"y":75},{"x":474,"y":75},{"x":475,"y":75},{"x":476,"y":75},{"x":477,"y":75},{"x":478,"y":75},{"x":479,"y":75},{"x":480,"y":75},{"x":481,"y":75},{"x":482,"y":75},{"x":483,"y":75},{"x":484,"y":76},{"x":485,"y":76},{"x":486,"y":77},{"x":487,"y":77},{"x":488,"y":77},{"x":489,"y":77},{"x":490,"y":78},{"x":491,"y":78},{"x":492,"y":78},{"x":493,"y":78},{"x":494,"y":77},{"x":495,"y":77},{"x":496,"y":77},{"x":497,"y":77},{"x":498,"y":77},{"x":499,"y":78},{"x":500,"y":78},{"x":501,"y":78},{"x":502,"y":78},{"x":503,"y":78},{"x":504,"y":78},{"x":505,"y":78},{"x":506,"y":78},{"x":507,"y":78},{"x":508,"y":78},{"x":509,"y":77},{"x":510,"y":77},{"x":511,"y":77},{"x":512,"y":77},{"x":513,"y":77},{"x":514,"y":76},{"x":515,"y":76},{"x":516,"y":77},{"x":517,"y":77},{"x":518,"y":77},{"x":519,"y":78},{"x":520,"y":78},{"x":521,"y":78},{"x":522,"y":77},{"x":523,"y":77},{"x":524,"y":77},{"x":525,"y":77},{"x":526,"y":77},{"x":527,"y":77},{"x":528,"y":77},{"x":529,"y":78},{"x":530,"y":78},{"x":531,"y":78},{"x":532,"y":78},{"x":533,"y":78},{"x":534,"y":78},{"x":535,"y":78},{"x":536,"y":79},{"x":537,"y":80},{"x":538,"y":80},{"x":539,"y":81},{"x":540,"y":81},{"x":541,"y":81},{"x":542,"y":81},{"x":543,"y":81},{"x":544,"y":81},{"x":545,"y":81},{"x":546,"y":81},{"x":547,"y":81},{"x":548,"y":81},{"x":549,"y":81},{"x":550,"y":81},{"x":551,"y":81},{"x":552,"y":81},{"x":553,"y":81},{"x":554,"y":81},{"x":555,"y":81},{"x":556,"y":80},{"x":557,"y":80},{"x":558,"y":80},{"x":559,"y":80},{"x":560,"y":79},{"x":561,"y":79},{"x":562,"y":78},{"x":563,"y":78},{"x":564,"y":77},{"x":565,"y":76},{"x":566,"y":76},{"x":567,"y":75},{"x":568,"y":75},{"x":569,"y":74},{"x":570,"y":74},{"x":571,"y":74},{"x":572,"y":74},{"x":573,"y":74},{"x":574,"y":74},{"x":575,"y":74},{"x":576,"y":74},{"x":577,"y":74},{"x":578,"y":74},{"x":579,"y":74},{"x":580,"y":74},{"x":581,"y":74},{"x":582,"y":74},{"x":583,"y":74},{"x":584,"y":73},{"x":585,"y":73},{"x":586,"y":73},{"x":587,"y":73},{"x":588,"y":73},{"x":589,"y":73},{"x":590,"y":73},{"x":591,"y":73},{"x":592,"y":72},{"x":593,"y":72},{"x":594,"y":72},{"x":595,"y":71},{"x":596,"y":71},{"x":597,"y":71},{"x":598,"y":71},{"x":599,"y":71},{"x":600,"y":71},{"x":601,"y":71},{"x":602,"y":71},{"x":603,"y":72},{"x":604,"y":72},{"x":605,"y":72},{"x":606,"y":72},{"x":607,"y":72},{"x":608,"y":72},{"x":609,"y":72},{"x":610,"y":72},{"x":611,"y":72},{"x":612,"y":72},{"x":613,"y":72},{"x":614,"y":72},{"x":615,"y":72},{"x":616,"y":72},{"x":617,"y":72},{"x":618,"y":72},{"x":619,"y":72},{"x":620,"y":72},{"x":621,"y":72},{"x":622,"y":72},{"x":623,"y":72},{"x":624,"y":72},{"x":625,"y":72},{"x":626,"y":72},{"x":627,"y":72},{"x":628,"y":72},{"x":629,"y":72},{"x":630,"y":72},{"x":631,"y":72},{"x":632,"y":72},{"x":633,"y":72},{"x":634,"y":72},{"x":635,"y":72},{"x":636,"y":73},{"x":637,"y":73},{"x":638,"y":73},{"x":639,"y":73},{"x":640,"y":73},{"x":641,"y":73},{"x":642,"y":73},{"x":643,"y":73},{"x":644,"y":72},{"x":645,"y":72},{"x":646,"y":72},{"x":647,"y":72},{"x":648,"y":73},{"x":649,"y":73},{"x":650,"y":73},{"x":651,"y":73},{"x":652,"y":73},{"x":653,"y":73},{"x":654,"y":73},{"x":655,"y":73},{"x":656,"y":73},{"x":657,"y":73},{"x":658,"y":73},{"x":659,"y":73},{"x":660,"y":73},{"x":661,"y":73},{"x":662,"y":73},{"x":663,"y":73},{"x":664,"y":73},{"x":665,"y":73},{"x":666,"y":73},{"x":667,"y":73},{"x":668,"y":73},{"x":669,"y":74},{"x":670,"y":74},{"x":671,"y":74},{"x":672,"y":73},{"x":673,"y":73},{"x":674,"y":73},{"x":675,"y":73},{"x":676,"y":73},{"x":677,"y":73},{"x":678,"y":73},{"x":679,"y":72},{"x":680,"y":72},{"x":681,"y":72},{"x":682,"y":72},{"x":683,"y":72},{"x":684,"y":73},{"x":685,"y":73},{"x":686,"y":74},{"x":687,"y":74},{"x":688,"y":74},{"x":689,"y":74},{"x":690,"y":74},{"x":691,"y":74},{"x":692,"y":74},{"x":693,"y":73},{"x":694,"y":73},{"x":695,"y":73},{"x":696,"y":73},{"x":697,"y":73},{"x":698,"y":73},{"x":699,"y":73},{"x":700,"y":73},{"x":701,"y":73},{"x":702,"y":73},{"x":703,"y":73},{"x":704,"y":73},{"x":705,"y":73},{"x":706,"y":73},{"x":707,"y":73},{"x":708,"y":73},{"x":709,"y":72},{"x":710,"y":72},{"x":711,"y":72},{"x":712,"y":72},{"x":713,"y":72},{"x":714,"y":72},{"x":715,"y":72},{"x":716,"y":72},{"x":717,"y":72},{"x":718,"y":71},{"x":719,"y":71},{"x":720,"y":71},{"x":721,"y":71},{"x":722,"y":71},{"x":723,"y":71},{"x":724,"y":71},{"x":725,"y":71},{"x":726,"y":71},{"x":727,"y":72},{"x":728,"y":72},{"x":729,"y":72},{"x":730,"y":71},{"x":731,"y":71},{"x":732,"y":71},{"x":733,"y":70},{"x":734,"y":70},{"x":735,"y":71},{"x":736,"y":71},{"x":737,"y":71},{"x":738,"y":71},{"x":739,"y":71},{"x":740,"y":71},{"x":741,"y":71},{"x":742,"y":72},{"x":743,"y":72},{"x":744,"y":72},{"x":745,"y":72},{"x":746,"y":72},{"x":747,"y":72},{"x":748,"y":72},{"x":749,"y":72},{"x":750,"y":72},{"x":751,"y":73},{"x":752,"y":73},{"x":753,"y":73},{"x":754,"y":73},{"x":755,"y":74},{"x":756,"y":74},{"x":757,"y":74},{"x":758,"y":74},{"x":759,"y":74},{"x":760,"y":73},{"x":761,"y":73},{"x":762,"y":73},{"x":763,"y":72},{"x":764,"y":72},{"x":765,"y":72},{"x":766,"y":72},{"x":767,"y":72},{"x":768,"y":72},{"x":769,"y":73},{"x":770,"y":73},{"x":771,"y":73},{"x":772,"y":73},{"x":773,"y":73},{"x":774,"y":73},{"x":775,"y":73},{"x":776,"y":72},{"x":777,"y":71},{"x":778,"y":71},{"x":779,"y":71},{"x":780,"y":72},{"x":781,"y":72},{"x":782,"y":72},{"x":783,"y":72},{"x":784,"y":72},{"x":785,"y":72},{"x":786,"y":72},{"x":787,"y":72},{"x":788,"y":72},{"x":789,"y":73},{"x":790,"y":73},{"x":791,"y":73},{"x":792,"y":73},{"x":793,"y":73},{"x":794,"y":73},{"x":795,"y":73},{"x":796,"y":73},{"x":797,"y":73},{"x":798,"y":73},{"x":799,"y":73},{"x":800,"y":73},{"x":801,"y":73},{"x":802,"y":73},{"x":803,"y":73},{"x":804,"y":73},{"x":805,"y":73},{"x":806,"y":73},{"x":807,"y":73},{"x":808,"y":73},{"x":809,"y":73},{"x":810,"y":73},{"x":811,"y":73},{"x":812,"y":74},{"x":813,"y":74},{"x":814,"y":74},{"x":815,"y":74},{"x":816,"y":74},{"x":817,"y":75},{"x":818,"y":75},{"x":819,"y":75},{"x":820,"y":76},{"x":821,"y":76},{"x":822,"y":76},{"x":823,"y":77},{"x":824,"y":77},{"x":825,"y":77},{"x":826,"y":77},{"x":827,"y":76},{"x":828,"y":75},{"x":829,"y":75},{"x":830,"y":74},{"x":831,"y":74},{"x":832,"y":74},{"x":833,"y":74},{"x":834,"y":75},{"x":835,"y":75},{"x":836,"y":75},{"x":837,"y":75},{"x":838,"y":75},{"x":839,"y":76},{"x":885,"y":77},{"x":886,"y":77},{"x":887,"y":76},{"x":888,"y":75},{"x":889,"y":74},{"x":890,"y":73},{"x":891,"y":72},{"x":892,"y":71},{"x":893,"y":70},{"x":894,"y":70},{"x":895,"y":70},{"x":896,"y":71},{"x":897,"y":72},{"x":898,"y":72},{"x":899,"y":73},{"x":900,"y":73},{"x":901,"y":73},{"x":902,"y":73},{"x":903,"y":73},{"x":904,"y":73},{"x":905,"y":73},{"x":906,"y":73},{"x":907,"y":73},{"x":908,"y":73},{"x":909,"y":74},{"x":910,"y":74},{"x":911,"y":74},{"x":912,"y":74},{"x":913,"y":74},{"x":914,"y":73},{"x":915,"y":73},{"x":916,"y":73},{"x":917,"y":73},{"x":918,"y":73},{"x":919,"y":73},{"x":920,"y":73},{"x":921,"y":73},{"x":922,"y":73},{"x":923,"y":73},{"x":924,"y":73},{"x":925,"y":73},{"x":926,"y":73},{"x":927,"y":73},{"x":928,"y":73},{"x":929,"y":73},{"x":930,"y":72},{"x":931,"y":72}],
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: 0.3, pointRadius: 0,
+      yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: {
+        title: function(ctx) {
+          const sec = ctx[0].parsed.x;
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return m + ':' + String(s).padStart(2, '0');
+        },
+        label: function(ctx) {
+          if (ctx.datasetIndex === 0) return fmtPace(ctx.parsed.y) + '/km';
+          return ctx.parsed.y + ' bpm';
+        }
+      } }
+    },
+    scales: {
+      x: { type: 'linear', title: { display: true, text: '运动时间' },
+        min: 0, max: 1020,
+        ticks: { callback: function(v) {
+          const m = Math.floor(v / 60);
+          const s = Math.round(v % 60);
+          return m + ':' + String(s).padStart(2, '0');
+        } } },
+      y: { reverse: true, position: 'left', title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } } },
+      y1: { position: 'right', title: { display: true, text: '心率 (bpm)' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Sleep Chart — stacked bars (deep + light + REM) + sleep score line overlay
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: ["06/25","06/26","06/27","06/28","06/29","06/30","07/01"],
+    datasets: [{
+      label: '深睡',
+      data: [1.7,1.3,1.3,0.9,1.6,1.5,2.3],
+      backgroundColor: 'rgba(92,124,200,.8)',
+      yAxisID: 'y',
+    }, {
+      label: '浅睡',
+      data: [4.3,2.7,3.2,2.7,3.9,3.8,4],
+      backgroundColor: 'rgba(140,170,220,.7)',
+      yAxisID: 'y',
+    }, {
+      label: 'REM',
+      data: [1.5,1.2,2.2,1.7,2.3,1.9,1.4],
+      backgroundColor: 'rgba(200,215,240,.6)',
+      yAxisID: 'y',
+    }, {
+      label: '睡眠评分',
+      type: 'line',
+      data: [88,50,94,90,97,98,96],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: false, tension: .3, pointRadius: 5,
+      pointBackgroundColor: '#7ec882',
+      yAxisID: 'y1',
+      order: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.datasetIndex < 3) {
+          const h = Math.floor(ctx.parsed.y);
+          const m = Math.round((ctx.parsed.y - h) * 60);
+          return ctx.dataset.label + ': ' + h + 'h' + String(m).padStart(2, '0') + 'min';
+        }
+        return ctx.dataset.label + ': ' + ctx.parsed.y;
+      } } } },
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, position: 'left', min: 0, max: 12,
+        title: { display: true, text: '睡眠时长 (h)' },
+        ticks: { stepSize: 2 } },
+      y1: { position: 'right', min: 0, max: 100,
+        title: { display: true, text: '睡眠评分' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Theme toggle
+(function(){
+  const btn = document.getElementById('themeToggle');
+  const root = document.documentElement;
+  const saved = localStorage.getItem('coros-theme') || 'dark';
+  root.setAttribute('data-theme', saved); btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  btn.addEventListener('click', function(){
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('coros-theme', next);
+    updateChartColors();
+  });
+  function getThemeColor(varName) {
+    return getComputedStyle(root).getPropertyValue(varName).trim();
+  }
+  function updateChartColors() {
+    const gridColor = getThemeColor('--border');
+    const tickColor = getThemeColor('--muted');
+    Chart.defaults.color = tickColor;
+    Chart.defaults.borderColor = gridColor;
+    // Chart.js v4 兼容：使用 Object.entries 遍历实例，避免直接修改 scale 配置
+    var charts = Chart.instances;
+    if (charts) {
+      Object.keys(charts).forEach(function(id) {
+        var chart = charts[id];
+        if (!chart || !chart.options) return;
+        // 仅更新图例标签颜色（scale 颜色由 Chart.defaults 自动处理）
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+          chart.options.plugins.legend.labels.color = tickColor;
+        }
+        chart.update('none');
+      });
+    }
+  }
+  updateChartColors();
+})();
+</script>
+
+</body>
+</html>
