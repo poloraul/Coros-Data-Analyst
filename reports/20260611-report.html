@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Jarvis 训练复盘 20260611</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="chart.min.js"></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
@@ -87,7 +87,8 @@ tr:hover td{background:var(--row-hover)}
 [data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
 [data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
 [data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
-@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}body{padding:14px}h1{font-size:1.4rem}.subtitle{font-size:.78rem;margin-bottom:20px}.card .value{font-size:1.3rem}.card .sub{font-size:.65rem}.card{padding:12px}.section-title{font-size:.95rem}.section-header{flex-wrap:wrap;gap:8px}.header-row{flex-wrap:wrap;gap:10px}.charts-grid{gap:10px}.chart-box{padding:12px}.chart-box h3{font-size:.8rem}th,td{padding:6px 6px;font-size:.75rem}table{font-size:.75rem}.review-grid{gap:10px}.ai-insight,.review-box{padding:12px}.prescription-detail{font-size:.75rem}.coach-advice{padding:14px;font-size:.85rem}}
+@media(max-width:480px){body{padding:10px}h1{font-size:1.2rem}.subtitle{font-size:.72rem;margin-bottom:16px}.card .value{font-size:1.1rem}.cards{gap:8px}.charts-grid{gap:8px}th,td{padding:4px 4px;font-size:.7rem}}
 </style>
 </head>
 <body>
@@ -95,7 +96,7 @@ tr:hover td{background:var(--row-hover)}
 <div class="header-row">
   <div>
     <h1>Jarvis 训练复盘</h1>
-    <p class="subtitle">20260611 | Jarvis | 距首马 26 周 (准备期) | 目标 3:30:00</p>
+    <p class="subtitle">20260611 | Jarvis | 距首马 22 周 (基础期 I) | 目标 3:30:00</p>
   </div>
   <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
 </div>
@@ -110,20 +111,22 @@ tr:hover td{background:var(--row-hover)}
   <div class="cards">
     <div class="card"><div class="label">VO2max</div><div class="value">53</div><div class="sub">阈值配速 4:18/km</div></div>
     <div class="card"><div class="label">全马预测</div><div class="value">3:18:18</div><div class="sub">目标 3:30:00</div></div>
-    <div class="card"><div class="label">距首马</div><div class="value">26<span style="font-size:.9rem">周</span></div><div class="sub">准备期 | 建立基础跑量、维持有氧</div></div>
-    <div class="card"><div class="label">本周跑量</div><div class="value">0.0<span style="font-size:.9rem">km</span></div><div class="sub">目标 45-60km<br><span style="font-size:.65rem;color:var(--muted)">周期 06/08~06/14</span></div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">22<span style="font-size:.9rem">周</span></div><div class="sub">基础期 I W3 | 有氧耐力、建立跑量</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value">0.0<span style="font-size:.9rem">km</span></div><div class="sub">目标 50-65km<br><span style="font-size:.65rem;color:var(--muted)">周期 07/06~07/12</span></div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">0<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 1.03（目标 0.8-1.3）</div></div>
     <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">100%</div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>良好</div></div>
     <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#7ec882">56<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>正常 | 基线 64ms</div></div>
+    
+    
   </div>
 </div>
 
-<!-- ==================== Zone Section: 配速 & 心率区间 ==================== -->
+<!-- ==================== Zone Section: 配速 & 心率 & 功率区间 ==================== -->
 
 <div class="section">
   <div class="section-header">
     <div class="section-title-row">
-      <div class="section-title">配速 &amp; 心率区间参考</div>
+      <div class="section-title">配速 &amp; 心率 &amp; 功率区间参考</div>
       <span class="source-badge badge-rule">阈值配速 4:18/km · 乳酸阈心率 170 bpm</span>
     </div>
   </div>
@@ -134,29 +137,34 @@ tr:hover td{background:var(--row-hover)}
         <tr><th>区间</th><th>名称</th><th>配速范围</th><th>%阈值</th></tr>
         <tr>
             <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
-            <td>恢复跑</td>
-            <td><strong>> 5:19/km</strong></td>
-            <td>0-81%</td>
+            <td>积极恢复区</td>
+            <td><strong>> 6:03/km</strong></td>
+            <td><71%</td>
           </tr><tr>
             <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
-            <td>轻松跑</td>
-            <td><strong>5:19/km — 4:44/km</strong></td>
-            <td>81-91%</td>
+            <td>有氧耐力区</td>
+            <td><strong>6:03/km — 5:04/km</strong></td>
+            <td>71-85%</td>
           </tr><tr>
             <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
-            <td>马拉松配速</td>
-            <td><strong>4:44/km — 4:23/km</strong></td>
-            <td>91-98%</td>
+            <td>有氧动力区</td>
+            <td><strong>5:04/km — 4:37/km</strong></td>
+            <td>86-93%</td>
           </tr><tr>
             <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
-            <td>阈值跑</td>
-            <td><strong>4:23/km — 4:03/km</strong></td>
-            <td>98-106%</td>
+            <td>乳酸阈区</td>
+            <td><strong>4:37/km — 4:13/km</strong></td>
+            <td>94-102%</td>
           </tr><tr>
             <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
-            <td>间歇跑</td>
-            <td><strong>< 4:03/km</strong></td>
-            <td>106-130%</td>
+            <td>速度耐力区</td>
+            <td><strong>4:13/km — 3:50/km</strong></td>
+            <td>103-112%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>< 3:50/km</strong></td>
+            <td>>112%</td>
           </tr>
         
       </table>
@@ -167,37 +175,43 @@ tr:hover td{background:var(--row-hover)}
         <tr><th>区间</th><th>名称</th><th>心率范围</th><th>%参考</th></tr>
         <tr>
             <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
-            <td>恢复跑</td>
-            <td><strong>< 138 bpm</strong></td>
-            <td><81%</td>
+            <td>积极恢复区</td>
+            <td><strong>< 136 bpm</strong></td>
+            <td><80%</td>
           </tr><tr>
             <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
-            <td>轻松跑</td>
-            <td><strong>138 — 148 bpm</strong></td>
-            <td>81-87%</td>
+            <td>有氧耐力区</td>
+            <td><strong>136 — 153 bpm</strong></td>
+            <td>80-90%</td>
           </tr><tr>
             <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
-            <td>马拉松配速</td>
-            <td><strong>148 — 160 bpm</strong></td>
-            <td>87-94%</td>
+            <td>有氧动力区</td>
+            <td><strong>153 — 163 bpm</strong></td>
+            <td>91-95%</td>
           </tr><tr>
             <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
-            <td>阈值跑</td>
-            <td><strong>160 — 170 bpm</strong></td>
-            <td>94-100%</td>
+            <td>乳酸阈区</td>
+            <td><strong>163 — 173 bpm</strong></td>
+            <td>96-102%</td>
           </tr><tr>
             <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
-            <td>间歇跑</td>
-            <td><strong>> 170 bpm</strong></td>
-            <td>>100%</td>
+            <td>速度耐力区</td>
+            <td><strong>173 — 180 bpm</strong></td>
+            <td>103-106%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>> 180 bpm</strong></td>
+            <td>>106%</td>
           </tr>
         
       </table>
     </div>
+    
   </div>
   <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
     <strong>使用说明：</strong>
-    配速区间基于阈值配速（4:18/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算。
+    配速区间基于阈值配速（4:18/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算；功率区间基于估算 FTP（—W，置信度 none）计算。
     训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
     
   </div>
@@ -304,14 +318,14 @@ tr:hover td{background:var(--row-hover)}
   <!-- Phase info + Progress bar -->
   <div style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <span style="font-size:.85rem;font-weight:600">准备期 — 建立基础跑量、维持有氧</span>
-      <span style="font-size:.8rem;color:var(--muted)">目标 45-60km/周</span>
+      <span style="font-size:.85rem;font-weight:600">基础期 I (W3) — 有氧耐力、建立跑量</span>
+      <span style="font-size:.8rem;color:var(--muted)">目标 50-65km/周</span>
     </div>
     <div class="progress-bar-container" style="margin-bottom:0">
       <div class="progress-bar-labels">
-        <span>已完成 0.0km</span>
+        <span>近7天已完成 0.0km</span>
         <span>0%</span>
-        <span>目标 60km</span>
+        <span>目标 65km</span>
       </div>
       <div class="progress-bar-track">
         <div class="progress-bar-fill" style="width:0%;background:#e89898"></div>
@@ -482,42 +496,33 @@ new Chart(document.getElementById('loadChart'), {
   }
 });
 
-// Pace Chart
-function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
-new Chart(document.getElementById('paceChart'), {
-  type: 'bar',
-  data: {
-    labels: [],
-    datasets: [{
-      label: '平均配速',
-      data: [],
-      backgroundColor: [],
-      borderColor: [],
-      borderWidth: 1.5, barPercentage: 0.6,
-    }, {
-      label: '阈值 ' + fmtPace(4.300) + '/km',
-      data: Array(0).fill(4.300),
-      type: 'line',
-      borderColor: '#e89898', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false,
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
-      tooltip: { callbacks: { label: function(ctx) {
-        if (ctx.dataset.type === 'line') return ctx.dataset.label;
-        const v = ctx.parsed.y;
-        const ratio = v / 4.300;
-        let zone = ratio > 1.15 ? 'E区' : ratio > 1.05 ? 'E-M区' : ratio > 0.98 ? 'T区' : 'I区';
-        return fmtPace(v) + '/km (' + zone + ', ' + Math.round(ratio * 100) + '%阈值)';
-      } } }
-    },
-    scales: { y: { reverse: true, title: { display: true, text: '配速 (越低越快)' },
-      ticks: { callback: function(v) { return fmtPace(v); } }
-    } }
+// Z1-Z6 background stripe plugin
+Chart.register({
+  id: 'paceZones',
+  beforeDraw(chart) {
+    const stripes = chart.options.plugins?.paceZones?.stripes;
+    if (!stripes?.length) return;
+    const ctx = chart.ctx;
+    const yScale = chart.scales.y;
+    const area = chart.chartArea;
+    ctx.save();
+    for (const s of stripes) {
+      const y1 = s.slower != null ? yScale.getPixelForValue(s.slower) : area.bottom;
+      const y2 = s.faster != null ? yScale.getPixelForValue(s.faster) : area.top;
+      if (!isFinite(y1) || !isFinite(y2)) continue;
+      const top = Math.max(area.top, Math.min(y1, y2));
+      const bot = Math.min(area.bottom, Math.max(y1, y2));
+      if (top >= bot) continue;
+      ctx.fillStyle = s.color + '20';
+      ctx.fillRect(area.left, top, area.right - area.left, bot - top);
+    }
+    ctx.restore();
   }
 });
+
+// Pace Chart
+function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+
 
 
 

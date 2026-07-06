@@ -484,7 +484,8 @@ tr:hover td{background:var(--row-hover)}
 [data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
 [data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
 [data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
-@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}body{padding:14px}h1{font-size:1.4rem}.subtitle{font-size:.78rem;margin-bottom:20px}.card .value{font-size:1.3rem}.card .sub{font-size:.65rem}.card{padding:12px}.section-title{font-size:.95rem}.section-header{flex-wrap:wrap;gap:8px}.header-row{flex-wrap:wrap;gap:10px}.charts-grid{gap:10px}.chart-box{padding:12px}.chart-box h3{font-size:.8rem}th,td{padding:6px 6px;font-size:.75rem}table{font-size:.75rem}.review-grid{gap:10px}.ai-insight,.review-box{padding:12px}.prescription-detail{font-size:.75rem}.coach-advice{padding:14px;font-size:.85rem}}
+@media(max-width:480px){body{padding:10px}h1{font-size:1.2rem}.subtitle{font-size:.72rem;margin-bottom:16px}.card .value{font-size:1.1rem}.cards{gap:8px}.charts-grid{gap:8px}th,td{padding:4px 4px;font-size:.7rem}}
 </style>
 </head>
 <body>

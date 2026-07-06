@@ -87,7 +87,8 @@ tr:hover td{background:var(--row-hover)}
 [data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
 [data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
 [data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
-@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}body{padding:14px}h1{font-size:1.4rem}.subtitle{font-size:.78rem;margin-bottom:20px}.card .value{font-size:1.3rem}.card .sub{font-size:.65rem}.card{padding:12px}.section-title{font-size:.95rem}.section-header{flex-wrap:wrap;gap:8px}.header-row{flex-wrap:wrap;gap:10px}.charts-grid{gap:10px}.chart-box{padding:12px}.chart-box h3{font-size:.8rem}th,td{padding:6px 6px;font-size:.75rem}table{font-size:.75rem}.review-grid{gap:10px}.ai-insight,.review-box{padding:12px}.prescription-detail{font-size:.75rem}.coach-advice{padding:14px;font-size:.85rem}}
+@media(max-width:480px){body{padding:10px}h1{font-size:1.2rem}.subtitle{font-size:.72rem;margin-bottom:16px}.card .value{font-size:1.1rem}.cards{gap:8px}.charts-grid{gap:8px}th,td{padding:4px 4px;font-size:.7rem}}
 </style>
 </head>
 <body>
@@ -95,7 +96,7 @@ tr:hover td{background:var(--row-hover)}
 <div class="header-row">
   <div>
     <h1>Jarvis 训练复盘</h1>
-    <p class="subtitle">20260702 | Jarvis | 距首马 23 周 (基础期 I) | 目标 3:30:00</p>
+    <p class="subtitle">20260702 | Jarvis | 距首马 22 周 (基础期 I) | 目标 3:30:00</p>
   </div>
   <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
 </div>
@@ -110,20 +111,22 @@ tr:hover td{background:var(--row-hover)}
   <div class="cards">
     <div class="card"><div class="label">VO2max</div><div class="value">55</div><div class="sub">阈值配速 4:19/km</div></div>
     <div class="card"><div class="label">全马预测</div><div class="value">3:18:36</div><div class="sub">目标 3:30:00</div></div>
-    <div class="card"><div class="label">距首马</div><div class="value">23<span style="font-size:.9rem">周</span></div><div class="sub">基础期 I W2 | 有氧耐力、建立跑量</div></div>
-    <div class="card"><div class="label">本周跑量</div><div class="value">20.3<span style="font-size:.9rem">km</span></div><div class="sub">目标 50-65km<br><span style="font-size:.65rem;color:var(--muted)">周期 06/29~07/05</span></div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">22<span style="font-size:.9rem">周</span></div><div class="sub">基础期 I W3 | 有氧耐力、建立跑量</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value">0.0<span style="font-size:.9rem">km</span></div><div class="sub">目标 50-65km<br><span style="font-size:.65rem;color:var(--muted)">周期 07/06~07/12</span></div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">555<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 0.95（目标 0.8-1.3）</div></div>
     <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">99%</div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>良好</div></div>
     <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#7ec882">77<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>正常 | 基线 71ms</div></div>
+    
+    
   </div>
 </div>
 
-<!-- ==================== Zone Section: 配速 & 心率区间 ==================== -->
+<!-- ==================== Zone Section: 配速 & 心率 & 功率区间 ==================== -->
 
 <div class="section">
   <div class="section-header">
     <div class="section-title-row">
-      <div class="section-title">配速 &amp; 心率区间参考</div>
+      <div class="section-title">配速 &amp; 心率 &amp; 功率区间参考</div>
       <span class="source-badge badge-rule">阈值配速 4:19/km · 乳酸阈心率 170 bpm</span>
     </div>
   </div>
@@ -204,10 +207,11 @@ tr:hover td{background:var(--row-hover)}
         <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练心率 (150 bpm) 所属区间</td></tr>
       </table>
     </div>
+    
   </div>
   <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
     <strong>使用说明：</strong>
-    配速区间基于阈值配速（4:19/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算。
+    配速区间基于阈值配速（4:19/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算；功率区间基于估算 FTP（—W，置信度 none）计算。
     训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
     
   </div>
@@ -440,7 +444,7 @@ tr:hover td{background:var(--row-hover)}
   <!-- Phase info + Progress bar -->
   <div style="margin-bottom:16px">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
-      <span style="font-size:.85rem;font-weight:600">基础期 I (W2) — 有氧耐力、建立跑量</span>
+      <span style="font-size:.85rem;font-weight:600">基础期 I (W3) — 有氧耐力、建立跑量</span>
       <span style="font-size:.8rem;color:var(--muted)">目标 50-65km/周</span>
     </div>
     <div class="progress-bar-container" style="margin-bottom:0">
@@ -787,26 +791,26 @@ new Chart(document.getElementById('secPaceHrChart'), {
 new Chart(document.getElementById('sleepChart'), {
   type: 'bar',
   data: {
-    labels: ["06/26","06/27","06/28","06/29","06/30","07/01","07/02"],
+    labels: ["06/26","06/27","06/28","06/29","06/30","07/01"],
     datasets: [{
       label: '深睡',
-      data: [1.3,1.3,0.9,1.6,1.5,2.3,0],
+      data: [1.3,1.3,0.9,1.6,1.5,2.3],
       backgroundColor: 'rgba(92,124,200,.8)',
       yAxisID: 'y',
     }, {
       label: '浅睡',
-      data: [2.7,3.2,2.7,3.9,3.8,4,0],
+      data: [2.7,3.2,2.7,3.9,3.8,4],
       backgroundColor: 'rgba(140,170,220,.7)',
       yAxisID: 'y',
     }, {
       label: 'REM',
-      data: [1.2,2.2,1.7,2.3,1.9,1.4,0],
+      data: [1.2,2.2,1.7,2.3,1.9,1.4],
       backgroundColor: 'rgba(200,215,240,.6)',
       yAxisID: 'y',
     }, {
       label: '睡眠评分',
       type: 'line',
-      data: [50,94,90,97,98,96,null],
+      data: [50,94,90,97,98,96],
       borderColor: '#7ec882',
       backgroundColor: 'rgba(126,200,130,.1)',
       fill: false, tension: .3, pointRadius: 5,
