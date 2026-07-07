@@ -58,6 +58,25 @@ const totalReports = reports.length;
 const totalKm = reports.reduce((s, r) => s + r.totalKm, 0);
 const avgWeeklyKm = totalReports > 0 ? (totalKm / totalReports).toFixed(1) : "0";
 
+// Each daily report stores a ~7-day rolling window of workouts, so the same
+// run reappears in consecutive reports. Deduplicate by date+distance+duration
+// and attribute each run to its own month for the real monthly tally.
+const runDedup = new Map();
+for (const r of reports) {
+  for (const w of r.runs) {
+    const key = `${w.date}|${(w.distance || 0).toFixed(2)}|${w.duration || ""}`;
+    if (!runDedup.has(key)) runDedup.set(key, w);
+  }
+}
+const monthRunStats = {};
+for (const w of runDedup.values()) {
+  const mk = (w.date || "").replace(/-/g, "").slice(0, 6);
+  if (!mk) continue;
+  if (!monthRunStats[mk]) monthRunStats[mk] = { km: 0, runs: 0 };
+  monthRunStats[mk].km += w.distance || 0;
+  monthRunStats[mk].runs += 1;
+}
+
 // --- Computed stats ---
 const latest = reports[0] || null;
 const latestRun = latest?.runs?.[0] || null;
@@ -193,7 +212,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
 
 /* Latest training snapshot */
 .latest-section{max-width:1100px;margin:0 auto;padding:20px 24px 0}
-.latest-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 8px var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.latest-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 8px var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:16px;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s,border-color .2s}
+.latest-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--shadow);border-color:var(--accent)}
 .latest-card .lc-left{display:flex;flex-direction:column;gap:6px}
 .latest-card .lc-left .lc-title{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
 .latest-card .lc-left .lc-date{font-size:1.2rem;font-weight:700;color:var(--text-strong)}
@@ -207,8 +227,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
 .latest-card .lc-week-progress{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
 .latest-card .lc-week-bar{flex:1;min-width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
 .latest-card .lc-week-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .6s}
-.latest-card .lc-link{display:inline-flex;align-items:center;gap:4px;margin-top:2px;font-size:.78rem;color:var(--accent4);text-decoration:none;font-weight:500}
-.latest-card .lc-link:hover{text-decoration:underline}
 
 /* Section title */
 .section-wrap{max-width:1100px;margin:0 auto;padding:24px 24px 0}
@@ -360,7 +378,7 @@ if (latest && latestRun) {
 
   html += `
 <div class="latest-section">
-  <div class="latest-card">
+  <a href="${latest.date}${REPORT_PREFIX}" class="latest-card">
     <div class="lc-left">
       <div class="lc-title">📋 最近训练</div>
       <div class="lc-date">${latest.date.slice(0,4)}/${latestDate} <span class="dow">· 周${dow}</span></div>
@@ -374,9 +392,8 @@ if (latest && latestRun) {
     <div class="lc-right">
       <div><span class="lc-tag">${trend}</span>${latest.bodyLevel ? ` <span class="tag" style="background:${levelColors[latest.bodyLevel]}22;color:${levelColors[latest.bodyLevel]}">${levelLabels[latest.bodyLevel]}</span>` : ""}${latest.phase ? ` <span class="tag" style="background:rgba(78,106,166,.12);color:var(--muted)">${latest.phase}</span>` : ""}</div>
       <div class="lc-week-progress">本周 ${weekKm.toFixed(1)}km / ${planWeekKm}km<div class="lc-week-bar"><div class="lc-week-fill" style="width:${weekPct}%"></div></div></div>
-      <a href="${latest.date}${REPORT_PREFIX}" class="lc-link">查看完整报告 →</a>
     </div>
-  </div>
+  </a>
 </div>`;
 }
 
@@ -395,8 +412,9 @@ html += `
 const monthKeys = Object.keys(groups).sort((a, b) => b.localeCompare(a));
 for (const mk of monthKeys) {
   const monthReports = groups[mk];
-  const monthTotal = monthReports.reduce((s, r) => s + r.totalKm, 0);
-  const monthRuns = monthReports.reduce((s, r) => s + r.runCount, 0);
+  const stats = monthRunStats[mk] || { km: 0, runs: 0 };
+  const monthTotal = stats.km;
+  const monthRuns = stats.runs;
 
   html += `
   <div class="tl-month">

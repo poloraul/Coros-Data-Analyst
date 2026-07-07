@@ -47,7 +47,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
 
 /* Latest training snapshot */
 .latest-section{max-width:1100px;margin:0 auto;padding:20px 24px 0}
-.latest-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 8px var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.latest-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 8px var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:16px;text-decoration:none;color:inherit;transition:transform .2s,box-shadow .2s,border-color .2s}
+.latest-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--shadow);border-color:var(--accent)}
 .latest-card .lc-left{display:flex;flex-direction:column;gap:6px}
 .latest-card .lc-left .lc-title{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
 .latest-card .lc-left .lc-date{font-size:1.2rem;font-weight:700;color:var(--text-strong)}
@@ -61,8 +62,6 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
 .latest-card .lc-week-progress{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
 .latest-card .lc-week-bar{flex:1;min-width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
 .latest-card .lc-week-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .6s}
-.latest-card .lc-link{display:inline-flex;align-items:center;gap:4px;margin-top:2px;font-size:.78rem;color:var(--accent4);text-decoration:none;font-weight:500}
-.latest-card .lc-link:hover{text-decoration:underline}
 
 /* Section title */
 .section-wrap{max-width:1100px;margin:0 auto;padding:24px 24px 0}
@@ -183,7 +182,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
 
 <!-- Milestones --><div class="milestone-strip"><span class="milestone-badge">🎉 1200km 达成</span><span class="milestone-badge next">🏁 1500km <span class="pct">81%</span></span><span class="milestone-badge">🔥 最佳周 70km</span><span class="milestone-badge">💪 最远 18.4km</span></div>
 <div class="latest-section">
-  <div class="latest-card">
+  <a href="20260707-report.html" class="latest-card">
     <div class="lc-left">
       <div class="lc-title">📋 最近训练</div>
       <div class="lc-date">2026/07/07 <span class="dow">· 周二</span></div>
@@ -197,9 +196,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
     <div class="lc-right">
       <div><span class="lc-tag">匀速</span> <span class="tag" style="background:#7ec88222;color:#7ec882">良好</span> <span class="tag" style="background:rgba(78,106,166,.12);color:var(--muted)">基础期 I W3</span></div>
       <div class="lc-week-progress">本周 36.2km / 54km<div class="lc-week-bar"><div class="lc-week-fill" style="width:67%"></div></div></div>
-      <a href="20260707-report.html" class="lc-link">查看完整报告 →</a>
     </div>
-  </div>
+  </a>
 </div>
 <div class="section-wrap">
   <div class="section-head">
@@ -214,7 +212,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
     <div class="tl-month-header">
       <div class="tl-month-dot"></div>
       <span class="tl-month-label">2026年 七月</span>
-      <span style="font-size:.7rem;color:var(--muted)">· 269km · 30 次</span>
+      <span style="font-size:.7rem;color:var(--muted)">· 36km · 5 次</span>
     </div>
     <a href="20260707-report.html" class="tl-card">
       <div class="tl-status-dot dot-green" style=""></div>
@@ -300,7 +298,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
     <div class="tl-month-header">
       <div class="tl-month-dot"></div>
       <span class="tl-month-label">2026年 六月</span>
-      <span style="font-size:.7rem;color:var(--muted)">· 629km · 60 次</span>
+      <span style="font-size:.7rem;color:var(--muted)">· 205km · 20 次</span>
     </div>
     <a href="20260629-report.html" class="tl-card">
       <div class="tl-status-dot dot-green" style=""></div>
@@ -546,7 +544,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino San
     <div class="tl-month-header">
       <div class="tl-month-dot"></div>
       <span class="tl-month-label">2026年 五月</span>
-      <span style="font-size:.7rem;color:var(--muted)">· 311km · 31 次</span>
+      <span style="font-size:.7rem;color:var(--muted)">· 98km · 9 次</span>
     </div>
     <a href="20260531-report.html" class="tl-card">
       <div class="tl-status-dot dot-yellow" style=""></div>
