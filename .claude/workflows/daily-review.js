@@ -126,10 +126,12 @@ await agent(
   依次执行：
   1. node scripts/report.js --date ${dateStr}
      查看 stderr 最后一行，若为 STATUS:OK 则成功
-  2. open reports/${dateStr}-report.html
+  2. node scripts/report-list.js
+     刷新门户页面
+  3. open reports/${dateStr}-report.html
      确认打开成功
 
-  确认两个命令都成功执行。`,
+  确认所有命令都成功执行。`,
   { label: "report" },
 );
 
