@@ -464,6 +464,8 @@ html += `
 </html>`;
 
 mkdirSync(REPORT_DIR, { recursive: true });
+// .nojekyll — prevent GitHub Pages from running Jekyll on our static HTML
+writeFileSync(path.join(REPORT_DIR, ".nojekyll"), "", "utf-8");
 const outPath = path.join(REPORT_DIR, "index.html");
 writeFileSync(outPath, html, "utf-8");
 console.log(`Report list saved to ${path.relative(PROJECT_ROOT, outPath)}`);
