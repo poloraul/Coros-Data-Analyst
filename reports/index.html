@@ -3,568 +3,684 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>训练复盘报告列表</title>
+<title>Jarvis 的 3:30 马拉松训练日志</title>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
-:root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04)}
-[data-theme="dark"]{--bg:#1a1b26;--card:#24283b;--border:#3b4261;--text:#a9b1d6;--text-strong:#c0caf5;--muted:#565f89;--accent:#9ece6a;--accent2:#e0af68;--accent3:#f7768e;--accent4:#7aa2f7;--shadow:rgba(0,0,0,.2);--row-hover:rgba(158,206,106,.06)}
-body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:24px;max-width:1100px;margin:0 auto}
-h1{font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:4px}
-.subtitle{color:var(--muted);font-size:.85rem;margin-bottom:24px}
-.stats-bar{display:flex;gap:16px;margin-bottom:28px;flex-wrap:wrap}
-.stat-card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;flex:1;min-width:130px;box-shadow:0 2px 6px var(--shadow)}
-.stat-card .label{font-size:.72rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px}
-.stat-card .value{font-size:1.4rem;font-weight:700;color:var(--text-strong);margin-top:2px}
-.stat-card .sub{font-size:.7rem;color:var(--muted);margin-top:1px}
+:root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.06);--row-hover:rgba(126,200,130,.04);--hero-glow:rgba(126,200,130,.08);--milestone-bg:rgba(126,200,130,.06)}
+[data-theme="dark"]{--bg:#0f111a;--card:#1a1b26;--border:#2f3346;--text:#a9b1d6;--text-strong:#c0caf5;--muted:#565f89;--accent:#9ece6a;--accent2:#e0af68;--accent3:#f7768e;--accent4:#7aa2f7;--shadow:rgba(0,0,0,.3);--row-hover:rgba(158,206,106,.05);--hero-glow:rgba(158,206,106,.05);--milestone-bg:rgba(158,206,106,.06)}
+body{font-family:-apple-system,BlinkMacSystemFont,'SF Pro Display','Hiragino Sans','Yu Gothic',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:0;min-height:100vh;transition:background .3s,color .3s}
 
-.report-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;margin-bottom:12px;box-shadow:0 2px 6px var(--shadow);transition:border-color .2s,background .2s;display:flex;align-items:center;gap:16px}
-.report-card:hover{border-color:var(--accent);background:var(--row-hover)}
-.report-card .date-col{min-width:130px}
-.report-card .date-col .day{font-size:1.1rem;font-weight:700;color:var(--text-strong)}
-.report-card .date-col .date-sub{font-size:.72rem;color:var(--muted)}
-.report-card .info-col{flex:1;min-width:0}
-.report-card .info-col .phase{font-size:.78rem;color:var(--muted)}
-.report-card .info-col .summary{font-size:.8rem;color:var(--text);margin-top:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.report-card .info-col .runs-wrap{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
-.report-card .stats-col{text-align:right;min-width:100px;flex-shrink:0}
-.report-card .stats-col .km{font-size:1.1rem;font-weight:700;color:var(--accent)}
-.report-card .stats-col .runs{font-size:.7rem;color:var(--muted)}
-.report-card .open-link{display:inline-block;margin-top:4px;color:var(--accent4);font-size:.75rem;text-decoration:none}
-.report-card .open-link:hover{text-decoration:underline}
-.badge{display:inline-block;padding:1px 7px;border-radius:6px;font-size:.7rem;font-weight:500}
-.badge-run{background:rgba(122,162,247,.12);color:var(--accent4)}
-.no-reports{text-align:center;padding:60px 20px;color:var(--muted);font-size:.9rem}
-.header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:24px}
-.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
-.theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
-@media(max-width:768px){body{padding:14px}h1{font-size:1.3rem}.subtitle{font-size:.78rem;margin-bottom:18px}.stats-bar{gap:10px;margin-bottom:20px}.stat-card{padding:10px 14px;min-width:100px}.stat-card .value{font-size:1.15rem}.report-card{padding:12px 14px;gap:10px}.report-card .date-col{min-width:80px}.report-card .date-col .day{font-size:.95rem}.report-card .stats-col{min-width:70px}.report-card .stats-col .km{font-size:.95rem}.report-card .info-col .summary{font-size:.75rem}.header-row{flex-wrap:wrap;gap:10px}}
-@media(max-width:480px){body{padding:10px}h1{font-size:1.1rem}.subtitle{font-size:.72rem;margin-bottom:16px}.stat-card{padding:8px 10px;min-width:80px}.stat-card .value{font-size:1rem}.report-card{flex-wrap:wrap;gap:6px;padding:10px 12px}.report-card .date-col{min-width:auto}.report-card .stats-col{text-align:left;min-width:auto}}
+/* Header */
+.header{background:var(--card);border-bottom:1px solid var(--border);padding:28px 24px 20px;position:relative;overflow:hidden}
+.header::before{content:'';position:absolute;top:-60%;right:-20%;width:400px;height:400px;background:radial-gradient(circle,var(--hero-glow) 0%,transparent 70%);pointer-events:none}
+.header-inner{max-width:1100px;margin:0 auto;display:flex;justify-content:space-between;align-items:flex-start;position:relative}
+.header-left{flex:1}
+.header-title{font-size:1.5rem;font-weight:800;margin-bottom:2px}
+.header-title .gradient{background:linear-gradient(135deg,var(--accent),var(--accent4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-sub{color:var(--muted);font-size:.82rem}
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:all .3s;flex-shrink:0;margin-left:12px}
+.theme-toggle:hover{color:var(--text-strong);border-color:var(--accent);transform:rotate(15deg)}
+
+/* Hero stat cards */
+.hero-row{max-width:1100px;margin:0 auto;padding:20px 24px 0;display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.hero-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:18px 20px;box-shadow:0 2px 8px var(--shadow);transition:transform .2s,box-shadow .2s}
+.hero-card:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--shadow)}
+.hero-card .icon{font-size:1.3rem;margin-bottom:4px}
+.hero-card .value{font-size:1.5rem;font-weight:800;color:var(--text-strong);line-height:1.2}
+.hero-card .value .unit{font-size:.8rem;font-weight:400;color:var(--muted)}
+.hero-card .label{font-size:.75rem;color:var(--muted);margin-top:2px}
+.hero-card.accent .value{background:linear-gradient(135deg,var(--accent),var(--accent4));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* Training plan progress bar */
+.progress-section{max-width:1100px;margin:0 auto;padding:16px 24px 0}
+.progress-bar-wrap{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px 20px;box-shadow:0 2px 8px var(--shadow);display:flex;align-items:center;gap:18px;flex-wrap:wrap}
+.progress-bar-label{font-size:.78rem;color:var(--muted);white-space:nowrap}
+.progress-bar-track{flex:1;min-width:120px;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.progress-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--accent),var(--accent4));transition:width .8s ease}
+.progress-bar-info{font-size:.75rem;color:var(--muted);white-space:nowrap}
+
+/* Milestone strip */
+.milestone-strip{max-width:1100px;margin:0 auto;padding:12px 24px 0;display:flex;flex-wrap:wrap;gap:8px}
+.milestone-badge{display:inline-flex;align-items:center;gap:4px;background:var(--milestone-bg);border:1px solid transparent;border-radius:20px;padding:4px 12px;font-size:.75rem;color:var(--accent);font-weight:500}
+.milestone-badge.next{border-color:var(--border);color:var(--muted);background:transparent}
+.milestone-badge .pct{font-size:.65rem;color:var(--muted);font-weight:400}
+
+/* Latest training snapshot */
+.latest-section{max-width:1100px;margin:0 auto;padding:20px 24px 0}
+.latest-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:20px;box-shadow:0 2px 8px var(--shadow);display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.latest-card .lc-left{display:flex;flex-direction:column;gap:6px}
+.latest-card .lc-left .lc-title{font-size:.78rem;color:var(--muted);font-weight:600;letter-spacing:.4px;text-transform:uppercase}
+.latest-card .lc-left .lc-date{font-size:1.2rem;font-weight:700;color:var(--text-strong)}
+.latest-card .lc-left .lc-date .dow{font-size:.8rem;font-weight:400;color:var(--muted)}
+.latest-card .lc-metrics{display:flex;gap:16px;flex-wrap:wrap}
+.latest-card .lc-metric{text-align:center}
+.latest-card .lc-metric .lc-mv{font-size:1.1rem;font-weight:700;color:var(--text-strong)}
+.latest-card .lc-metric .lc-ml{font-size:.68rem;color:var(--muted)}
+.latest-card .lc-right{display:flex;flex-direction:column;gap:8px;justify-content:center}
+.latest-card .lc-tag{display:inline-block;background:rgba(122,162,247,.1);color:var(--accent4);padding:3px 10px;border-radius:8px;font-size:.75rem;font-weight:500}
+.latest-card .lc-week-progress{display:flex;align-items:center;gap:10px;flex-wrap:wrap;font-size:.78rem;color:var(--muted)}
+.latest-card .lc-week-bar{flex:1;min-width:80px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+.latest-card .lc-week-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .6s}
+.latest-card .lc-link{display:inline-flex;align-items:center;gap:4px;margin-top:2px;font-size:.78rem;color:var(--accent4);text-decoration:none;font-weight:500}
+.latest-card .lc-link:hover{text-decoration:underline}
+
+/* Section title */
+.section-wrap{max-width:1100px;margin:0 auto;padding:24px 24px 0}
+.section-head{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.section-head .sh-line{flex:1;height:1px;background:var(--border)}
+.section-head .sh-text{font-size:.78rem;font-weight:600;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;white-space:nowrap}
+.section-head .sh-count{font-size:.7rem;color:var(--muted);font-weight:400}
+
+/* Timeline report cards */
+.timeline{max-width:1100px;margin:0 auto;padding:0 24px 40px}
+.tl-month{position:relative;padding-left:20px;margin-bottom:8px}
+.tl-month::before{content:'';position:absolute;left:6px;top:14px;bottom:-8px;width:2px;background:var(--border);border-radius:1px}
+.tl-month:last-child::before{display:none}
+.tl-month-header{display:flex;align-items:center;gap:8px;margin-bottom:4px;padding:6px 0}
+.tl-month-dot{width:10px;height:10px;border-radius:50%;background:var(--accent);border:2px solid var(--card);flex-shrink:0;margin-left:-25px}
+.tl-month-label{font-size:.8rem;font-weight:600;color:var(--muted)}
+
+.tl-card{display:flex;align-items:center;gap:12px;padding:10px 14px;margin-bottom:4px;background:var(--card);border:1px solid var(--border);border-radius:12px;cursor:pointer;transition:all .2s;text-decoration:none;color:inherit}
+.tl-card:hover{border-color:var(--accent);box-shadow:0 3px 12px var(--shadow);transform:translateX(3px)}
+.tl-card .tl-date{min-width:56px}
+.tl-card .tl-date .tl-day{font-size:1rem;font-weight:700;color:var(--text-strong);line-height:1.2}
+.tl-card .tl-date .tl-dow{font-size:.65rem;color:var(--muted)}
+.tl-card .tl-body{flex:1;min-width:0}
+.tl-card .tl-body .tl-phase{font-size:.68rem;color:var(--muted)}
+.tl-card .tl-body .tl-summary{font-size:.78rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:1px}
+.tl-card .tl-tags{display:flex;flex-wrap:wrap;gap:3px;margin-top:4px}
+.tl-card .tl-stats{text-align:right;flex-shrink:0;min-width:60px}
+.tl-card .tl-stats .tl-km{font-size:.95rem;font-weight:700;color:var(--accent)}
+.tl-card .tl-stats .tl-runs{font-size:.65rem;color:var(--muted)}
+
+.tl-status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;margin-left:-18px}
+.tl-status-dot.dot-green{background:#7ec882;box-shadow:0 0 6px rgba(126,200,130,.5)}
+.tl-status-dot.dot-yellow{background:#f4c542;box-shadow:0 0 6px rgba(244,197,66,.5)}
+.tl-status-dot.dot-red{background:#e89898;box-shadow:0 0 6px rgba(232,152,152,.5)}
+
+/* Tags */
+.tag{display:inline-block;padding:1px 7px;border-radius:5px;font-size:.65rem;font-weight:500;background:rgba(122,162,247,.1);color:var(--accent4)}
+
+/* Content area max-width contrainer */
+.content-wrap{max-width:1100px;margin:0 auto;padding:0 24px}
+
+/* Responsive */
+@media(max-width:768px){
+  .header{padding:20px 16px 16px}
+  .header-title{font-size:1.2rem}
+  .header-inner{padding:0}
+  .hero-row{grid-template-columns:repeat(2,1fr);gap:10px;padding:16px 16px 0}
+  .hero-card{padding:14px 16px}
+  .hero-card .value{font-size:1.2rem}
+  .latest-card{grid-template-columns:1fr;gap:12px}
+  .latest-section,.progress-section,.milestone-strip,.section-wrap,.timeline,.content-wrap{padding-left:16px;padding-right:16px}
+  .progress-bar-wrap{flex-wrap:wrap;gap:10px}
+  .tl-card{gap:8px;padding:8px 10px}
+  .tl-card .tl-date{min-width:44px}
+  .tl-card .tl-date .tl-day{font-size:.85rem}
+  .tl-card .tl-stats{min-width:50px}
+  .tl-card .tl-stats .tl-km{font-size:.82rem}
+  .tl-card .tl-body .tl-summary{font-size:.72rem}
+  .tl-month{padding-left:16px}
+  .tl-status-dot{margin-left:-14px;width:6px;height:6px}
+  .tl-month-dot{margin-left:-21px;width:8px;height:8px}
+}
+@media(max-width:480px){
+  .hero-row{grid-template-columns:1fr 1fr;gap:8px}
+  .header-title{font-size:1rem}
+  .hero-card{padding:10px 12px}
+  .hero-card .value{font-size:1rem}
+  .latest-card{padding:14px}
+  .latest-card .lc-metrics{gap:10px}
+  .latest-card .lc-metric .lc-mv{font-size:.95rem}
+  .tl-month{padding-left:14px}
+  .tl-status-dot{margin-left:-11px}
+  .tl-month-dot{margin-left:-18px}
+}
 </style>
 </head>
 <body>
 
-<div class="header-row">
-  <div>
-    <h1>🏃 训练复盘报告</h1>
-    <p class="subtitle">共 28 份报告 · 累计跑量 1164km · 周均 41.6km</p>
+<!-- ==================== Hero ==================== -->
+<div class="header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="header-title"><span class="gradient">Jarvis 的 3:30 马拉松训练日志</span></div>
+      <div class="header-sub">距首马 22 周 · 2026-12-06 · 目标配速 4:58/km</div>
+    </div>
+    <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
   </div>
-  <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
 </div>
 
-<div class="stats-bar">
-  <div class="stat-card"><div class="label">报告总数</div><div class="value">28</div><div class="sub"></div></div>
-  <div class="stat-card"><div class="label">累计跑量</div><div class="value">1164<span style="font-size:.9rem">km</span></div><div class="sub"></div></div>
-  <div class="stat-card"><div class="label">周均跑量</div><div class="value">41.6<span style="font-size:.9rem">km</span></div><div class="sub"></div></div>
-  <div class="stat-card"><div class="label">最近报告</div><div class="value" style="font-size:.95rem">07月06日 · 周一</div><div class="sub"></div></div>
+<div class="hero-row">
+  <div class="hero-card accent">
+    <div class="icon">⏱️</div>
+    <div class="value">22<span class="unit"> 周</span></div>
+    <div class="label">距首马 2026-12-06</div>
+  </div>
+  <div class="hero-card accent">
+    <div class="icon">📏</div>
+    <div class="value">1.2<span class="unit">k km</span></div>
+    <div class="label">累计跑量 · 28 份报告</div>
+  </div>
+  <div class="hero-card">
+    <div class="icon">🎯</div>
+    <div class="value">基础期 I W3</div>
+    <div class="label">当前阶段 2/24 周</div>
+  </div>
 </div>
 
-<a href="20260706-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">07/06</div>
-    <div class="date-sub">周一 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W3 · 距首马 22 周</div>
-    <div class="summary">过去7天呈现高强度偏向模式：3次跑步（7/1, 6/29, 7/5）均进入Z4–Z5功率区，缺乏真正低强度有氧跑（Z2），与基础期两极化理念背离。主动恢复日执行到位，但高质量课密度…</div>
-    <div class="runs-wrap"><span class="badge badge-run">配速均匀</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">29.2<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 54km</div>
+<!-- Training Plan Progress -->
+<div class="progress-section">
+  <div class="progress-bar-wrap">
+    <span class="progress-bar-label">📅 训练进度</span>
+    <div class="progress-bar-track">
+      <div class="progress-bar-fill" style="width:8%"></div>
+    </div>
+    <span class="progress-bar-info">2 / 24 周 · 8%</span>
   </div>
 </div>
-</a>
-<a href="20260703-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">07/03</div>
-    <div class="date-sub">周五 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W2 · 距首马 23 周</div>
-    <div class="summary">过去一周呈现‘以中等强度为主，轻松跑占比不足’的模式。虽然有LSD和节奏跑，但大部分跑步都落入Z3-Z4灰色区，缺乏纯Z2慢跑积累。两极化原则尚未落地，需要调整强度分布。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">57.4<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">5 次跑步 · 计划 58km</div>
-  </div>
-</div>
-</a>
-<a href="20260702-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">07/02</div>
-    <div class="date-sub">周四 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W2 · 距首马 23 周</div>
-    <div class="summary">基础期I第2周，近期跑量适中，但强度分布偏向中高强度：连续多次训练主区间落于Z3-Z4，Z2比例偏低，不符合两极化原则。然而在高温环境下每一张课表都完成得较为果断，负分段跑法显现出…</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> <span class="badge badge-run">+1</span></div>
-  </div>
-  <div class="stats-col">
-    <div class="km">68.2<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">6 次跑步 · 计划 51km</div>
+
+<!-- Milestones --><div class="milestone-strip"><span class="milestone-badge">🎉 1000km 达成</span><span class="milestone-badge next">🏁 1200km <span class="pct">98%</span></span><span class="milestone-badge">🔥 最佳周 70km</span><span class="milestone-badge">💪 最远 18.4km</span></div>
+<div class="latest-section">
+  <div class="latest-card">
+    <div class="lc-left">
+      <div class="lc-title">📋 最近训练</div>
+      <div class="lc-date">2026/07/06 <span class="dow">· 周一</span></div>
+      <div class="lc-metrics">
+        <div class="lc-metric"><div class="lc-mv">9.89<span style="font-size:.65rem;font-weight:400">km</span></div><div class="lc-ml">距离</div></div>
+        <div class="lc-metric"><div class="lc-mv">5:38</div><div class="lc-ml">配速</div></div>
+        <div class="lc-metric"><div class="lc-mv">149</div><div class="lc-ml">心率</div></div>
+        <div class="lc-metric"><div class="lc-mv">204<span style="font-size:.65rem;font-weight:400">W</span></div><div class="lc-ml">功率</div></div>
+      </div>
+    </div>
+    <div class="lc-right">
+      <div><span class="lc-tag">匀速</span> <span class="tag" style="background:#f4c54222;color:#f4c542">注意</span> <span class="tag" style="background:rgba(78,106,166,.12);color:var(--muted)">基础期 I W3</span></div>
+      <div class="lc-week-progress">本周 35.5km / 54km<div class="lc-week-bar"><div class="lc-week-fill" style="width:66%"></div></div></div>
+      <a href="20260706-report.html" class="lc-link">查看完整报告 →</a>
+    </div>
   </div>
 </div>
-</a>
-<a href="20260701-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">07/01</div>
-    <div class="date-sub">周三 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W2 · 距首马 23 周</div>
-    <div class="summary">跑者习惯使用“明显比轻松跑快、但未达阈值刺激”的Z3灰色区进行日常训练，形成了看似稳定但实际上低效的训练模式。这极有可能导致有氧能力提升缓慢并累积隐性疲劳。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">配速波动</span> <span class="badge badge-run">+1</span></div>
-  </div>
-  <div class="stats-col">
-    <div class="km">68.7<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">6 次跑步 · 计划 57km</div>
+<div class="section-wrap">
+  <div class="section-head">
+    <span class="sh-text">训练日志</span>
+    <span class="sh-count">· 28 篇</span>
+    <span class="sh-line"></span>
   </div>
 </div>
-</a>
-<a href="20260629-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/29</div>
-    <div class="date-sub">周一 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W2 · 距首马 23 周</div>
-    <div class="summary">过去一周训练量60.6km，满足基础期50-65km目标，但强度分布存在明显问题：多节课实际训练区间落入Z3“灰色区”，违反了二区训练+两极化原则。平均心率虽不高，但配速普遍在5:…</div>
-    <div class="runs-wrap"><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">配速波动</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">60.6<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">5 次跑步 · 计划 56km</div>
-  </div>
+
+<div class="timeline">
+  <div class="tl-month">
+    <div class="tl-month-header">
+      <div class="tl-month-dot"></div>
+      <span class="tl-month-label">2026年 七月</span>
+      <span style="font-size:.7rem;color:var(--muted)">· 233km · 25 次</span>
+    </div>
+    <a href="20260706-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">07/06</div>
+        <div class="tl-dow">周一</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W3</div>
+        <div class="tl-summary">过去7天呈现高强度偏向模式：3次跑步（7/1, 6/29, 7/5）均进入Z4–Z5功率区，缺乏真正低强度有氧跑（Z2），与基础期两极化理念…</div>
+        <div class="tl-tags"><span class="tag">匀速</span><span class="tag">掉速</span><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">35.5</div>
+        <div class="tl-runs">5 次</div>
+      </div>
+    </a>
+    <a href="20260703-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">07/03</div>
+        <div class="tl-dow">周五</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W2</div>
+        <div class="tl-summary">过去一周呈现‘以中等强度为主，轻松跑占比不足’的模式。虽然有LSD和节奏跑，但大部分跑步都落入Z3-Z4灰色区，缺乏纯Z2慢跑积累。两极化原…</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">HR71→7</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">58.4</div>
+        <div class="tl-runs">6 次</div>
+      </div>
+    </a>
+    <a href="20260702-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">07/02</div>
+        <div class="tl-dow">周四</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W2</div>
+        <div class="tl-summary">基础期I第2周，近期跑量适中，但强度分布偏向中高强度：连续多次训练主区间落于Z3-Z4，Z2比例偏低，不符合两极化原则。然而在高温环境下每一…</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">HR71→7</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">69.2</div>
+        <div class="tl-runs">7 次</div>
+      </div>
+    </a>
+    <a href="20260701-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">07/01</div>
+        <div class="tl-dow">周三</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W2</div>
+        <div class="tl-summary">跑者习惯使用“明显比轻松跑快、但未达阈值刺激”的Z3灰色区进行日常训练，形成了看似稳定但实际上低效的训练模式。这极有可能导致有氧能力提升缓慢…</div>
+        <div class="tl-tags"><span class="tag">HR71→7</span><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">69.8</div>
+        <div class="tl-runs">7 次</div>
+      </div>
+    </a></div>
+  <div class="tl-month">
+    <div class="tl-month-header">
+      <div class="tl-month-dot"></div>
+      <span class="tl-month-label">2026年 六月</span>
+      <span style="font-size:.7rem;color:var(--muted)">· 629km · 60 次</span>
+    </div>
+    <a href="20260629-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/29</div>
+        <div class="tl-dow">周一</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W2</div>
+        <div class="tl-summary">过去一周训练量60.6km，满足基础期50-65km目标，但强度分布存在明显问题：多节课实际训练区间落入Z3“灰色区”，违反了二区训练+两极…</div>
+        <div class="tl-tags"><span class="tag">掉速</span><span class="tag">负分段</span><span class="tag">匀速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">60.6</div>
+        <div class="tl-runs">5 次</div>
+      </div>
+    </a>
+    <a href="20260627-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/27</div>
+        <div class="tl-dow">周六</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W1</div>
+        <div class="tl-summary">基础期首周呈现Z3主导的模式，不符合两极化原则。节奏跑和LSD心率均长期停留在有氧动力区(153-163bpm预估灰色区)，削弱了有氧基础建…</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">匀速</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">62.9</div>
+        <div class="tl-runs">6 次</div>
+      </div>
+    </a>
+    <a href="20260626-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/26</div>
+        <div class="tl-dow">周五</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W1</div>
+        <div class="tl-summary">近期训练以有氧轻松跑和节奏跑为主，LSD间歇缺失，尚未加入真正的高强度刺激(Z4以上)。步频普遍偏低(两次轻松跑&lt;172spm)，经济性有待…</div>
+        <div class="tl-tags"><span class="tag">匀速</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">50.9</div>
+        <div class="tl-runs">5 次</div>
+      </div>
+    </a>
+    <a href="20260625-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/25</div>
+        <div class="tl-dow">周四</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W1</div>
+        <div class="tl-summary">当前无历史训练数据，无法分析既有模式。从目标和所处阶段推断，跑者正处于基础期第1周，核心任务是构建有氧基础，稳步增加跑量，避免过早进行高强度…</div>
+        <div class="tl-tags"></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">0.0</div>
+        <div class="tl-runs">0 次</div>
+      </div>
+    </a>
+    <a href="20260622-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/22</div>
+        <div class="tl-dow">周一</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">基础期 I W1</div>
+        <div class="tl-summary">近2周训练以轻松跑+LSD+间歇跑为主，基本符合两极化训练框架，但部分课次结构模糊、步频偏低问题贯穿。热环境适应力强，有氧能力在提升中。</div>
+        <div class="tl-tags"><span class="tag">掉速</span><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">47.8</div>
+        <div class="tl-runs">5 次</div>
+      </div>
+    </a>
+    <a href="20260618-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/18</div>
+        <div class="tl-dow">周四</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练体系已初步建立两极化结构，长距离和高质量课交替，但LSD配速略快，间歇恢复段可优化。</div>
+        <div class="tl-tags"><span class="tag">掉速</span><span class="tag">负分段</span><span class="tag">HR69→6</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">47.1</div>
+        <div class="tl-runs">5 次</div>
+      </div>
+    </a>
+    <a href="20260616-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/16</div>
+        <div class="tl-dow">周二</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">近期训练表现出良好速度能力和有氧基础，配速控制能力突出，但对极端湿热环境的应对尚不稳定，长距离配速略有偏离目标。</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">HR69→6</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">54.3</div>
+        <div class="tl-runs">6 次</div>
+      </div>
+    </a>
+    <a href="20260615-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/15</div>
+        <div class="tl-dow">周一</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">过去一周训练呈现‘高强度多样化’特征，包含节奏跑、LSD、间歇跑等多种模式，但所有强度课均缺乏规范的冷身收尾。运动员在配速控制上有极强的天赋…</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">HR69→6</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">45.6</div>
+        <div class="tl-runs">5 次</div>
+      </div>
+    </a>
+    <a href="20260612-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/12</div>
+        <div class="tl-dow">周五</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练以有氧长距离和少量马拉松配速跑为主，强度分布略偏向中高强度，轻松跑比例不足，配速稳定性是明显短板。</div>
+        <div class="tl-tags"><span class="tag">跑</span><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">47.1</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260611-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/11</div>
+        <div class="tl-dow">周四</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">当前处于准备期，缺少近期具体训练数据，但根据生理指标与目标分析，有氧基础及马拉松配速专项能力需在本阶段重点发展。</div>
+        <div class="tl-tags"></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">0.0</div>
+        <div class="tl-runs">0 次</div>
+      </div>
+    </a>
+    <a href="20260610-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/10</div>
+        <div class="tl-dow">周三</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">近期训练模式不连续，本周仅一次高强度跑，跑量严重不足（8.2km），但强度课完成质量高。前两周有中长距离跑，但配速受天气拖累偏慢。</div>
+        <div class="tl-tags"><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">32.7</div>
+        <div class="tl-runs">3 次</div>
+      </div>
+    </a>
+    <a href="20260608-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/08</div>
+        <div class="tl-dow">周一</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">近期训练呈现有氧耐力突出、负分段能力强，但强度分布略倾向高区，且受湿热影响明显</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">42.8</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260606-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/06</div>
+        <div class="tl-dow">周六</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练以低心率有氧为主，搭配一次高强度刺激，周跑量偏低，缺少马拉松专项配速训练</div>
+        <div class="tl-tags"><span class="tag">掉速</span><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">44.6</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260605-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/05</div>
+        <div class="tl-dow">周五</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练模式整体科学，以负分段和稳定有氧为主，但近两周跑量偏低，且存在一次高温下过量高强度训练。</div>
+        <div class="tl-tags"><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">46.4</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260603-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">06/03</div>
+        <div class="tl-dow">周三</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">近期训练以中高强度为主，有氧基础比例不足，尽管控速能力不错，但整体负荷偏向高强度，不利于首马准备期的跑量积累。</div>
+        <div class="tl-tags"><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">46.0</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a></div>
+  <div class="tl-month">
+    <div class="tl-month-header">
+      <div class="tl-month-dot"></div>
+      <span class="tl-month-label">2026年 五月</span>
+      <span style="font-size:.7rem;color:var(--muted)">· 311km · 31 次</span>
+    </div>
+    <a href="20260531-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/31</div>
+        <div class="tl-dow">周日</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练模式呈现混合强度偏向高强度，有氧基础积累稳固但恢复与稳定强度课分配不够均衡。</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">跑</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">47.9</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260530-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/30</div>
+        <div class="tl-dow">周六</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">本周训练次数偏少（3次），强度偏集中，缺乏结构化的低强度有氧积累，不符合准备期‘建立基础跑量’的阶段性要求。</div>
+        <div class="tl-tags"><span class="tag">跑</span><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">37.9</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260529-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/29</div>
+        <div class="tl-dow">周五</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练以中短距离为主，受湿热天气影响强度被动偏高，低强度有氧跑不足，步频与有氧基础需强化。</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">27.9</div>
+        <div class="tl-runs">3 次</div>
+      </div>
+    </a>
+    <a href="20260528-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/28</div>
+        <div class="tl-dow">周四</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">在高温高湿环境中仍然追求配速，导致心率偏高、恢复不够充分，但具有负分割意识和较强节奏感</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">27.9</div>
+        <div class="tl-runs">3 次</div>
+      </div>
+    </a>
+    <a href="20260526-report.html" class="tl-card">
+      <div class="tl-status-dot dot-yellow" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/26</div>
+        <div class="tl-dow">周二</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">训练类型偏向中高强度，轻松跑强度失控，有氧基础建设明显不足，不符合准备期重点。</div>
+        <div class="tl-tags"><span class="tag">负分段</span><span class="tag">掉速</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">31.8</div>
+        <div class="tl-runs">3 次</div>
+      </div>
+    </a>
+    <a href="20260525-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/25</div>
+        <div class="tl-dow">周一</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">当前训练以中高强度为主，轻松跑有氧基础不够稳固，节奏跑能力尚可但控速与步频有待提升，训练强度分布存在优化空间。</div>
+        <div class="tl-tags"><span class="tag">掉速</span><span class="tag">负分段</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">27.2</div>
+        <div class="tl-runs">3 次</div>
+      </div>
+    </a>
+    <a href="20260523-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/23</div>
+        <div class="tl-dow">周六</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">过去4次训练呈现出“快而不稳”的模式：训练配速普遍偏快（除恢复跑外均接近或快于目标马配），导致多数课心率主要分布在Z3-Z4，心率漂移率均&gt;…</div>
+        <div class="tl-tags"><span class="tag">跑</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">37.3</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a>
+    <a href="20260522-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/22</div>
+        <div class="tl-dow">周五</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">本周3次训练全部存在强度过高问题，未完成任何一次真正的低心率有氧轻松跑，与准备期‘建立基础跑量、维持有氧’的阶段目标严重偏离。心率漂移率均超…</div>
+        <div class="tl-tags"><span class="tag">跑</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">30.3</div>
+        <div class="tl-runs">3 次</div>
+      </div>
+    </a>
+    <a href="20260521-report.html" class="tl-card">
+      <div class="tl-status-dot dot-green" style=""></div>
+      <div class="tl-date">
+        <div class="tl-day">05/21</div>
+        <div class="tl-dow">周四</div>
+      </div>
+      <div class="tl-body">
+        <div class="tl-phase">准备期</div>
+        <div class="tl-summary">近一周以轻松跑为主，训练负荷适中，强度分布合理</div>
+        <div class="tl-tags"><span class="tag">跑</span></div>
+      </div>
+      <div class="tl-stats">
+        <div class="tl-km">43.3</div>
+        <div class="tl-runs">4 次</div>
+      </div>
+    </a></div></div>
+<div style="max-width:1100px;margin:0 auto;padding:10px 24px 40px;text-align:center;font-size:.72rem;color:var(--muted)">
+  <p>Jarvis · 首马目标 3:30 · 2026.12.06 · 2026-12-06</p>
 </div>
-</a>
-<a href="20260627-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/27</div>
-    <div class="date-sub">周六 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W1 · 距首马 24 周</div>
-    <div class="summary">基础期首周呈现Z3主导的模式，不符合两极化原则。节奏跑和LSD心率均长期停留在有氧动力区(153-163bpm预估灰色区)，削弱了有氧基础建设效率。步态生物力学短板明显(步频<17…</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">配速波动</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">后程掉速</span> <span class="badge badge-run">+1</span></div>
-  </div>
-  <div class="stats-col">
-    <div class="km">62.9<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">6 次跑步 · 计划 44km</div>
-  </div>
-</div>
-</a>
-<a href="20260626-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/26</div>
-    <div class="date-sub">周五 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W1 · 距首马 24 周</div>
-    <div class="summary">近期训练以有氧轻松跑和节奏跑为主，LSD间歇缺失，尚未加入真正的高强度刺激(Z4以上)。步频普遍偏低(两次轻松跑<172spm)，经济性有待提升。总体符合基础期初期要求，但需逐渐引…</div>
-    <div class="runs-wrap"><span class="badge badge-run">配速波动</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">50.9<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">5 次跑步 · 计划 60km</div>
-  </div>
-</div>
-</a>
-<a href="20260625-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/25</div>
-    <div class="date-sub">周四 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W1 · 距首马 24 周</div>
-    <div class="summary">当前无历史训练数据，无法分析既有模式。从目标和所处阶段推断，跑者正处于基础期第1周，核心任务是构建有氧基础，稳步增加跑量，避免过早进行高强度专项训练。</div>
-    <div class="runs-wrap"> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">0.0<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">0 次跑步 · 计划 58km</div>
-  </div>
-</div>
-</a>
-<a href="20260622-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">06/22</div>
-    <div class="date-sub">周一 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">基础期 I W1 · 距首马 24 周</div>
-    <div class="summary">近2周训练以轻松跑+LSD+间歇跑为主，基本符合两极化训练框架，但部分课次结构模糊、步频偏低问题贯穿。热环境适应力强，有氧能力在提升中。</div>
-    <div class="runs-wrap"><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">47.8<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">5 次跑步</div>
-  </div>
-</div>
-</a>
-<a href="20260618-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/18</div>
-    <div class="date-sub">周四 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 25 周</div>
-    <div class="summary">训练体系已初步建立两极化结构，长距离和高质量课交替，但LSD配速略快，间歇恢复段可优化。</div>
-    <div class="runs-wrap"><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">HR69→6</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">47.1<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">5 次跑步 · 计划 43km</div>
-  </div>
-</div>
-</a>
-<a href="20260616-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/16</div>
-    <div class="date-sub">周二 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 25 周</div>
-    <div class="summary">近期训练表现出良好速度能力和有氧基础，配速控制能力突出，但对极端湿热环境的应对尚不稳定，长距离配速略有偏离目标。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">HR69→6</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span> <span class="badge badge-run">+1</span></div>
-  </div>
-  <div class="stats-col">
-    <div class="km">54.3<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">6 次跑步 · 计划 52km</div>
-  </div>
-</div>
-</a>
-<a href="20260615-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/15</div>
-    <div class="date-sub">周一 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 25 周</div>
-    <div class="summary">过去一周训练呈现‘高强度多样化’特征，包含节奏跑、LSD、间歇跑等多种模式，但所有强度课均缺乏规范的冷身收尾。运动员在配速控制上有极强的天赋(CV常<2%)，心率漂移表现良好，但因…</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">HR69→6</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">45.6<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">5 次跑步 · 计划 58km</div>
-  </div>
-</div>
-</a>
-<a href="20260612-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/12</div>
-    <div class="date-sub">周五 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 26 周</div>
-    <div class="summary">训练以有氧长距离和少量马拉松配速跑为主，强度分布略偏向中高强度，轻松跑比例不足，配速稳定性是明显短板。</div>
-    <div class="runs-wrap"><span class="badge badge-run">跑</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">47.1<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 50km</div>
-  </div>
-</div>
-</a>
-<a href="20260611-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/11</div>
-    <div class="date-sub">周四 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 26 周</div>
-    <div class="summary">当前处于准备期，缺少近期具体训练数据，但根据生理指标与目标分析，有氧基础及马拉松配速专项能力需在本阶段重点发展。</div>
-    <div class="runs-wrap"> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">0.0<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">0 次跑步 · 计划 51km</div>
-  </div>
-</div>
-</a>
-<a href="20260610-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">06/10</div>
-    <div class="date-sub">周三 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 26 周</div>
-    <div class="summary">近期训练模式不连续，本周仅一次高强度跑，跑量严重不足（8.2km），但强度课完成质量高。前两周有中长距离跑，但配速受天气拖累偏慢。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">32.7<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 54km</div>
-  </div>
-</div>
-</a>
-<a href="20260608-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">06/08</div>
-    <div class="date-sub">周一 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 26 周</div>
-    <div class="summary">近期训练呈现有氧耐力突出、负分段能力强，但强度分布略倾向高区，且受湿热影响明显</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">42.8<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 49km</div>
-  </div>
-</div>
-</a>
-<a href="20260606-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/06</div>
-    <div class="date-sub">周六 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 27 周</div>
-    <div class="summary">训练以低心率有氧为主，搭配一次高强度刺激，周跑量偏低，缺少马拉松专项配速训练</div>
-    <div class="runs-wrap"><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">44.6<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 46km</div>
-  </div>
-</div>
-</a>
-<a href="20260605-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">06/05</div>
-    <div class="date-sub">周五 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 27 周</div>
-    <div class="summary">训练模式整体科学，以负分段和稳定有氧为主，但近两周跑量偏低，且存在一次高温下过量高强度训练。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">46.4<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 62km</div>
-  </div>
-</div>
-</a>
-<a href="20260603-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">06/03</div>
-    <div class="date-sub">周三 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 27 周</div>
-    <div class="summary">近期训练以中高强度为主，有氧基础比例不足，尽管控速能力不错，但整体负荷偏向高强度，不利于首马准备期的跑量积累。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">46.0<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 48km</div>
-  </div>
-</div>
-</a>
-<a href="20260531-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">05/31</div>
-    <div class="date-sub">周日 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 27 周</div>
-    <div class="summary">训练模式呈现混合强度偏向高强度，有氧基础积累稳固但恢复与稳定强度课分配不够均衡。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">跑</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">47.9<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 50km</div>
-  </div>
-</div>
-</a>
-<a href="20260530-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">05/30</div>
-    <div class="date-sub">周六 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 28 周</div>
-    <div class="summary">本周训练次数偏少（3次），强度偏集中，缺乏结构化的低强度有氧积累，不符合准备期‘建立基础跑量’的阶段性要求。</div>
-    <div class="runs-wrap"><span class="badge badge-run">跑</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">37.9<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 48km</div>
-  </div>
-</div>
-</a>
-<a href="20260529-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">05/29</div>
-    <div class="date-sub">周五 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 28 周</div>
-    <div class="summary">训练以中短距离为主，受湿热天气影响强度被动偏高，低强度有氧跑不足，步频与有氧基础需强化。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">27.9<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 46km</div>
-  </div>
-</div>
-</a>
-<a href="20260528-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">05/28</div>
-    <div class="date-sub">周四 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 28 周</div>
-    <div class="summary">在高温高湿环境中仍然追求配速，导致心率偏高、恢复不够充分，但具有负分割意识和较强节奏感</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">27.9<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 47km</div>
-  </div>
-</div>
-</a>
-<a href="20260526-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #f4c542">
-  <div class="date-col">
-    <div class="day">05/26</div>
-    <div class="date-sub">周二 · 2026</div>
-    <span class="badge" style="background:#f4c54222;color:#f4c542;margin-top:4px">注意</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 28 周</div>
-    <div class="summary">训练类型偏向中高强度，轻松跑强度失控，有氧基础建设明显不足，不符合准备期重点。</div>
-    <div class="runs-wrap"><span class="badge badge-run">负分段加速</span><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">31.8<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 46km</div>
-  </div>
-</div>
-</a>
-<a href="20260525-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">05/25</div>
-    <div class="date-sub">周一 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 28 周</div>
-    <div class="summary">当前训练以中高强度为主，轻松跑有氧基础不够稳固，节奏跑能力尚可但控速与步频有待提升，训练强度分布存在优化空间。</div>
-    <div class="runs-wrap"><span class="badge badge-run">后程掉速</span><span class="badge badge-run">负分段加速</span><span class="badge badge-run">负分段加速</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">27.2<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 48km</div>
-  </div>
-</div>
-</a>
-<a href="20260523-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">05/23</div>
-    <div class="date-sub">周六 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 29 周</div>
-    <div class="summary">过去4次训练呈现出“快而不稳”的模式：训练配速普遍偏快（除恢复跑外均接近或快于目标马配），导致多数课心率主要分布在Z3-Z4，心率漂移率均>15%，有氧基础训练严重不足。步频在快跑…</div>
-    <div class="runs-wrap"><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">37.3<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 48km</div>
-  </div>
-</div>
-</a>
-<a href="20260522-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">05/22</div>
-    <div class="date-sub">周五 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 29 周</div>
-    <div class="summary">本周3次训练全部存在强度过高问题，未完成任何一次真正的低心率有氧轻松跑，与准备期‘建立基础跑量、维持有氧’的阶段目标严重偏离。心率漂移率均超过15%，揭示有氧基础薄弱。</div>
-    <div class="runs-wrap"><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">30.3<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">3 次跑步 · 计划 47km</div>
-  </div>
-</div>
-</a>
-<a href="20260521-report.html" style="text-decoration:none;color:inherit">
-<div class="report-card" style="border-left:4px solid #7ec882">
-  <div class="date-col">
-    <div class="day">05/21</div>
-    <div class="date-sub">周四 · 2026</div>
-    <span class="badge" style="background:#7ec88222;color:#7ec882;margin-top:4px">良好</span>
-  </div>
-  <div class="info-col">
-    <div class="phase">准备期 · 距首马 29 周</div>
-    <div class="summary">近一周以轻松跑为主，训练负荷适中，强度分布合理</div>
-    <div class="runs-wrap"><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span><span class="badge badge-run">跑</span> </div>
-  </div>
-  <div class="stats-col">
-    <div class="km">43.3<span style="font-size:.7rem;font-weight:400">km</span></div>
-    <div class="runs">4 次跑步 · 计划 40km</div>
-  </div>
-</div>
-</a>
 
 <script>
-// Theme toggle (matches individual report style)
 (function(){
   const btn = document.getElementById('themeToggle');
   const root = document.documentElement;
@@ -580,6 +696,5 @@ h1{font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:4px}
   });
 })();
 </script>
-
 </body>
 </html>
