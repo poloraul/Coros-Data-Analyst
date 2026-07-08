@@ -202,6 +202,8 @@ function generateHTML(data, aiAnalysis) {
   const weeksLeft = weeksUntilMarathon();
   const phase = getCurrentPhase(weeksLeft);
   const recovery = assessRecovery(data);
+  const recoveryPct = recovery.recoveryPct;
+  const recoveryPctLevel = recoveryPct == null ? "green" : recoveryPct >= 85 ? "green" : recoveryPct >= 70 ? "yellow" : "red";
 
   const hasAI = !!aiAnalysis;
   const aiWorkoutReviews = aiAnalysis?.workoutReviews || [];
@@ -511,7 +513,7 @@ tr:hover td{background:var(--row-hover)}
     <div class="card"><div class="label">距首马</div><div class="value">${weeksLeft}<span style="font-size:.9rem">周</span></div><div class="sub">${phase.name}${phase.currentWeek > 0 ? " W" + phase.currentWeek : ""} | ${phase.focus}</div></div>
     <div class="card"><div class="label">本周跑量</div><div class="value"${kmWarning ? ' style="color:#c9a030"' : ""}>${totalKm.toFixed(1)}<span style="font-size:.9rem">km</span></div><div class="sub">${kmWarning ? "⚠️ 超出目标上限" : `目标 ${kmTargetMin}-${kmTargetMax}km`}<br><span style="font-size:.65rem;color:var(--muted)">周期 ${weekStart.slice(5).replace('-','/')}~${weekEnd.slice(5).replace('-','/')}</span></div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value"${loadWarning ? ' style="color:#c9a030"' : ""}>${totalTL}<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 ${loadRatio || "-"}（目标 0.8-1.3）${loadWarning ? " ⚠️偏高" : ""}</div></div>
-    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub"><span class="recovery-indicator" style="background:${levelColors[recovery.level]}"></span>${levelLabels[recovery.level]}</div></div>
+    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:${levelColors[recoveryPctLevel]}">${recovery.recoveryPct || "-"}%</div><div class="sub"><span class="recovery-indicator" style="background:${levelColors[recoveryPctLevel]}"></span>${levelLabels[recoveryPctLevel]}</div></div>
     <div class="card"><div class="label">最新HRV</div><div class="value" style="color:${hrvWarning ? levelColors.yellow : levelColors.green}">${latestHRV || "-"}<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:${hrvWarning ? levelColors.yellow : levelColors.green}"></span>${hrvWarning ? "偏低" : "正常"} | 基线 ${recovery.baseline || "-"}ms</div></div>
     ${latestRunWithPower ? `<div class="card"><div class="label">平均功率（最近跑步）</div><div class="value">${latestRunWithPower.avgPower}<span style="font-size:.9rem">W</span></div><div class="sub">${latestWkg != null ? latestWkg + " W/kg" : ""}${latestPowerZone ? ` · ${latestPowerZone.key} ${latestPowerZone.name}` : ""}</div></div>` : ""}
     ${ftp.ftpW ? `<div class="card"><div class="label">估算 FTP</div><div class="value">${ftp.ftpW}<span style="font-size:.9rem">W</span></div><div class="sub">${ftp.ftpWkg != null ? ftp.ftpWkg + " W/kg" : ""} · 置信度 ${ftp.confidence}（n=${ftp.sampleSize}）</div></div>` : ""}
@@ -582,7 +584,7 @@ ${paceZones || hrZones ? `
     <strong>使用说明：</strong>
     配速区间基于阈值配速（${tp}/km）按百分比计算；心率区间基于乳酸阈心率（${LACTATE_THRESHOLD_HR} bpm）计算；功率区间基于估算 FTP（${ftp.ftpW || "—"}W，置信度 ${ftp.confidence}）计算。
     训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
-    ${recovery.level !== "green" ? `<span style="color:${levelColors[recovery.level]}">⚠️ 当前恢复状态为"${levelLabels[recovery.level]}"，建议降低一档强度区间训练。</span>` : ""}
+    ${recovery.level !== "green" ? `<span style="color:${levelColors[recovery.level]}">⚠️ ${recovery.reasons.length > 0 ? recovery.reasons.join("，") : "身体状态需关注"}，建议降低一档强度区间训练。</span>` : ""}
   </div>
 </div>
 ` : ""}
@@ -791,8 +793,8 @@ ${aiWorkoutReviews.length > 1 ? `
   <div style="margin-top:20px">
     <div class="section-title" style="font-size:.95rem">恢复指标</div>
     <div class="cards">
-      <div class="card"><div class="label">恢复度</div><div class="value" style="color:${levelColors[recovery.level]}">${recovery.recoveryPct || "-"}%</div><div class="sub">${data.recovery?.level || "-"}</div></div>
-      <div class="card"><div class="label">HRV连续偏低</div><div class="value">${recovery.consecutiveBelow}<span style="font-size:.9rem">天</span></div><div class="sub">${recovery.consecutiveBelow >= 2 ? "⚠️ 需关注" : "正常"}</div></div>
+      <div class="card"><div class="label">恢复度</div><div class="value" style="color:${levelColors[recoveryPctLevel]}">${recovery.recoveryPct || "-"}%</div><div class="sub">${data.recovery?.level || "-"}</div></div>
+      <div class="card"><div class="label">HRV连续偏低</div><div class="value">${recovery.consecutiveBelow}<span style="font-size:.9rem">天</span></div><div class="sub">${recovery.consecutiveBelow >= 2 ? `持续${recovery.consecutiveBelow}天偏低` : '正常'}</div></div>
       <div class="card"><div class="label">睡眠(最新)</div><div class="value">${data.sleep?.[data.sleep.length - 1]?.sleepScore || data.dailyHealth?.[data.dailyHealth.length - 1]?.sleepScore || "-"}</div><div class="sub">${data.sleep?.[data.sleep.length - 1]?.sleepWindow || "-"}</div></div>
       <div class="card"><div class="label">负荷比</div><div class="value">${loadEntries[0]?.loadRatio || "-"}</div><div class="sub">${loadEntries[0]?.comment || "-"}</div></div>
       ${(() => { const fr = data.recovery?.estimatedFullRecovery || "-"; const ok = fr === "0h" || fr === "0h0min" || fr === "00:00:00"; return `<div class="card"><div class="label">预计完全恢复</div><div class="value" style="color:${ok ? levelColors.green : "inherit"}">${ok ? "完全恢复" : fr}</div><div class="sub">${data.recovery?.level || "-"}</div></div>`; })()}

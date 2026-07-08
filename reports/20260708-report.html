@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis 训练复盘 20260708</title>
+<script src="chart.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
+[data-theme="dark"]{--bg:#1a1b26;--card:#24283b;--border:#3b4261;--text:#a9b1d6;--text-strong:#c0caf5;--muted:#565f89;--accent:#9ece6a;--accent2:#e0af68;--accent3:#f7768e;--accent4:#7aa2f7;--shadow:rgba(0,0,0,.2);--row-hover:rgba(158,206,106,.06);--finding-border:rgba(59,66,97,.6)}
+body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:1200px;margin:0 auto;transition:background .3s,color .3s}
+h1{font-size:1.8rem;font-weight:800;color:var(--accent);margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.section{margin-bottom:36px}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:4px;height:18px;background:linear-gradient(135deg,var(--accent),#4db8a4);border-radius:2px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title-row{display:flex;align-items:center;gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.card .value{font-size:1.6rem;font-weight:800;color:var(--text-strong)}
+.card .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.chart-box h3{font-size:.85rem;font-weight:600;margin-bottom:10px;color:var(--muted)}
+.full-width{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--row-hover)}
+.recovery-indicator{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.7rem;font-weight:600;margin:2px}
+.badge-green{background:rgba(126,200,130,.2);color:#5aa65e}
+.badge-yellow{background:rgba(244,197,66,.2);color:#c9a030}
+.badge-red{background:rgba(232,152,152,.2);color:#c07070}
+.badge-blue{background:rgba(124,185,232,.2);color:#5a9ec7}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.review-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.review-box h4{font-size:.85rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.finding-item{font-size:.82rem;padding:4px 0;border-bottom:1px solid var(--finding-border)}
+.finding-item:last-child{border-bottom:none}
+.plan-today{background:rgba(77,184,164,.06)!important}
+[data-theme="dark"] .plan-today{background:rgba(158,206,106,.08)!important}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
+.theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
+/* New styles */
+.source-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;letter-spacing:.3px}
+.badge-ai{background:rgba(126,200,130,.15);color:#5aa65e;border:1px solid rgba(126,200,130,.3)}
+[data-theme="dark"] .badge-ai{background:rgba(158,206,106,.12);color:#9ece6a;border-color:rgba(158,206,106,.3)}
+.badge-rule{background:rgba(158,148,132,.15);color:#9e9484;border:1px solid rgba(158,148,132,.3)}
+[data-theme="dark"] .badge-rule{background:rgba(86,95,137,.15);color:#565f89;border-color:rgba(86,95,137,.3)}
+.ai-insight{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.ai-insight h4{font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--accent)}
+.ai-insight p{font-size:.85rem;line-height:1.7;margin-bottom:6px}
+.ai-insight .detail-text{font-size:.82rem;color:var(--text);line-height:1.8;white-space:pre-line}
+.coach-advice{background:linear-gradient(135deg,rgba(126,200,130,.08),rgba(77,184,164,.08));border:1px solid rgba(126,200,130,.2);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:20px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+[data-theme="dark"] .coach-advice{background:linear-gradient(135deg,rgba(158,206,106,.06),rgba(77,184,164,.06));border-color:rgba(158,206,106,.2)}
+.coach-advice h4{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--accent);display:flex;align-items:center;gap:6px}
+.coach-advice p{font-size:.88rem;line-height:1.8}
+.progress-bar-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);margin-bottom:14px;transition:background .3s,border-color .3s}
+.progress-bar-track{width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.progress-bar-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.prescription-toggle{cursor:pointer;color:var(--accent);font-size:.75rem;text-decoration:underline;user-select:none}
+.prescription-detail{display:none;margin-top:8px;padding:10px 12px;background:rgba(126,200,130,.04);border-radius:8px;font-size:.78rem;line-height:1.7}
+.prescription-detail.open{display:block}
+[data-theme="dark"] .prescription-detail{background:rgba(158,206,106,.06)}
+.prescription-detail dt{font-weight:600;color:var(--muted);margin-top:4px}
+.prescription-detail dt:first-child{margin-top:0}
+.prescription-detail dd{margin-left:0;margin-bottom:4px}
+.body-assessment-level{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;margin-bottom:8px}
+.body-assessment-level.green{background:rgba(126,200,130,.15);color:#5aa65e}
+.body-assessment-level.yellow{background:rgba(244,197,66,.15);color:#c9a030}
+.body-assessment-level.red{background:rgba(232,152,152,.15);color:#c07070}
+[data-theme="dark"] .body-assessment-level.green{background:rgba(158,206,106,.12);color:#9ece6a}
+[data-theme="dark"] .body-assessment-level.yellow{background:rgba(224,175,104,.12);color:#e0af68}
+[data-theme="dark"] .body-assessment-level.red{background:rgba(247,118,142,.12);color:#f7768e}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:500}
+.tag-strength{background:rgba(126,200,130,.12);color:#5aa65e}
+.tag-risk{background:rgba(232,152,152,.12);color:#c07070}
+.tag-suggestion{background:rgba(124,185,232,.12);color:#5a9ec7}
+[data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
+[data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
+[data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}body{padding:14px}h1{font-size:1.4rem}.subtitle{font-size:.78rem;margin-bottom:20px}.card .value{font-size:1.3rem}.card .sub{font-size:.65rem}.card{padding:12px}.section-title{font-size:.95rem}.section-header{flex-wrap:wrap;gap:8px}.header-row{flex-wrap:wrap;gap:10px}.charts-grid{gap:10px}.chart-box{padding:12px}.chart-box h3{font-size:.8rem}th,td{padding:6px 6px;font-size:.75rem}table{font-size:.75rem}.review-grid{gap:10px}.ai-insight,.review-box{padding:12px}.prescription-detail{font-size:.75rem}.coach-advice{padding:14px;font-size:.85rem}}
+@media(max-width:480px){body{padding:10px}h1{font-size:1.2rem}.subtitle{font-size:.72rem;margin-bottom:16px}.card .value{font-size:1.1rem}.cards{gap:8px}.charts-grid{gap:8px}th,td{padding:4px 4px;font-size:.7rem}}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div>
+    <h1>Jarvis 训练复盘</h1>
+    <p class="subtitle">20260708 | Jarvis | 距首马 22 周 (基础期 I) | 目标 3:30:00</p>
+  </div>
+  <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+</div>
+
+<!-- ==================== Section 1: 个人训练关键指标 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">个人训练关键指标</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">VO2max</div><div class="value">55</div><div class="sub">阈值配速 4:19/km</div></div>
+    <div class="card"><div class="label">全马预测</div><div class="value">3:18:44</div><div class="sub">目标 3:30:00</div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">22<span style="font-size:.9rem">周</span></div><div class="sub">基础期 I W3 | 有氧耐力、建立跑量</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value">16.2<span style="font-size:.9rem">km</span></div><div class="sub">目标 50-65km<br><span style="font-size:.65rem;color:var(--muted)">周期 07/06~07/12</span></div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">390<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 0.82（目标 0.8-1.3）</div></div>
+    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">100%</div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>良好</div></div>
+    <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#f4c542">57<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#f4c542"></span>偏低 | 基线 72ms</div></div>
+    <div class="card"><div class="label">平均功率（最近跑步）</div><div class="value">189<span style="font-size:.9rem">W</span></div><div class="sub">2.83 W/kg · Z5 速度耐力区</div></div>
+    <div class="card"><div class="label">估算 FTP</div><div class="value">175<span style="font-size:.9rem">W</span></div><div class="sub">2.62 W/kg · 置信度 high（n=3）</div></div>
+  </div>
+</div>
+
+<!-- ==================== Zone Section: 配速 & 心率 & 功率区间 ==================== -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">配速 &amp; 心率 &amp; 功率区间参考</div>
+      <span class="source-badge badge-rule">阈值配速 4:19/km · 乳酸阈心率 170 bpm · 估算 FTP 175W</span>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>配速区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>配速范围</th><th>%阈值</th></tr>
+        <tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>> 6:05/km</strong></td>
+            <td><71%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>6:05/km — 5:05/km</strong></td>
+            <td>71-85%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>5:05/km — 4:38/km</strong></td>
+            <td>86-93%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>4:38/km — 4:14/km</strong></td>
+            <td>94-102%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>4:14/km — 3:51/km</strong></td>
+            <td>103-112%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>< 3:51/km</strong></td>
+            <td>>112%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练配速 (6:07/km) 所属区间</td></tr>
+      </table>
+    </div>
+    <div class="chart-box">
+      <h3>心率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>心率范围</th><th>%参考</th></tr>
+        <tr>
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>< 136 bpm</strong></td>
+            <td><80%</td>
+          </tr><tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>136 — 153 bpm</strong></td>
+            <td>80-90%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>153 — 163 bpm</strong></td>
+            <td>91-95%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>163 — 173 bpm</strong></td>
+            <td>96-102%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>173 — 180 bpm</strong></td>
+            <td>103-106%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>> 180 bpm</strong></td>
+            <td>>106%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练心率 (138 bpm) 所属区间</td></tr>
+      </table>
+    </div>
+    
+    <div class="chart-box">
+      <h3>功率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>功率范围</th><th>%FTP</th></tr>
+        <tr>
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>< 96 W</strong></td>
+            <td><55%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>96 — 131 W</strong></td>
+            <td>55-75%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>131 — 158 W</strong></td>
+            <td>75-90%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>158 — 184 W</strong></td>
+            <td>90-105%</td>
+          </tr><tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>184 — 210 W</strong></td>
+            <td>105-120%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>> 210 W</strong></td>
+            <td>>120%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最近跑步功率 (189W) 所属区间</td></tr>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
+    <strong>使用说明：</strong>
+    配速区间基于阈值配速（4:19/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算；功率区间基于估算 FTP（175W，置信度 high）计算。
+    训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
+    <span style="color:#e89898">⚠️ HRV连续3天低于正常范围，建议降低一档强度区间训练。</span>
+  </div>
+</div>
+
+
+<!-- ==================== Section 2: 最近一次训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近一次训练分析（2026-07-07）</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+
+  <div class="cards" style="margin-bottom:16px">
+    <div class="card"><div class="label">距离/时间</div><div class="value">7.41<span style="font-size:.9rem">km</span></div><div class="sub">45:22</div></div>
+    <div class="card"><div class="label">配速</div><div class="value">6:07<span style="font-size:.9rem">/km</span></div><div class="sub">最快 5:50 | 轻松跑 (E区)</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">138<span style="font-size:.9rem">bpm</span></div><div class="sub">76% HRmax</div></div>
+    <div class="card"><div class="label">步频</div><div class="value">179<span style="font-size:.9rem">spm</span></div><div class="sub">低于180目标1spm</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">71<span style="font-size:.9rem">TL</span></div><div class="sub">Below Average</div></div>
+    <div class="card"><div class="label">天气</div><div class="value" style="font-size:1.2rem">-</div><div class="sub">  </div></div>
+  </div>
+  
+  <div class="chart-box full-width" style="margin-bottom:16px;height:300px;display:flex;flex-direction:column">
+    <h3>逐秒配速 & 心率</h3>
+    <canvas id="secPaceHrChart" style="flex:1;min-height:0"></canvas>
+  </div>
+
+  <div class="review-grid">
+    <div class="ai-insight">
+      <h4>训练概要</h4>
+      <div style="margin-bottom:4px"><span class="badge badge-green">轻松跑</span></div>
+      <p>渐进式轻松跑，负分段加速，心率漂移明显，可能与温度有关，整体负荷可控。</p>
+      <div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">距离7.41km，平均配速6:07（Z1-Z2交界），心率均值138bpm（Z2），漂移20.2%为合理范围。步频178达标，步幅0.91m偏低，经济速度2.7m/s。功率189W相对配速偏高，但用于维持步频尚可。训练模式呈渐进，无剧烈强度波动，适合基础期恢复日，但缺少冷身环节。</div>
+      
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:.75rem;font-weight:600;color:var(--muted)">训练结构</span>
+          <span class="badge badge-green">质量:good</span>
+        </div>
+        <div style="font-size:.78rem;line-height:1.7">
+          <div><span style="color:var(--muted)">热身:</span> KM1 6:41，心率119，热身约2km至配速6:00</div><div><span style="color:var(--muted)">主训练:</span> KM3-KM8 配速6:01-5:51，心率137-146，保持在Z2上部，约5.5km</div><div><span style="color:var(--muted)">冷身:</span> 无冷身，末段仍5:59心率146</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-box">
+      <h4>亮点</h4>
+      <div class="finding-item" style="color:#5aa65e">步频稳定178，下肢刚性较好</div><div class="finding-item" style="color:#5aa65e">负分段设计可增加训练趣味，且未造成过度疲劳</div>
+      <h4 style="margin-top:12px">改进方向</h4>
+      <div class="finding-item" style="color:#c9a030">前30分钟可维持更稳定配速，避免过快进入Z2顶部</div><div class="finding-item" style="color:#c9a030">增加5分钟冷身跑（配速6:40+），使心率低于130再停止</div>
+    </div>
+  </div>
+
+
+  <div style="margin-top:16px">
+    <div class="section-title" style="font-size:.95rem">其他近期训练（近7天）</div>
+    <table>
+      <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
+      <tr>
+        <td>2026-07-06</td>
+        <td style="max-width:300px">配速极为均匀的轻松跑，CV仅1.1%，心率平稳甚至呈下降趋势，恢复效果佳，但步频偏低触发生物力学红线。</td>
+        <td><span class="badge badge-green">配速控制极佳，体现了优秀的配速感知能力</span><span class="badge badge-green">心率低且下降，证明当日恢复充分</span></td>
+        <td><span class="badge badge-yellow">下次轻松跑强制使用节拍器178bpm，同步缩小步幅约5cm以维持同配速</span><span class="badge badge-yellow">增加4-6组臀中肌激活与屈髋肌拉伸练习，提升步幅经济性</span></td>
+      </tr><tr>
+        <td>2026-07-05</td>
+        <td style="max-width:300px">配速稳定的节奏跑，CV 3.6%，心率控制良好，但缺少冷身环节。</td>
+        <td><span class="badge badge-green">配速执行稳定，节奏感强，符合首马目标配速附近的阈值刺激</span><span class="badge badge-green">心率未过度漂移，维持在有氧动力区，体现基础耐力扎实</span></td>
+        <td><span class="badge badge-yellow">加入10分钟冷身（配速6:30-6:00），帮助心率自然回落</span><span class="badge badge-yellow">节奏跑中可穿插1-2次短加速（4:30/km）激活神经，但需控制总时间</span></td>
+      </tr><tr>
+        <td>2026-07-04</td>
+        <td style="max-width:300px">低强度徒步，累积少量训练负荷，用作恢复或交叉训练。</td>
+        <td><span class="badge badge-green">心率极低，完全不构成疲劳刺激，加速恢复</span><span class="badge badge-green">爬升可轻度激活臀腿肌群</span></td>
+        <td><span class="badge badge-yellow">可作为休息日主动恢复选项，但若目的为跑姿调整不如慢跑</span></td>
+      </tr><tr>
+        <td>2026-07-01</td>
+        <td style="max-width:300px">雨中渐进跑，负分段明显，后程稳定在乳酸阈下沿，环境恶劣但表现良好。</td>
+        <td><span class="badge badge-green">在高温高湿条件下保持稳定加速，后程配速控制精准</span><span class="badge badge-green">训练负荷逐段提升，刺激充分且无衰竭迹象</span><span class="badge badge-green">步频稳定，神经肌肉协调良好</span></td>
+        <td><span class="badge badge-yellow">建议增加5-10分钟冷身慢跑，使心率降至Z2以下再结束</span><span class="badge badge-yellow">雨天训练注意防滑与核心保暖，避免着凉</span></td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- ==================== Section 3: 最近7天训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近7天训练分析</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>HRV 7日趋势</h3>
+      <canvas id="hrvChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>训练负荷趋势</h3>
+      <canvas id="loadChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>最近训练配速 vs 阈值</h3>
+      <canvas id="paceChart"></canvas>
+    </div>
+    
+    <div class="chart-box">
+      <h3>睡眠质量趋势（近7天）</h3>
+      <canvas id="sleepChart"></canvas>
+    </div>
+    
+  </div>
+
+  <!-- Workouts Table -->
+  
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">近期训练一览（近7天）</div>
+    <table>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
+      <tr>
+        <td>2026-07-07</td>
+        <td>7.41km</td>
+        <td>6:07/km</td>
+        <td>138bpm (76%)</td>
+        <td>179spm</td>
+        <td>71TL</td>
+        <td>Below Average</td>
+        <td>- °C</td>
+      </tr><tr>
+        <td>2026-07-06</td>
+        <td>8.76km</td>
+        <td>6:09/km</td>
+        <td>131bpm (72%)</td>
+        <td>167spm</td>
+        <td>69TL</td>
+        <td>Normal</td>
+        <td>- °C</td>
+      </tr><tr>
+        <td>2026-07-05</td>
+        <td>9.89km</td>
+        <td>5:38/km</td>
+        <td>149bpm (82%)</td>
+        <td>178spm</td>
+        <td>119TL</td>
+        <td>Poor</td>
+        <td>- °C</td>
+      </tr><tr>
+        <td>2026-07-04</td>
+        <td>5.32km</td>
+        <td>undefined/km</td>
+        <td>82bpm (45%)</td>
+        <td>-spm</td>
+        <td>3TL</td>
+        <td>-</td>
+        <td>- °C</td>
+      </tr><tr>
+        <td>2026-07-01</td>
+        <td>11.21km</td>
+        <td>5:14/km</td>
+        <td>150bpm (82%)</td>
+        <td>177spm</td>
+        <td>128TL</td>
+        <td>Good</td>
+        <td>中雨 26.3°C</td>
+      </tr><tr>
+        <td>2026-07-01</td>
+        <td>1.04km</td>
+        <td>15:00/km</td>
+        <td>73bpm (40%)</td>
+        <td>99spm</td>
+        <td>-TL</td>
+        <td>-1</td>
+        <td>中雨 26.3°C</td>
+      </tr>
+    </table>
+  </div>
+  
+
+  <!-- Recovery Detail Cards -->
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">恢复指标</div>
+    <div class="cards">
+      <div class="card"><div class="label">恢复度</div><div class="value" style="color:#7ec882">100%</div><div class="sub">Heavy training allowed</div></div>
+      <div class="card"><div class="label">HRV连续偏低</div><div class="value">3<span style="font-size:.9rem">天</span></div><div class="sub">持续3天偏低</div></div>
+      <div class="card"><div class="label">睡眠(最新)</div><div class="value">95</div><div class="sub">22:48 - 07:06</div></div>
+      <div class="card"><div class="label">负荷比</div><div class="value">0.82</div><div class="sub">Maintaining</div></div>
+      <div class="card"><div class="label">预计完全恢复</div><div class="value" style="color:#7ec882">完全恢复</div><div class="sub">Heavy training allowed</div></div>
+    </div>
+  </div>
+
+  <!-- AI Body Assessment & Training Pattern -->
+  
+  <div style="margin-top:14px">
+    <div class="analysis-grid">
+      
+      <div class="ai-insight">
+        <h4>身体状态评估</h4>
+        <div class="body-assessment-level yellow">需要关注</div>
+        <p>HRV持续3天低于正常基线，提示潜在疲劳积累，但睡眠质量高且恢复百分比100%，身体允许高强度训练。下肢跑姿经济性偏低，步幅与步频组合未达高效区间，需通过专项训练改善。</p>
+        <ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7"><li>HRV 57低于正常下限58，连续3天，可能反映神经恢复不足或生活压力</li><li>睡眠评分95，深度睡眠占比24%，恢复质量佳</li><li>训练负荷短/长比0.82，负荷维持适宜，未过度</li><li>近期跑步数据均显示经济速度偏低（2.7-3.2m/s），步幅0.91-1.08m与步频167-179组合未达理想</li></ul>
+        <div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：如HRV持续偏低，可将一次轻松跑改为完全休息或交叉训练（游泳/骑行）；每日补充镁元素400mg，有助于神经放松与睡眠质量；加入每周2次跑姿专项：A/B-skip、直腿跑、折叠腿练习，重点提升折叠前摆幅度</div>
+      </div>
+      
+
+      
+      <div class="ai-insight">
+        <h4>训练模式分析</h4>
+        <p>近一周训练以中高强度（Z3-Z4）为主，缺乏纯粹Z2长时间跑，偏离两极化原则。步频问题暴露明显，下周需调整结构。</p>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list"><span class="tag tag-strength">节奏跑与混合训练执行稳定，阈值区间耐受良好</span><span class="tag tag-strength">轻松跑配速控制精准（7月6日），具备优秀的有氧配速感知</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list"><span class="tag tag-risk">Z3灰色区（5:05-4:38）训练占比过高，削弱极化效果，易累积疲劳且效率不高</span><span class="tag tag-risk">步频低于170的轻松跑增加冲击风险，需立即纠正</span><span class="tag tag-risk">缺少纯粹Z1-Z2长距离有氧跑（LSD），影响线粒体密度提升</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list"><span class="tag tag-suggestion">将80%跑量回归Z2（配速5:30-6:05），减少节奏跑频率至每周1次</span><span class="tag tag-suggestion">周日或周六安排20km以上LSD，全程心率<153，可以负分段但勿进入Z3</span><span class="tag tag-suggestion">通过节拍器纠正步频，目标所有轻松跑>175spm，并逐渐缩短步幅</span></div></div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+<!-- ==================== Section 4: 下一阶段训练计划 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">下一阶段训练计划</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Phase info + Progress bar -->
+  <div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span style="font-size:.85rem;font-weight:600">基础期 I (W3) — 有氧耐力、建立跑量</span>
+      <span style="font-size:.8rem;color:var(--muted)">目标 50-65km/周</span>
+    </div>
+    <div class="progress-bar-container" style="margin-bottom:0">
+      <div class="progress-bar-labels">
+        <span>近7天已完成 43.6km</span>
+        <span>67%</span>
+        <span>目标 65km</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:67%;background:#e89898"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Plan Table -->
+  
+  <table>
+    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>详细计划</th></tr>
+    <tr class="">
+        <td>周三 07-08</td>
+        <td>间歇</td>
+        <td>8km</td>
+        <td>3:45 — 3:55/km (undefined-Z5)</td>
+        <td>Z4-Z5</td>
+        <td>高质量间歇课：400m×10组，目标配速3:45-3:55/km (Z5)，组间慢跑200m 6:30+；训练前充分动态热身15分钟。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-1');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-1"><dt>热身</dt><dd>慢跑2km（6:20-6:00）+动态拉伸+4-6组跨步跑</dd><dt>主课</dt><dd>400m×10，配速3:45-3:55，组间慢跑恢复200m（不限制配速，以心率降至Z2为准）</dd><dt>冷身</dt><dd>慢跑2km（6:40-6:20）+静态拉伸</dd><dt>备注</dt><dd>炎热环境下需适当放宽配速上浮2-3秒，若心率超过180则延长恢复时间</dd></div></td>
+      </tr><tr class="">
+        <td>周四 07-09</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>—</td>
+        <td>—</td>
+        <td>完全休息或30分钟散步/泡沫轴放松，促进恢复。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-2');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-2"><dt>备注</dt><dd>若HRV明显回升，可进行30分钟核心力量训练</dd></div></td>
+      </tr><tr class="">
+        <td>周五 07-10</td>
+        <td>轻松跑</td>
+        <td>8km</td>
+        <td>5:50 — 6:10/km (Z2-Z1)</td>
+        <td>Z2</td>
+        <td>恢复性轻松跑，强制节拍器178bpm，缩短步幅。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-3');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-3"><dt>热身</dt><dd>无需专门热身，起步保持6:30-6:10</dd><dt>主课</dt><dd>8km，配速5:50-6:10，全程步频178spm，有意识地减小步幅5-8cm，心率<150</dd><dt>冷身</dt><dd>末1km自然降速至6:40，步行2分钟</dd><dt>备注</dt><dd>使用节拍器APP，此跑旨在建立神经肌肉记忆，纠正步频偏低</dd></div></td>
+      </tr><tr class="">
+        <td>周六 07-11</td>
+        <td>LSD</td>
+        <td>18km</td>
+        <td>5:40 — 5:55/km (Z2)</td>
+        <td>Z2</td>
+        <td>长距离有氧跑，全程心率<153，可负分段，后程配速不得快于5:30/km。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-4');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-4"><dt>热身</dt><dd>前3km配速6:10-6:00，心率自然上升至130+</dd><dt>主课</dt><dd>12km稳定配速5:40-5:55，心率135-148；最后3km可微加速至5:30-5:35，但心率不得突破153</dd><dt>冷身</dt><dd>冷身慢跑2km（6:30+），结束静态拉伸</dd><dt>备注</dt><dd>带水或电解质饮料，每隔30分钟补给一次；注意步频>175</dd></div></td>
+      </tr><tr class="">
+        <td>周日 07-12</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>—</td>
+        <td>—</td>
+        <td>完全休息，拉伸/瑜伽恢复。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-5');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-5"><dt>备注</dt><dd>观察HRV恢复情况，可进行15分钟冷热水交替浴</dd></div></td>
+      </tr><tr class="">
+        <td>周一 07-13</td>
+        <td>轻松跑</td>
+        <td>10km</td>
+        <td>Z2</td>
+        <td>Z2</td>
+        <td>中距离轻松跑，维持步频>175，配速5:40-6:00，心率<150。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-6');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-6"><dt>热身</dt><dd>前1km 6:15，激活神经</dd><dt>主课</dt><dd>8km保持5:50-5:55，步频176-178，心率138-148</dd><dt>冷身</dt><dd>末1km降至6:20，步行放松</dd><dt>备注</dt><dd>若肌肉仍有酸痛，可将配速降低至6:10</dd></div></td>
+      </tr><tr class="">
+        <td>周二 07-14</td>
+        <td>轻松跑</td>
+        <td>8km</td>
+        <td>5:55 — 6:05/km (Z2-Z1)</td>
+        <td>Z2</td>
+        <td>短距离恢复跑，配合跑姿技术练习。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-7');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-7"><dt>热身</dt><dd>5分钟慢跑+动态热身</dd><dt>主课</dt><dd>6km轻松跑，配速5:55-6:05，心率<148；中间穿插4组30秒高步频快步（180-190spm）</dd><dt>冷身</dt><dd>慢跑1km+静态拉伸</dd><dt>备注</dt><dd>技术跑注意轻柔着地，避免跨步，体会步幅缩短后步频提升的感觉</dd></div></td>
+      </tr>
+  </table>
+
+  <!-- Coach Advice -->
+  
+  <div class="coach-advice" style="margin-top:20px">
+    <h4>AI 教练建议</h4>
+    <p>你目前处于基础期，心肺能力尚可但下肢力学效率拖了后腿。近期训练配速多落在Z3灰色区，虽然感觉‘跑得还行’，但长远来看容易陷入疲劳而训练收益有限。接下来的三周，我们拿出决心彻底重塑步频——所有轻松跑强制170+，理想178spm，同时主动缩短步幅。这会让你感觉‘原地倒脚’，但这是通往高效跑姿的必经之路。LSD严格控心率在153以下，宁可慢也不进入节奏跑区域。当你能在6:00配速下用180步频跑完10km而不喘，你的全马破330基础才算真正打好。此外，关注HRV，若连续低于正常，大胆休息，恢复也是训练的一部分。记住，马拉松拼的不是谁在训练中跑得快，而是谁能在比赛日把训练成果全部释放出来。</p>
+  </div>
+  
+</div>
+
+<script>
+// HRV Chart
+new Chart(document.getElementById('hrvChart'), {
+  type: 'line',
+  data: {
+    labels: ["07-02","07-03","07-04","07-05","07-06","07-07","07-08"],
+    datasets: [{
+      label: 'HRV',
+      data: [71,73,81,86,46,57,57],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: .3, pointRadius: 4,
+    }, {
+      label: '基线',
+      data: Array(7).fill(72),
+      borderColor: '#9e9484', borderDash: [5, 5], pointRadius: 0, fill: false,
+    }, {
+      label: '正常下限',
+      data: Array(7).fill(58),
+      borderColor: '#e89898', borderDash: [3, 3], pointRadius: 0, fill: false,
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: false } } }
+});
+
+// Training Load Chart
+new Chart(document.getElementById('loadChart'), {
+  type: 'bar',
+  data: {
+    labels: ["07-02","07-03","07-04","07-05","07-06","07-07","07-08"],
+    datasets: [{
+      label: '短期负荷',
+      data: [62,53,46,56,58,60,51],
+      backgroundColor: 'rgba(124,185,232,.7)',
+      yAxisID: 'y',
+      order: 2,
+    }, {
+      label: '长期负荷',
+      data: [65,63,62,63,63,63,62],
+      backgroundColor: 'rgba(196,166,216,.5)',
+      yAxisID: 'y',
+      order: 3,
+    }, {
+      label: '负荷比',
+      type: 'line',
+      data: [0.95,0.84,0.74,0.88,0.92,0.95,0.82],
+      borderColor: 'rgba(232,152,152,.9)',
+      backgroundColor: 'rgba(232,152,152,.9)',
+      pointBackgroundColor: 'rgba(232,152,152,.9)',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.3,
+      yAxisID: 'y1',
+      order: 1,
+      fill: false,
+    }, {
+      label: '平衡线 (1.0)',
+      type: 'line',
+      data: Array(7).fill(1.0),
+      borderColor: 'rgba(150,150,150,.5)',
+      borderWidth: 1.5,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      yAxisID: 'y1',
+      order: 3,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'TL', font: { size: 10 } }
+      },
+      y1: {
+        beginAtZero: false,
+        position: 'right',
+        min: 0.7,
+        max: 1.5,
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: '负荷比', font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// Z1-Z6 background stripe plugin
+Chart.register({
+  id: 'paceZones',
+  beforeDraw(chart) {
+    const stripes = chart.options.plugins?.paceZones?.stripes;
+    if (!stripes?.length) return;
+    const ctx = chart.ctx;
+    const yScale = chart.scales.y;
+    const area = chart.chartArea;
+    ctx.save();
+    for (const s of stripes) {
+      const y1 = s.slower != null ? yScale.getPixelForValue(s.slower) : area.bottom;
+      const y2 = s.faster != null ? yScale.getPixelForValue(s.faster) : area.top;
+      if (!isFinite(y1) || !isFinite(y2)) continue;
+      const top = Math.max(area.top, Math.min(y1, y2));
+      const bot = Math.min(area.bottom, Math.max(y1, y2));
+      if (top >= bot) continue;
+      ctx.fillStyle = s.color + '20';
+      ctx.fillRect(area.left, top, area.right - area.left, bot - top);
+    }
+    ctx.restore();
+  }
+});
+
+// Pace Chart
+function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+
+new Chart(document.getElementById('paceChart'), {
+  type: 'line',
+  data: {
+    labels: ["07-01","07-01","07-05","07-06","07-07"],
+    datasets: [{
+      label: '训练配速',
+      data: [15,5.233333333333333,5.633333333333334,6.15,6.116666666666666],
+      showLine: false,
+      pointBackgroundColor: ["#7ec882","#4db8a4","#4db8a4","#7ec882","#7ec882"],
+      pointBorderColor: ["#7ec882","#4db8a4","#4db8a4","#7ec882","#7ec882"],
+      pointRadius: [5.872,14,14,14,14],
+      pointHoverRadius: [7.872,16,16,16,16],
+      pointBorderWidth: 1.5,
+    }, {
+      label: '阈值 ' + fmtPace(4.317) + '/km',
+      data: Array(5).fill(4.317),
+      type: 'line',
+      borderColor: '#e89898', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      paceZones: { stripes: [{"slower":null,"faster":6.083333333333333,"color":"#7ec882","key":"Z1","name":"积极恢复区"},{"slower":6.083333333333333,"faster":5.083333333333333,"color":"#4db8a4","key":"Z2","name":"有氧耐力区"},{"slower":5.083333333333333,"faster":4.633333333333334,"color":"#f4c542","key":"Z3","name":"有氧动力区"},{"slower":4.633333333333334,"faster":4.233333333333333,"color":"#e89898","key":"Z4","name":"乳酸阈区"},{"slower":4.233333333333333,"faster":3.85,"color":"#c07070","key":"Z5","name":"速度耐力区"},{"slower":3.85,"faster":null,"color":"#d94f4f","key":"Z6","name":"无氧动力区"}] },
+      tooltip: { callbacks: {
+        label: function(ctx) {
+          if (ctx.datasetIndex === 1) return ctx.dataset.label;
+          const v = ctx.parsed.y;
+          const idx = ctx.dataIndex;
+          const zi = [0,1,1,0,0][idx];
+          const zLabel = ["Z1 积极恢复区","Z2 有氧耐力区","Z3 有氧动力区","Z4 乳酸阈区","Z5 速度耐力区","Z6 无氧动力区"][zi] || '';
+          const ratio = v / 4.317;
+          return ['配速 ' + fmtPace(v) + '/km · ' + zLabel + ' · ' + Math.round(ratio * 100) + '%阈值'];
+        },
+        afterLabel: function(ctx) {
+          if (ctx.datasetIndex === 1) return;
+          const idx = ctx.dataIndex;
+          const d = [{"dist":1.04,"time":"15:34","hr":73,"perf":"-1"},{"dist":11.21,"time":"58:35","hr":150,"tl":128,"perf":"Good"},{"dist":9.89,"time":"55:45","hr":149,"tl":119,"perf":"Poor"},{"dist":8.76,"time":"53:47","hr":131,"tl":69,"perf":"Normal"},{"dist":7.41,"time":"45:22","hr":138,"tl":71,"perf":"Below Average"}][idx];
+          if (!d) return;
+          const lines = [];
+          if (d.dist) lines.push('距离 ' + d.dist + 'km');
+          if (d.time) lines.push('时长 ' + d.time);
+          if (d.hr) lines.push('心率 ' + d.hr + 'bpm');
+          if (d.tl) lines.push('训练负荷 ' + d.tl);
+          if (d.perf && d.perf !== '-1') lines.push('表现 ' + d.perf);
+          return lines;
+        }
+      } }
+    },
+    scales: {
+      y: { reverse: true, min: 7.500, max: 3.500,
+        title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } }
+      }
+    }
+  }
+});
+
+
+
+// Vertical crosshair plugin for per-second chart (Chart.js v4 compatible)
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterDraw: function(chart) {
+    const active = chart.tooltip?.active;
+    if (active && active.length) {
+      const ctx = chart.ctx;
+      const x = active[0].element.x;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chart.scales.y.top);
+      ctx.lineTo(x, chart.scales.y.bottom);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#9e9484';
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+Chart.register(crosshairPlugin);
+// Per-second Pace & HR Chart
+new Chart(document.getElementById('secPaceHrChart'), {
+  type: 'line',
+  data: {
+    datasets: [{
+      label: '配速',
+      data: [{"x":0,"y":10.695187165775401},{"x":1,"y":5.347593582887701},{"x":2,"y":5.347593582887701},{"x":3,"y":5.347593582887701},{"x":4,"y":5.385996409335727},{"x":5,"y":5.420054200542006},{"x":6,"y":5.45950864422202},{"x":7,"y":5.4945054945054945},{"x":8,"y":5.509641873278237},{"x":9,"y":5.519779208831647},{"x":10,"y":5.730659025787965},{"x":11,"y":5.9523809523809526},{"x":12,"y":6.109979633401222},{"x":13,"y":6.2761506276150625},{"x":14,"y":6.369426751592357},{"x":15,"y":6.458557588805167},{"x":16,"y":6.507592190889371},{"x":17,"y":6.557377049180328},{"x":18,"y":6.586169045005489},{"x":19,"y":6.615214994487321},{"x":20,"y":6.6298342541436455},{"x":21,"y":6.64451827242525},{"x":22,"y":6.659267480577137},{"x":23,"y":6.666666666666667},{"x":24,"y":6.68896321070234},{"x":25,"y":6.703910614525141},{"x":26,"y":6.7340067340067336},{"x":27,"y":6.756756756756756},{"x":28,"y":6.779661016949153},{"x":29,"y":6.802721088435374},{"x":30,"y":6.8181818181818175},{"x":31,"y":6.825938566552901},{"x":32,"y":6.83371298405467},{"x":33,"y":6.83371298405467},{"x":34,"y":6.83371298405467},{"x":35,"y":6.83371298405467},{"x":36,"y":6.841505131128849},{"x":37,"y":6.841505131128849},{"x":38,"y":6.841505131128849},{"x":39,"y":6.841505131128849},{"x":40,"y":6.8493150684931505},{"x":41,"y":6.8493150684931505},{"x":42,"y":6.857142857142857},{"x":43,"y":6.864988558352403},{"x":44,"y":6.8728522336769755},{"x":45,"y":6.880733944954128},{"x":46,"y":6.8886337543053955},{"x":47,"y":6.8886337543053955},{"x":48,"y":6.8965517241379315},{"x":49,"y":6.8965517241379315},{"x":50,"y":6.904487917146145},{"x":51,"y":6.904487917146145},{"x":52,"y":6.904487917146145},{"x":53,"y":6.904487917146145},{"x":54,"y":6.912442396313364},{"x":55,"y":6.912442396313364},{"x":56,"y":6.912442396313364},{"x":57,"y":6.912442396313364},{"x":58,"y":6.912442396313364},{"x":59,"y":6.912442396313364},{"x":60,"y":6.912442396313364},{"x":61,"y":6.912442396313364},{"x":62,"y":6.912442396313364},{"x":63,"y":6.912442396313364},{"x":64,"y":6.912442396313364},{"x":65,"y":6.912442396313364},{"x":66,"y":6.912442396313364},{"x":67,"y":6.904487917146145},{"x":68,"y":6.904487917146145},{"x":69,"y":6.904487917146145},{"x":70,"y":6.904487917146145},{"x":71,"y":6.8965517241379315},{"x":72,"y":6.8965517241379315},{"x":73,"y":6.8965517241379315},{"x":74,"y":6.8965517241379315},{"x":75,"y":6.8886337543053955},{"x":76,"y":6.8886337543053955},{"x":77,"y":6.880733944954128},{"x":78,"y":6.880733944954128},{"x":79,"y":6.8728522336769755},{"x":80,"y":6.8728522336769755},{"x":81,"y":6.864988558352403},{"x":82,"y":6.864988558352403},{"x":83,"y":6.864988558352403},{"x":84,"y":6.864988558352403},{"x":85,"y":6.864988558352403},{"x":86,"y":6.864988558352403},{"x":87,"y":6.864988558352403},{"x":88,"y":6.864988558352403},{"x":89,"y":6.864988558352403},{"x":90,"y":6.864988558352403},{"x":91,"y":6.864988558352403},{"x":92,"y":6.864988558352403},{"x":93,"y":6.864988558352403},{"x":94,"y":6.864988558352403},{"x":95,"y":6.864988558352403},{"x":96,"y":6.864988558352403},{"x":97,"y":6.864988558352403},{"x":98,"y":6.864988558352403},{"x":99,"y":6.864988558352403},{"x":100,"y":6.864988558352403},{"x":101,"y":6.864988558352403},{"x":102,"y":6.864988558352403},{"x":103,"y":6.864988558352403},{"x":104,"y":6.864988558352403},{"x":105,"y":6.864988558352403},{"x":106,"y":6.864988558352403},{"x":107,"y":6.857142857142857},{"x":108,"y":6.857142857142857},{"x":109,"y":6.857142857142857},{"x":110,"y":6.857142857142857},{"x":111,"y":6.8493150684931505},{"x":112,"y":6.8493150684931505},{"x":113,"y":6.8493150684931505},{"x":114,"y":6.8493150684931505},{"x":115,"y":6.841505131128849},{"x":116,"y":6.83371298405467},{"x":117,"y":6.825938566552901},{"x":118,"y":6.825938566552901},{"x":119,"y":6.8181818181818175},{"x":120,"y":6.8181818181818175},{"x":121,"y":6.81044267877412},{"x":122,"y":6.81044267877412},{"x":123,"y":6.81044267877412},{"x":124,"y":6.8181818181818175},{"x":125,"y":6.8181818181818175},{"x":126,"y":6.825938566552901},{"x":127,"y":6.825938566552901},{"x":128,"y":6.83371298405467},{"x":129,"y":6.83371298405467},{"x":130,"y":6.83371298405467},{"x":131,"y":6.825938566552901},{"x":132,"y":6.825938566552901},{"x":133,"y":6.825938566552901},{"x":134,"y":6.825938566552901},{"x":135,"y":6.8181818181818175},{"x":136,"y":6.8181818181818175},{"x":137,"y":6.81044267877412},{"x":138,"y":6.81044267877412},{"x":139,"y":6.802721088435374},{"x":140,"y":6.802721088435374},{"x":141,"y":6.795016987542469},{"x":142,"y":6.787330316742081},{"x":143,"y":6.779661016949153},{"x":144,"y":6.779661016949153},{"x":145,"y":6.772009029345373},{"x":146,"y":6.764374295377678},{"x":147,"y":6.756756756756756},{"x":148,"y":6.756756756756756},{"x":149,"y":6.749156355455567},{"x":150,"y":6.749156355455567},{"x":151,"y":6.741573033707865},{"x":152,"y":6.741573033707865},{"x":153,"y":6.7340067340067336},{"x":154,"y":6.726457399103139},{"x":155,"y":6.71892497200448},{"x":156,"y":6.7114093959731544},{"x":157,"y":6.696428571428571},{"x":158,"y":6.68896321070234},{"x":159,"y":6.681514476614699},{"x":160,"y":6.674082313681868},{"x":161,"y":6.666666666666667},{"x":162,"y":6.659267480577137},{"x":163,"y":6.651884700665189},{"x":164,"y":6.651884700665189},{"x":165,"y":6.64451827242525},{"x":166,"y":6.64451827242525},{"x":167,"y":6.64451827242525},{"x":168,"y":6.64451827242525},{"x":169,"y":6.64451827242525},{"x":170,"y":6.651884700665189},{"x":171,"y":6.651884700665189},{"x":172,"y":6.651884700665189},{"x":173,"y":6.651884700665189},{"x":174,"y":6.659267480577137},{"x":175,"y":6.659267480577137},{"x":176,"y":6.666666666666667},{"x":177,"y":6.666666666666667},{"x":178,"y":6.674082313681868},{"x":179,"y":6.674082313681868},{"x":180,"y":6.681514476614699},{"x":181,"y":6.681514476614699},{"x":182,"y":6.681514476614699},{"x":183,"y":6.681514476614699},{"x":184,"y":6.68896321070234},{"x":185,"y":6.68896321070234},{"x":186,"y":6.68896321070234},{"x":187,"y":6.68896321070234},{"x":188,"y":6.696428571428571},{"x":189,"y":6.696428571428571},{"x":190,"y":6.703910614525141},{"x":191,"y":6.7114093959731544},{"x":192,"y":6.71892497200448},{"x":193,"y":6.726457399103139},{"x":194,"y":6.7340067340067336},{"x":195,"y":6.7340067340067336},{"x":196,"y":6.7340067340067336},{"x":197,"y":6.7340067340067336},{"x":198,"y":6.741573033707865},{"x":199,"y":6.741573033707865},{"x":200,"y":6.749156355455567},{"x":201,"y":6.756756756756756},{"x":202,"y":6.764374295377678},{"x":203,"y":6.772009029345373},{"x":204,"y":6.779661016949153},{"x":205,"y":6.787330316742081},{"x":206,"y":6.787330316742081},{"x":207,"y":6.787330316742081},{"x":208,"y":6.795016987542469},{"x":209,"y":6.795016987542469},{"x":210,"y":6.802721088435374},{"x":211,"y":6.802721088435374},{"x":212,"y":6.81044267877412},{"x":213,"y":6.81044267877412},{"x":214,"y":6.825938566552901},{"x":215,"y":6.83371298405467},{"x":216,"y":6.857142857142857},{"x":217,"y":6.8728522336769755},{"x":218,"y":6.8886337543053955},{"x":219,"y":6.904487917146145},{"x":220,"y":6.920415224913495},{"x":221,"y":6.928406466512702},{"x":222,"y":6.936416184971098},{"x":223,"y":6.936416184971098},{"x":224,"y":6.936416184971098},{"x":225,"y":6.928406466512702},{"x":226,"y":6.920415224913495},{"x":227,"y":6.912442396313364},{"x":228,"y":6.904487917146145},{"x":229,"y":6.8886337543053955},{"x":230,"y":6.880733944954128},{"x":231,"y":6.8728522336769755},{"x":232,"y":6.8728522336769755},{"x":233,"y":6.864988558352403},{"x":234,"y":6.864988558352403},{"x":235,"y":6.857142857142857},{"x":236,"y":6.857142857142857},{"x":237,"y":6.8493150684931505},{"x":238,"y":6.8493150684931505},{"x":239,"y":6.8493150684931505},{"x":240,"y":6.8493150684931505},{"x":241,"y":6.841505131128849},{"x":242,"y":6.841505131128849},{"x":243,"y":6.83371298405467},{"x":244,"y":6.83371298405467},{"x":245,"y":6.825938566552901},{"x":246,"y":6.825938566552901},{"x":247,"y":6.825938566552901},{"x":248,"y":6.83371298405467},{"x":249,"y":6.83371298405467},{"x":250,"y":6.83371298405467},{"x":251,"y":6.83371298405467},{"x":252,"y":6.83371298405467},{"x":253,"y":6.83371298405467},{"x":254,"y":6.83371298405467},{"x":255,"y":6.83371298405467},{"x":256,"y":6.83371298405467},{"x":257,"y":6.825938566552901},{"x":258,"y":6.825938566552901},{"x":259,"y":6.8181818181818175},{"x":260,"y":6.8181818181818175},{"x":261,"y":6.81044267877412},{"x":262,"y":6.81044267877412},{"x":263,"y":6.81044267877412},{"x":264,"y":6.81044267877412},{"x":265,"y":6.802721088435374},{"x":266,"y":6.802721088435374},{"x":267,"y":6.802721088435374},{"x":268,"y":6.802721088435374},{"x":269,"y":6.802721088435374},{"x":270,"y":6.8181818181818175},{"x":271,"y":6.825938566552901},{"x":272,"y":6.83371298405467},{"x":273,"y":6.841505131128849},{"x":274,"y":6.8493150684931505},{"x":275,"y":6.857142857142857},{"x":276,"y":6.864988558352403},{"x":277,"y":6.8728522336769755},{"x":278,"y":6.8728522336769755},{"x":279,"y":6.8728522336769755},{"x":280,"y":6.8728522336769755},{"x":281,"y":6.864988558352403},{"x":282,"y":6.864988558352403},{"x":283,"y":6.864988558352403},{"x":284,"y":6.864988558352403},{"x":285,"y":6.857142857142857},{"x":286,"y":6.857142857142857},{"x":287,"y":6.857142857142857},{"x":288,"y":6.857142857142857},{"x":289,"y":6.8493150684931505},{"x":290,"y":6.8493150684931505},{"x":291,"y":6.8493150684931505},{"x":292,"y":6.8493150684931505},{"x":293,"y":6.8493150684931505},{"x":294,"y":6.8493150684931505},{"x":295,"y":6.841505131128849},{"x":296,"y":6.83371298405467},{"x":297,"y":6.825938566552901},{"x":298,"y":6.8181818181818175},{"x":299,"y":6.81044267877412},{"x":300,"y":6.81044267877412},{"x":301,"y":6.802721088435374},{"x":302,"y":6.802721088435374},{"x":303,"y":6.795016987542469},{"x":304,"y":6.795016987542469},{"x":305,"y":6.787330316742081},{"x":306,"y":6.779661016949153},{"x":307,"y":6.764374295377678},{"x":308,"y":6.749156355455567},{"x":309,"y":6.726457399103139},{"x":310,"y":6.7114093959731544},{"x":311,"y":6.68896321070234},{"x":312,"y":6.674082313681868},{"x":313,"y":6.659267480577137},{"x":314,"y":6.651884700665189},{"x":315,"y":6.637168141592921},{"x":316,"y":6.622516556291391},{"x":317,"y":6.607929515418502},{"x":318,"y":6.600660066006601},{"x":319,"y":6.593406593406594},{"x":320,"y":6.586169045005489},{"x":321,"y":6.578947368421053},{"x":322,"y":6.571741511500547},{"x":323,"y":6.564551422319474},{"x":324,"y":6.557377049180328},{"x":325,"y":6.550218340611353},{"x":326,"y":6.543075245365322},{"x":327,"y":6.528835690968444},{"x":328,"y":6.507592190889371},{"x":329,"y":6.479481641468682},{"x":330,"y":6.437768240343347},{"x":331,"y":6.3965884861407245},{"x":332,"y":6.369426751592357},{"x":333,"y":6.335797254487856},{"x":334,"y":6.322444678609062},{"x":335,"y":6.302521008403362},{"x":336,"y":6.302521008403362},{"x":337,"y":6.295907660020987},{"x":338,"y":6.302521008403362},{"x":339,"y":6.309148264984227},{"x":340,"y":6.329113924050633},{"x":341,"y":6.342494714587737},{"x":342,"y":6.3559322033898304},{"x":343,"y":6.369426751592357},{"x":344,"y":6.382978723404255},{"x":345,"y":6.3965884861407245},{"x":346,"y":6.4034151547492},{"x":347,"y":6.410256410256411},{"x":348,"y":6.4171122994652405},{"x":349,"y":6.4239828693790155},{"x":350,"y":6.430868167202572},{"x":351,"y":6.430868167202572},{"x":352,"y":6.437768240343347},{"x":353,"y":6.437768240343347},{"x":354,"y":6.437768240343347},{"x":355,"y":6.437768240343347},{"x":356,"y":6.437768240343347},{"x":357,"y":6.437768240343347},{"x":358,"y":6.437768240343347},{"x":359,"y":6.437768240343347},{"x":360,"y":6.430868167202572},{"x":361,"y":6.4239828693790155},{"x":362,"y":6.4239828693790155},{"x":363,"y":6.4171122994652405},{"x":364,"y":6.4171122994652405},{"x":365,"y":6.410256410256411},{"x":366,"y":6.4171122994652405},{"x":367,"y":6.4171122994652405},{"x":368,"y":6.4171122994652405},{"x":369,"y":6.4171122994652405},{"x":370,"y":6.4239828693790155},{"x":371,"y":6.4239828693790155},{"x":372,"y":6.4239828693790155},{"x":373,"y":6.4239828693790155},{"x":374,"y":6.4239828693790155},{"x":375,"y":6.4239828693790155},{"x":376,"y":6.4239828693790155},{"x":377,"y":6.4239828693790155},{"x":378,"y":6.4239828693790155},{"x":379,"y":6.4239828693790155},{"x":380,"y":6.430868167202572},{"x":381,"y":6.430868167202572},{"x":382,"y":6.430868167202572},{"x":383,"y":6.430868167202572},{"x":384,"y":6.430868167202572},{"x":385,"y":6.430868167202572},{"x":386,"y":6.437768240343347},{"x":387,"y":6.437768240343347},{"x":388,"y":6.437768240343347},{"x":389,"y":6.437768240343347},{"x":390,"y":6.437768240343347},{"x":391,"y":6.437768240343347},{"x":392,"y":6.437768240343347},{"x":393,"y":6.430868167202572},{"x":394,"y":6.4239828693790155},{"x":395,"y":6.410256410256411},{"x":396,"y":6.3965884861407245},{"x":397,"y":6.382978723404255},{"x":398,"y":6.376195536663125},{"x":399,"y":6.362672322375398},{"x":400,"y":6.3559322033898304},{"x":401,"y":6.342494714587737},{"x":402,"y":6.335797254487856},{"x":403,"y":6.322444678609062},{"x":404,"y":6.315789473684211},{"x":405,"y":6.309148264984227},{"x":406,"y":6.302521008403362},{"x":407,"y":6.295907660020987},{"x":408,"y":6.295907660020987},{"x":409,"y":6.295907660020987},{"x":410,"y":6.295907660020987},{"x":411,"y":6.289308176100629},{"x":412,"y":6.282722513089005},{"x":413,"y":6.2761506276150625},{"x":414,"y":6.2761506276150625},{"x":415,"y":6.269592476489028},{"x":416,"y":6.269592476489028},{"x":417,"y":6.263048016701461},{"x":418,"y":6.263048016701461},{"x":419,"y":6.256517205422315},{"x":420,"y":6.263048016701461},{"x":421,"y":6.263048016701461},{"x":422,"y":6.269592476489028},{"x":423,"y":6.269592476489028},{"x":424,"y":6.289308176100629},{"x":425,"y":6.302521008403362},{"x":426,"y":6.322444678609062},{"x":427,"y":6.335797254487856},{"x":428,"y":6.34920634920635},{"x":429,"y":6.362672322375398},{"x":430,"y":6.369426751592357},{"x":431,"y":6.376195536663125},{"x":432,"y":6.376195536663125},{"x":433,"y":6.376195536663125},{"x":434,"y":6.382978723404255},{"x":435,"y":6.382978723404255},{"x":436,"y":6.382978723404255},{"x":437,"y":6.382978723404255},{"x":438,"y":6.382978723404255},{"x":439,"y":6.382978723404255},{"x":440,"y":6.382978723404255},{"x":441,"y":6.382978723404255},{"x":442,"y":6.3897763578274756},{"x":443,"y":6.3897763578274756},{"x":444,"y":6.3965884861407245},{"x":445,"y":6.4034151547492},{"x":446,"y":6.410256410256411},{"x":447,"y":6.410256410256411},{"x":448,"y":6.4171122994652405},{"x":449,"y":6.4171122994652405},{"x":450,"y":6.4239828693790155},{"x":451,"y":6.4239828693790155},{"x":452,"y":6.430868167202572},{"x":453,"y":6.430868167202572},{"x":454,"y":6.430868167202572},{"x":455,"y":6.430868167202572},{"x":456,"y":6.4171122994652405},{"x":457,"y":6.4034151547492},{"x":458,"y":6.3897763578274756},{"x":459,"y":6.369426751592357},{"x":460,"y":6.3559322033898304},{"x":461,"y":6.342494714587737},{"x":462,"y":6.335797254487856},{"x":463,"y":6.329113924050633},{"x":464,"y":6.322444678609062},{"x":465,"y":6.309148264984227},{"x":466,"y":6.302521008403362},{"x":467,"y":6.295907660020987},{"x":468,"y":6.289308176100629},{"x":469,"y":6.282722513089005},{"x":470,"y":6.2761506276150625},{"x":471,"y":6.269592476489028},{"x":472,"y":6.269592476489028},{"x":473,"y":6.269592476489028},{"x":474,"y":6.2761506276150625},{"x":475,"y":6.282722513089005},{"x":476,"y":6.289308176100629},{"x":477,"y":6.295907660020987},{"x":478,"y":6.302521008403362},{"x":479,"y":6.302521008403362},{"x":480,"y":6.302521008403362},{"x":481,"y":6.295907660020987},{"x":482,"y":6.289308176100629},{"x":483,"y":6.2761506276150625},{"x":484,"y":6.263048016701461},{"x":485,"y":6.25},{"x":486,"y":6.243496357960458},{"x":487,"y":6.230529595015576},{"x":488,"y":6.230529595015576},{"x":489,"y":6.224066390041493},{"x":490,"y":6.230529595015576},{"x":491,"y":6.237006237006238},{"x":492,"y":6.243496357960458},{"x":493,"y":6.25},{"x":494,"y":6.263048016701461},{"x":495,"y":6.269592476489028},{"x":496,"y":6.289308176100629},{"x":497,"y":6.302521008403362},{"x":498,"y":6.322444678609062},{"x":499,"y":6.342494714587737},{"x":500,"y":6.3559322033898304},{"x":501,"y":6.369426751592357},{"x":502,"y":6.382978723404255},{"x":503,"y":6.3897763578274756},{"x":504,"y":6.3965884861407245},{"x":505,"y":6.4034151547492},{"x":506,"y":6.410256410256411},{"x":507,"y":6.410256410256411},{"x":508,"y":6.4171122994652405},{"x":509,"y":6.4171122994652405},{"x":510,"y":6.4171122994652405},{"x":511,"y":6.4171122994652405},{"x":512,"y":6.4239828693790155},{"x":513,"y":6.4239828693790155},{"x":514,"y":6.430868167202572},{"x":515,"y":6.430868167202572},{"x":516,"y":6.430868167202572},{"x":517,"y":6.430868167202572},{"x":518,"y":6.437768240343347},{"x":519,"y":6.4446831364124595},{"x":520,"y":6.4446831364124595},{"x":521,"y":6.4446831364124595},{"x":522,"y":6.451612903225806},{"x":523,"y":6.451612903225806},{"x":524,"y":6.451612903225806},{"x":525,"y":6.451612903225806},{"x":526,"y":6.458557588805167},{"x":527,"y":6.458557588805167},{"x":528,"y":6.472491909385114},{"x":529,"y":6.479481641468682},{"x":530,"y":6.4935064935064934},{"x":531,"y":6.507592190889371},{"x":532,"y":6.521739130434783},{"x":533,"y":6.528835690968444},{"x":534,"y":6.5359477124183005},{"x":535,"y":6.543075245365322},{"x":536,"y":6.550218340611353},{"x":537,"y":6.550218340611353},{"x":538,"y":6.557377049180328},{"x":539,"y":6.557377049180328},{"x":540,"y":6.557377049180328},{"x":541,"y":6.557377049180328},{"x":542,"y":6.557377049180328},{"x":543,"y":6.557377049180328},{"x":544,"y":6.557377049180328},{"x":545,"y":6.557377049180328},{"x":546,"y":6.557377049180328},{"x":547,"y":6.550218340611353},{"x":548,"y":6.543075245365322},{"x":549,"y":6.528835690968444},{"x":550,"y":6.521739130434783},{"x":551,"y":6.507592190889371},{"x":552,"y":6.500541711809317},{"x":553,"y":6.486486486486487},{"x":554,"y":6.479481641468682},{"x":555,"y":6.4655172413793105},{"x":556,"y":6.458557588805167},{"x":557,"y":6.451612903225806},{"x":558,"y":6.451612903225806},{"x":559,"y":6.4446831364124595},{"x":560,"y":6.4446831364124595},{"x":561,"y":6.4446831364124595},{"x":562,"y":6.4446831364124595},{"x":563,"y":6.4446831364124595},{"x":564,"y":6.4446831364124595},{"x":565,"y":6.4446831364124595},{"x":566,"y":6.4446831364124595},{"x":567,"y":6.437768240343347},{"x":568,"y":6.437768240343347},{"x":569,"y":6.437768240343347},{"x":570,"y":6.437768240343347},{"x":571,"y":6.430868167202572},{"x":572,"y":6.437768240343347},{"x":573,"y":6.437768240343347},{"x":574,"y":6.437768240343347},{"x":575,"y":6.437768240343347},{"x":576,"y":6.4446831364124595},{"x":577,"y":6.4446831364124595},{"x":578,"y":6.4446831364124595},{"x":579,"y":6.4446831364124595},{"x":580,"y":6.451612903225806},{"x":581,"y":6.451612903225806},{"x":582,"y":6.451612903225806},{"x":583,"y":6.4446831364124595},{"x":584,"y":6.437768240343347},{"x":585,"y":6.430868167202572},{"x":586,"y":6.410256410256411},{"x":587,"y":6.3897763578274756},{"x":588,"y":6.382978723404255},{"x":589,"y":6.376195536663125},{"x":590,"y":6.376195536663125},{"x":591,"y":6.369426751592357},{"x":592,"y":6.376195536663125},{"x":593,"y":6.376195536663125},{"x":594,"y":6.376195536663125},{"x":595,"y":6.376195536663125},{"x":596,"y":6.382978723404255},{"x":597,"y":6.382978723404255},{"x":597,"y":6.382978723404255},{"x":598,"y":6.382978723404255},{"x":599,"y":6.382978723404255},{"x":600,"y":6.382978723404255},{"x":601,"y":6.382978723404255},{"x":602,"y":6.382978723404255},{"x":603,"y":6.382978723404255},{"x":604,"y":6.382978723404255},{"x":605,"y":6.376195536663125},{"x":606,"y":6.376195536663125},{"x":607,"y":6.369426751592357},{"x":608,"y":6.369426751592357},{"x":609,"y":6.362672322375398},{"x":610,"y":6.362672322375398},{"x":611,"y":6.3559322033898304},{"x":612,"y":6.342494714587737},{"x":613,"y":6.322444678609062},{"x":614,"y":6.295907660020987},{"x":615,"y":6.263048016701461},{"x":616,"y":6.237006237006238},{"x":617,"y":6.211180124223603},{"x":618,"y":6.191950464396285},{"x":619,"y":6.166495375128468},{"x":620,"y":6.153846153846154},{"x":621,"y":6.134969325153374},{"x":622,"y":6.122448979591836},{"x":623,"y":6.103763987792472},{"x":624,"y":6.097560975609756},{"x":625,"y":6.085192697768763},{"x":626,"y":6.079027355623101},{"x":627,"y":6.066734074823053},{"x":628,"y":6.0606060606060606},{"x":629,"y":6.048387096774194},{"x":630,"y":6.042296072507553},{"x":631,"y":6.036217303822938},{"x":632,"y":6.030150753768845},{"x":633,"y":6.018054162487462},{"x":634,"y":6.012024048096192},{"x":635,"y":6.006006006006006},{"x":636,"y":6},{"x":637,"y":5.9880239520958085},{"x":638,"y":5.982053838484546},{"x":639,"y":5.970149253731343},{"x":640,"y":5.9582919563058585},{"x":641,"y":5.9405940594059405},{"x":642,"y":5.928853754940712},{"x":643,"y":5.9171597633136095},{"x":644,"y":5.911330049261084},{"x":645,"y":5.899705014749262},{"x":646,"y":5.899705014749262},{"x":647,"y":5.893909626719057},{"x":648,"y":5.893909626719057},{"x":649,"y":5.893909626719057},{"x":650,"y":5.899705014749262},{"x":651,"y":5.899705014749262},{"x":652,"y":5.905511811023622},{"x":653,"y":5.911330049261084},{"x":654,"y":5.9171597633136095},{"x":655,"y":5.923000987166831},{"x":656,"y":5.928853754940712},{"x":657,"y":5.928853754940712},{"x":658,"y":5.934718100890208},{"x":659,"y":5.934718100890208},{"x":660,"y":5.934718100890208},{"x":661,"y":5.934718100890208},{"x":662,"y":5.9405940594059405},{"x":663,"y":5.9405940594059405},{"x":664,"y":5.946481665014867},{"x":665,"y":5.946481665014867},{"x":666,"y":5.9523809523809526},{"x":667,"y":5.9523809523809526},{"x":668,"y":5.9582919563058585},{"x":669,"y":5.9582919563058585},{"x":670,"y":5.964214711729622},{"x":671,"y":5.964214711729622},{"x":672,"y":5.964214711729622},{"x":673,"y":5.964214711729622},{"x":674,"y":5.964214711729622},{"x":675,"y":5.964214711729622},{"x":676,"y":5.964214711729622},{"x":677,"y":5.964214711729622},{"x":678,"y":5.976095617529881},{"x":679,"y":5.9880239520958085},{"x":680,"y":6.006006006006006},{"x":681,"y":6.024096385542168},{"x":682,"y":6.042296072507553},{"x":683,"y":6.054490413723512},{"x":684,"y":6.066734074823053},{"x":685,"y":6.072874493927125},{"x":686,"y":6.079027355623101},{"x":687,"y":6.079027355623101},{"x":688,"y":6.079027355623101},{"x":689,"y":6.079027355623101},{"x":690,"y":6.079027355623101},{"x":691,"y":6.072874493927125},{"x":692,"y":6.079027355623101},{"x":693,"y":6.079027355623101},{"x":694,"y":6.079027355623101},{"x":695,"y":6.079027355623101},{"x":696,"y":6.079027355623101},{"x":697,"y":6.079027355623101},{"x":698,"y":6.079027355623101},{"x":699,"y":6.079027355623101},{"x":700,"y":6.079027355623101},{"x":701,"y":6.079027355623101},{"x":702,"y":6.079027355623101},{"x":703,"y":6.079027355623101},{"x":704,"y":6.079027355623101},{"x":705,"y":6.079027355623101},{"x":706,"y":6.079027355623101},{"x":707,"y":6.079027355623101},{"x":708,"y":6.079027355623101},{"x":709,"y":6.072874493927125},{"x":710,"y":6.072874493927125},{"x":711,"y":6.066734074823053},{"x":712,"y":6.066734074823053},{"x":713,"y":6.066734074823053},{"x":714,"y":6.066734074823053},{"x":715,"y":6.066734074823053},{"x":716,"y":6.072874493927125},{"x":717,"y":6.072874493927125},{"x":718,"y":6.079027355623101},{"x":719,"y":6.085192697768763},{"x":720,"y":6.091370558375635},{"x":721,"y":6.091370558375635},{"x":722,"y":6.091370558375635},{"x":723,"y":6.091370558375635},{"x":724,"y":6.091370558375635},{"x":725,"y":6.091370558375635},{"x":726,"y":6.091370558375635},{"x":727,"y":6.091370558375635},{"x":728,"y":6.097560975609756},{"x":729,"y":6.097560975609756},{"x":730,"y":6.103763987792472},{"x":731,"y":6.109979633401222},{"x":732,"y":6.122448979591836},{"x":733,"y":6.128702757916241},{"x":734,"y":6.141248720573183},{"x":735,"y":6.147540983606557},{"x":736,"y":6.153846153846154},{"x":737,"y":6.153846153846154},{"x":738,"y":6.160164271047228},{"x":739,"y":6.160164271047228},{"x":740,"y":6.166495375128468},{"x":741,"y":6.166495375128468},{"x":742,"y":6.166495375128468},{"x":743,"y":6.166495375128468},{"x":744,"y":6.166495375128468},{"x":745,"y":6.160164271047228},{"x":746,"y":6.160164271047228},{"x":747,"y":6.160164271047228},{"x":748,"y":6.160164271047228},{"x":749,"y":6.160164271047228},{"x":750,"y":6.160164271047228},{"x":751,"y":6.153846153846154},{"x":752,"y":6.153846153846154},{"x":753,"y":6.153846153846154},{"x":754,"y":6.153846153846154},{"x":755,"y":6.153846153846154},{"x":756,"y":6.153846153846154},{"x":757,"y":6.153846153846154},{"x":758,"y":6.160164271047228},{"x":759,"y":6.160164271047228},{"x":760,"y":6.160164271047228},{"x":761,"y":6.160164271047228},{"x":762,"y":6.166495375128468},{"x":763,"y":6.166495375128468},{"x":764,"y":6.166495375128468},{"x":765,"y":6.166495375128468},{"x":766,"y":6.172839506172839},{"x":767,"y":6.172839506172839},{"x":768,"y":6.172839506172839},{"x":769,"y":6.172839506172839},{"x":770,"y":6.172839506172839},{"x":771,"y":6.172839506172839},{"x":772,"y":6.179196704428424},{"x":773,"y":6.179196704428424},{"x":774,"y":6.185567010309279},{"x":775,"y":6.185567010309279},{"x":776,"y":6.185567010309279},{"x":777,"y":6.185567010309279},{"x":778,"y":6.172839506172839},{"x":779,"y":6.153846153846154},{"x":780,"y":6.128702757916241},{"x":781,"y":6.097560975609756},{"x":782,"y":6.0606060606060606},{"x":783,"y":6.018054162487462},{"x":784,"y":5.970149253731343},{"x":785,"y":5.9171597633136095},{"x":786,"y":5.865102639296188},{"x":787,"y":5.808325266214908},{"x":788,"y":5.758157389635317},{"x":789,"y":5.7034220532319395},{"x":790,"y":5.671077504725898},{"x":791,"y":5.633802816901408},{"x":792,"y":5.612722170252573},{"x":793,"y":5.58659217877095},{"x":794,"y":5.571030640668524},{"x":795,"y":5.555555555555555},{"x":796,"y":5.550416281221091},{"x":797,"y":5.54016620498615},{"x":798,"y":5.54016620498615},{"x":799,"y":5.54016620498615},{"x":800,"y":5.550416281221091},{"x":801,"y":5.555555555555555},{"x":802,"y":5.571030640668524},{"x":803,"y":5.5813953488372094},{"x":804,"y":5.597014925373134},{"x":805,"y":5.607476635514019},{"x":806,"y":5.617977528089888},{"x":807,"y":5.628517823639775},{"x":808,"y":5.639097744360902},{"x":809,"y":5.649717514124294},{"x":810,"y":5.665722379603399},{"x":811,"y":5.676442762535477},{"x":812,"y":5.6872037914691935},{"x":813,"y":5.692599620493359},{"x":814,"y":5.7034220532319395},{"x":815,"y":5.708848715509039},{"x":816,"y":5.719733079122975},{"x":817,"y":5.730659025787965},{"x":818,"y":5.736137667304015},{"x":819,"y":5.741626794258374},{"x":820,"y":5.74712643678161},{"x":821,"y":5.74712643678161},{"x":822,"y":5.758157389635317},{"x":823,"y":5.763688760806916},{"x":824,"y":5.769230769230769},{"x":825,"y":5.7747834456207885},{"x":826,"y":5.785920925747349},{"x":827,"y":5.797101449275362},{"x":828,"y":5.808325266214908},{"x":829,"y":5.813953488372093},{"x":830,"y":5.825242718446601},{"x":831,"y":5.830903790087464},{"x":832,"y":5.842259006815969},{"x":833,"y":5.853658536585366},{"x":834,"y":5.865102639296188},{"x":835,"y":5.876591576885406},{"x":836,"y":5.888125613346419},{"x":837,"y":5.893909626719057},{"x":838,"y":5.899705014749262},{"x":839,"y":5.905511811023622},{"x":840,"y":5.905511811023622},{"x":841,"y":5.905511811023622},{"x":842,"y":5.911330049261084},{"x":843,"y":5.911330049261084},{"x":844,"y":5.911330049261084},{"x":845,"y":5.911330049261084},{"x":846,"y":5.911330049261084},{"x":847,"y":5.911330049261084},{"x":848,"y":5.911330049261084},{"x":849,"y":5.905511811023622},{"x":850,"y":5.899705014749262},{"x":851,"y":5.893909626719057},{"x":852,"y":5.893909626719057},{"x":853,"y":5.888125613346419},{"x":854,"y":5.882352941176471},{"x":855,"y":5.876591576885406},{"x":856,"y":5.876591576885406},{"x":857,"y":5.870841487279843},{"x":858,"y":5.870841487279843},{"x":859,"y":5.870841487279843},{"x":860,"y":5.870841487279843},{"x":861,"y":5.870841487279843},{"x":862,"y":5.870841487279843},{"x":863,"y":5.865102639296188},{"x":864,"y":5.865102639296188},{"x":865,"y":5.859375},{"x":866,"y":5.853658536585366},{"x":867,"y":5.847953216374269},{"x":868,"y":5.847953216374269},{"x":869,"y":5.842259006815969},{"x":870,"y":5.842259006815969},{"x":871,"y":5.842259006815969},{"x":872,"y":5.842259006815969},{"x":873,"y":5.842259006815969},{"x":874,"y":5.842259006815969},{"x":875,"y":5.842259006815969},{"x":876,"y":5.842259006815969},{"x":877,"y":5.842259006815969},{"x":878,"y":5.847953216374269},{"x":879,"y":5.847953216374269},{"x":880,"y":5.853658536585366},{"x":881,"y":5.853658536585366},{"x":882,"y":5.853658536585366},{"x":883,"y":5.853658536585366},{"x":884,"y":5.853658536585366},{"x":885,"y":5.853658536585366},{"x":886,"y":5.859375},{"x":887,"y":5.859375},{"x":888,"y":5.859375},{"x":889,"y":5.859375},{"x":890,"y":5.865102639296188},{"x":891,"y":5.865102639296188},{"x":892,"y":5.870841487279843},{"x":893,"y":5.876591576885406},{"x":894,"y":5.888125613346419},{"x":895,"y":5.893909626719057},{"x":896,"y":5.899705014749262},{"x":897,"y":5.905511811023622},{"x":898,"y":5.9171597633136095},{"x":899,"y":5.923000987166831},{"x":900,"y":5.928853754940712},{"x":901,"y":5.934718100890208},{"x":902,"y":5.946481665014867},{"x":903,"y":5.9523809523809526},{"x":904,"y":5.964214711729622},{"x":905,"y":5.970149253731343},{"x":906,"y":5.976095617529881},{"x":907,"y":5.982053838484546},{"x":908,"y":5.9880239520958085},{"x":909,"y":5.994005994005994},{"x":910,"y":6},{"x":911,"y":6},{"x":912,"y":6.006006006006006},{"x":913,"y":6.006006006006006},{"x":914,"y":6.012024048096192},{"x":915,"y":6.012024048096192},{"x":916,"y":6.012024048096192},{"x":917,"y":6.012024048096192},{"x":918,"y":6.018054162487462},{"x":919,"y":6.018054162487462},{"x":920,"y":6.018054162487462},{"x":921,"y":6.018054162487462},{"x":922,"y":6.018054162487462},{"x":923,"y":6.018054162487462},{"x":924,"y":6.024096385542168},{"x":925,"y":6.024096385542168},{"x":926,"y":6.024096385542168},{"x":927,"y":6.024096385542168},{"x":928,"y":6.030150753768845},{"x":929,"y":6.030150753768845},{"x":930,"y":6.030150753768845},{"x":931,"y":6.030150753768845},{"x":932,"y":6.030150753768845},{"x":933,"y":6.030150753768845},{"x":934,"y":6.030150753768845},{"x":935,"y":6.030150753768845},{"x":936,"y":6.030150753768845},{"x":937,"y":6.030150753768845},{"x":938,"y":6.030150753768845},{"x":939,"y":6.030150753768845},{"x":940,"y":6.030150753768845},{"x":941,"y":6.030150753768845},{"x":942,"y":6.036217303822938},{"x":943,"y":6.042296072507553},{"x":944,"y":6.048387096774194},{"x":945,"y":6.048387096774194},{"x":946,"y":6.054490413723512},{"x":947,"y":6.0606060606060606},{"x":948,"y":6.066734074823053},{"x":949,"y":6.072874493927125},{"x":950,"y":6.079027355623101},{"x":951,"y":6.079027355623101},{"x":952,"y":6.085192697768763},{"x":953,"y":6.091370558375635},{"x":954,"y":6.097560975609756},{"x":955,"y":6.103763987792472},{"x":956,"y":6.109979633401222},{"x":957,"y":6.109979633401222},{"x":958,"y":6.109979633401222},{"x":959,"y":6.109979633401222},{"x":960,"y":6.116207951070336},{"x":961,"y":6.116207951070336},{"x":962,"y":6.122448979591836},{"x":963,"y":6.122448979591836},{"x":964,"y":6.128702757916241},{"x":965,"y":6.128702757916241},{"x":966,"y":6.134969325153374},{"x":967,"y":6.134969325153374},{"x":968,"y":6.134969325153374},{"x":969,"y":6.128702757916241},{"x":970,"y":6.122448979591836},{"x":971,"y":6.116207951070336},{"x":972,"y":6.109979633401222},{"x":973,"y":6.097560975609756},{"x":974,"y":6.091370558375635},{"x":975,"y":6.079027355623101},{"x":976,"y":6.079027355623101},{"x":977,"y":6.072874493927125},{"x":978,"y":6.072874493927125},{"x":979,"y":6.072874493927125},{"x":980,"y":6.072874493927125},{"x":981,"y":6.072874493927125},{"x":982,"y":6.072874493927125},{"x":983,"y":6.072874493927125},{"x":984,"y":6.072874493927125},{"x":985,"y":6.072874493927125},{"x":986,"y":6.072874493927125},{"x":987,"y":6.066734074823053},{"x":988,"y":6.066734074823053},{"x":989,"y":6.066734074823053},{"x":990,"y":6.066734074823053},{"x":991,"y":6.066734074823053},{"x":992,"y":6.066734074823053},{"x":993,"y":6.066734074823053},{"x":994,"y":6.066734074823053},{"x":995,"y":6.0606060606060606},{"x":996,"y":6.0606060606060606},{"x":997,"y":6.0606060606060606},{"x":998,"y":6.0606060606060606},{"x":999,"y":6.054490413723512},{"x":1000,"y":6.048387096774194},{"x":1001,"y":6.042296072507553},{"x":1002,"y":6.036217303822938},{"x":1003,"y":6.030150753768845},{"x":1004,"y":6.024096385542168},{"x":1005,"y":6.018054162487462},{"x":1006,"y":6.018054162487462},{"x":1007,"y":6.012024048096192},{"x":1008,"y":6.012024048096192},{"x":1009,"y":6.006006006006006},{"x":1010,"y":6.006006006006006},{"x":1011,"y":6.006006006006006},{"x":1012,"y":6.006006006006006},{"x":1013,"y":6},{"x":1014,"y":6},{"x":1015,"y":6},{"x":1016,"y":6},{"x":1017,"y":6},{"x":1018,"y":6},{"x":1019,"y":6},{"x":1020,"y":6},{"x":1021,"y":6},{"x":1022,"y":6},{"x":1023,"y":6},{"x":1024,"y":6.006006006006006},{"x":1025,"y":6.012024048096192},{"x":1026,"y":6.018054162487462},{"x":1027,"y":6.018054162487462},{"x":1028,"y":6.024096385542168},{"x":1029,"y":6.030150753768845},{"x":1030,"y":6.036217303822938},{"x":1031,"y":6.042296072507553},{"x":1032,"y":6.048387096774194},{"x":1033,"y":6.048387096774194},{"x":1034,"y":6.054490413723512},{"x":1035,"y":6.054490413723512},{"x":1036,"y":6.0606060606060606},{"x":1037,"y":6.0606060606060606},{"x":1038,"y":6.066734074823053},{"x":1039,"y":6.072874493927125},{"x":1040,"y":6.079027355623101},{"x":1041,"y":6.085192697768763},{"x":1042,"y":6.091370558375635},{"x":1043,"y":6.097560975609756},{"x":1044,"y":6.097560975609756},{"x":1045,"y":6.097560975609756},{"x":1046,"y":6.103763987792472},{"x":1047,"y":6.103763987792472},{"x":1048,"y":6.103763987792472},{"x":1049,"y":6.103763987792472},{"x":1050,"y":6.103763987792472},{"x":1051,"y":6.103763987792472},{"x":1052,"y":6.103763987792472},{"x":1053,"y":6.103763987792472},{"x":1054,"y":6.103763987792472},{"x":1055,"y":6.103763987792472},{"x":1056,"y":6.109979633401222},{"x":1057,"y":6.109979633401222},{"x":1058,"y":6.116207951070336},{"x":1059,"y":6.116207951070336},{"x":1060,"y":6.122448979591836},{"x":1061,"y":6.122448979591836},{"x":1062,"y":6.122448979591836},{"x":1063,"y":6.122448979591836},{"x":1064,"y":6.116207951070336},{"x":1065,"y":6.109979633401222},{"x":1066,"y":6.103763987792472},{"x":1067,"y":6.097560975609756},{"x":1068,"y":6.091370558375635},{"x":1069,"y":6.085192697768763},{"x":1070,"y":6.085192697768763},{"x":1071,"y":6.079027355623101},{"x":1072,"y":6.079027355623101},{"x":1073,"y":6.072874493927125},{"x":1074,"y":6.072874493927125},{"x":1075,"y":6.072874493927125},{"x":1076,"y":6.072874493927125},{"x":1077,"y":6.066734074823053},{"x":1078,"y":6.066734074823053},{"x":1079,"y":6.066734074823053},{"x":1080,"y":6.0606060606060606},{"x":1081,"y":6.054490413723512},{"x":1082,"y":6.048387096774194},{"x":1083,"y":6.036217303822938},{"x":1084,"y":6.018054162487462},{"x":1085,"y":5.994005994005994},{"x":1086,"y":5.976095617529881},{"x":1087,"y":5.9523809523809526},{"x":1088,"y":5.9405940594059405},{"x":1089,"y":5.923000987166831},{"x":1090,"y":5.9171597633136095},{"x":1091,"y":5.905511811023622},{"x":1092,"y":5.905511811023622},{"x":1093,"y":5.899705014749262},{"x":1094,"y":5.899705014749262},{"x":1095,"y":5.899705014749262},{"x":1096,"y":5.905511811023622},{"x":1097,"y":5.911330049261084},{"x":1098,"y":5.923000987166831},{"x":1099,"y":5.928853754940712},{"x":1100,"y":5.934718100890208},{"x":1101,"y":5.9405940594059405},{"x":1102,"y":5.946481665014867},{"x":1103,"y":5.9523809523809526},{"x":1104,"y":5.9582919563058585},{"x":1105,"y":5.964214711729622},{"x":1106,"y":5.970149253731343},{"x":1107,"y":5.976095617529881},{"x":1108,"y":5.982053838484546},{"x":1109,"y":5.9880239520958085},{"x":1110,"y":5.994005994005994},{"x":1111,"y":5.994005994005994},{"x":1112,"y":6},{"x":1113,"y":6.006006006006006},{"x":1114,"y":6.012024048096192},{"x":1115,"y":6.012024048096192},{"x":1116,"y":6.012024048096192},{"x":1117,"y":6.012024048096192},{"x":1118,"y":6.018054162487462},{"x":1119,"y":6.018054162487462},{"x":1120,"y":6.024096385542168},{"x":1121,"y":6.024096385542168},{"x":1122,"y":6.030150753768845},{"x":1123,"y":6.030150753768845},{"x":1124,"y":6.042296072507553},{"x":1125,"y":6.048387096774194},{"x":1126,"y":6.054490413723512},{"x":1127,"y":6.0606060606060606},{"x":1128,"y":6.066734074823053},{"x":1129,"y":6.072874493927125},{"x":1130,"y":6.079027355623101},{"x":1131,"y":6.079027355623101},{"x":1132,"y":6.079027355623101},{"x":1133,"y":6.079027355623101},{"x":1134,"y":6.079027355623101},{"x":1135,"y":6.072874493927125},{"x":1136,"y":6.066734074823053},{"x":1137,"y":6.0606060606060606},{"x":1138,"y":6.054490413723512},{"x":1139,"y":6.048387096774194},{"x":1140,"y":6.042296072507553},{"x":1141,"y":6.030150753768845},{"x":1142,"y":6.024096385542168},{"x":1143,"y":6.018054162487462},{"x":1144,"y":6.012024048096192},{"x":1145,"y":6.006006006006006},{"x":1146,"y":6},{"x":1147,"y":5.994005994005994},{"x":1148,"y":5.9880239520958085},{"x":1149,"y":5.982053838484546},{"x":1150,"y":5.982053838484546},{"x":1151,"y":5.982053838484546},{"x":1152,"y":5.982053838484546},{"x":1153,"y":5.976095617529881},{"x":1154,"y":5.976095617529881},{"x":1155,"y":5.976095617529881},{"x":1156,"y":5.976095617529881},{"x":1157,"y":5.970149253731343},{"x":1158,"y":5.970149253731343},{"x":1159,"y":5.964214711729622},{"x":1160,"y":5.970149253731343},{"x":1161,"y":5.970149253731343},{"x":1162,"y":5.976095617529881},{"x":1163,"y":5.976095617529881},{"x":1164,"y":5.982053838484546},{"x":1165,"y":5.982053838484546},{"x":1166,"y":5.9880239520958085},{"x":1167,"y":5.9880239520958085},{"x":1168,"y":5.9880239520958085},{"x":1169,"y":5.9880239520958085},{"x":1170,"y":5.9880239520958085},{"x":1171,"y":5.9880239520958085},{"x":1172,"y":5.9880239520958085},{"x":1173,"y":5.9880239520958085},{"x":1174,"y":5.994005994005994},{"x":1175,"y":5.994005994005994},{"x":1176,"y":6},{"x":1177,"y":6.006006006006006},{"x":1178,"y":6.012024048096192},{"x":1179,"y":6.018054162487462},{"x":1180,"y":6.024096385542168},{"x":1181,"y":6.024096385542168},{"x":1182,"y":6.030150753768845},{"x":1183,"y":6.036217303822938},{"x":1184,"y":6.042296072507553},{"x":1185,"y":6.042296072507553},{"x":1186,"y":6.048387096774194},{"x":1187,"y":6.048387096774194},{"x":1188,"y":6.054490413723512},{"x":1189,"y":6.0606060606060606},{"x":1190,"y":6.066734074823053},{"x":1191,"y":6.072874493927125},{"x":1192,"y":6.079027355623101},{"x":1193,"y":6.079027355623101},{"x":1194,"y":6.085192697768763},{"x":1195,"y":6.091370558375635},{"x":1196,"y":6.097560975609756},{"x":1197,"y":6.103763987792472},{"x":1198,"y":6.109979633401222},{"x":1199,"y":6.116207951070336},{"x":1200,"y":6.122448979591836},{"x":1201,"y":6.122448979591836},{"x":1202,"y":6.128702757916241},{"x":1203,"y":6.128702757916241},{"x":1204,"y":6.134969325153374},{"x":1205,"y":6.134969325153374},{"x":1206,"y":6.134969325153374},{"x":1207,"y":6.134969325153374},{"x":1208,"y":6.134969325153374},{"x":1209,"y":6.134969325153374},{"x":1210,"y":6.134969325153374},{"x":1211,"y":6.134969325153374},{"x":1212,"y":6.128702757916241},{"x":1213,"y":6.116207951070336},{"x":1214,"y":6.109979633401222},{"x":1215,"y":6.097560975609756},{"x":1216,"y":6.091370558375635},{"x":1217,"y":6.085192697768763},{"x":1218,"y":6.079027355623101},{"x":1219,"y":6.072874493927125},{"x":1220,"y":6.072874493927125},{"x":1221,"y":6.066734074823053},{"x":1222,"y":6.0606060606060606},{"x":1223,"y":6.054490413723512},{"x":1224,"y":6.048387096774194},{"x":1225,"y":6.036217303822938},{"x":1226,"y":6.024096385542168},{"x":1227,"y":6.006006006006006},{"x":1228,"y":5.976095617529881},{"x":1229,"y":5.946481665014867},{"x":1230,"y":5.9171597633136095},{"x":1231,"y":5.882352941176471},{"x":1232,"y":5.859375},{"x":1233,"y":5.836575875486382},{"x":1234,"y":5.819592628516004},{"x":1235,"y":5.802707930367505},{"x":1236,"y":5.802707930367505},{"x":1237,"y":5.797101449275362},{"x":1238,"y":5.802707930367505},{"x":1239,"y":5.802707930367505},{"x":1240,"y":5.813953488372093},{"x":1241,"y":5.819592628516004},{"x":1242,"y":5.830903790087464},{"x":1243,"y":5.836575875486382},{"x":1244,"y":5.847953216374269},{"x":1245,"y":5.853658536585366},{"x":1246,"y":5.865102639296188},{"x":1247,"y":5.870841487279843},{"x":1248,"y":5.882352941176471},{"x":1249,"y":5.893909626719057},{"x":1250,"y":5.905511811023622},{"x":1251,"y":5.911330049261084},{"x":1252,"y":5.9171597633136095},{"x":1253,"y":5.923000987166831},{"x":1254,"y":5.928853754940712},{"x":1255,"y":5.934718100890208},{"x":1256,"y":5.9405940594059405},{"x":1257,"y":5.946481665014867},{"x":1258,"y":5.9523809523809526},{"x":1259,"y":5.9582919563058585},{"x":1260,"y":5.9582919563058585},{"x":1261,"y":5.9582919563058585},{"x":1262,"y":5.964214711729622},{"x":1263,"y":5.964214711729622},{"x":1264,"y":5.970149253731343},{"x":1265,"y":5.976095617529881},{"x":1266,"y":5.982053838484546},{"x":1267,"y":5.9880239520958085},{"x":1268,"y":5.994005994005994},{"x":1269,"y":5.994005994005994},{"x":1270,"y":6},{"x":1271,"y":6},{"x":1272,"y":6.006006006006006},{"x":1273,"y":6.006006006006006},{"x":1274,"y":6.012024048096192},{"x":1275,"y":6.018054162487462},{"x":1276,"y":6.030150753768845},{"x":1277,"y":6.036217303822938},{"x":1278,"y":6.042296072507553},{"x":1279,"y":6.048387096774194},{"x":1280,"y":6.054490413723512},{"x":1281,"y":6.0606060606060606},{"x":1282,"y":6.066734074823053},{"x":1283,"y":6.066734074823053},{"x":1284,"y":6.066734074823053},{"x":1285,"y":6.0606060606060606},{"x":1286,"y":6.0606060606060606},{"x":1287,"y":6.054490413723512},{"x":1288,"y":6.054490413723512},{"x":1289,"y":6.048387096774194},{"x":1290,"y":6.042296072507553},{"x":1291,"y":6.036217303822938},{"x":1292,"y":6.030150753768845},{"x":1293,"y":6.024096385542168},{"x":1294,"y":6.018054162487462},{"x":1295,"y":6.012024048096192},{"x":1296,"y":6.006006006006006},{"x":1297,"y":6},{"x":1298,"y":6},{"x":1299,"y":6},{"x":1300,"y":6},{"x":1301,"y":6},{"x":1302,"y":6.006006006006006},{"x":1303,"y":6.006006006006006},{"x":1304,"y":6.012024048096192},{"x":1305,"y":6.012024048096192},{"x":1306,"y":6.018054162487462},{"x":1307,"y":6.018054162487462},{"x":1308,"y":6.024096385542168},{"x":1309,"y":6.024096385542168},{"x":1310,"y":6.030150753768845},{"x":1311,"y":6.030150753768845},{"x":1312,"y":6.036217303822938},{"x":1313,"y":6.042296072507553},{"x":1314,"y":6.048387096774194},{"x":1315,"y":6.054490413723512},{"x":1316,"y":6.0606060606060606},{"x":1317,"y":6.066734074823053},{"x":1318,"y":6.072874493927125},{"x":1319,"y":6.072874493927125},{"x":1320,"y":6.079027355623101},{"x":1321,"y":6.079027355623101},{"x":1322,"y":6.079027355623101},{"x":1323,"y":6.079027355623101},{"x":1324,"y":6.079027355623101},{"x":1325,"y":6.079027355623101},{"x":1326,"y":6.072874493927125},{"x":1327,"y":6.066734074823053},{"x":1328,"y":6.0606060606060606},{"x":1329,"y":6.054490413723512},{"x":1330,"y":6.048387096774194},{"x":1331,"y":6.042296072507553},{"x":1332,"y":6.036217303822938},{"x":1333,"y":6.030150753768845},{"x":1334,"y":6.024096385542168},{"x":1335,"y":6.012024048096192},{"x":1336,"y":6.006006006006006},{"x":1337,"y":6},{"x":1338,"y":5.994005994005994},{"x":1339,"y":5.982053838484546},{"x":1340,"y":5.976095617529881},{"x":1341,"y":5.964214711729622},{"x":1342,"y":5.964214711729622},{"x":1343,"y":5.9582919563058585},{"x":1344,"y":5.9582919563058585},{"x":1345,"y":5.9523809523809526},{"x":1346,"y":5.9523809523809526},{"x":1347,"y":5.946481665014867},{"x":1348,"y":5.946481665014867},{"x":1349,"y":5.946481665014867},{"x":1350,"y":5.946481665014867},{"x":1351,"y":5.946481665014867},{"x":1352,"y":5.946481665014867},{"x":1353,"y":5.9405940594059405},{"x":1354,"y":5.9405940594059405},{"x":1355,"y":5.934718100890208},{"x":1356,"y":5.934718100890208},{"x":1357,"y":5.934718100890208},{"x":1358,"y":5.934718100890208},{"x":1359,"y":5.928853754940712},{"x":1360,"y":5.928853754940712},{"x":1361,"y":5.923000987166831},{"x":1362,"y":5.9171597633136095},{"x":1363,"y":5.911330049261084},{"x":1364,"y":5.899705014749262},{"x":1365,"y":5.888125613346419},{"x":1366,"y":5.865102639296188},{"x":1367,"y":5.842259006815969},{"x":1368,"y":5.813953488372093},{"x":1369,"y":5.785920925747349},{"x":1370,"y":5.763688760806916},{"x":1371,"y":5.736137667304015},{"x":1372,"y":5.714285714285714},{"x":1373,"y":5.6872037914691935},{"x":1374,"y":5.660377358490567},{"x":1375,"y":5.628517823639775},{"x":1376,"y":5.602240896358543},{"x":1377,"y":5.571030640668524},{"x":1378,"y":5.550416281221091},{"x":1379,"y":5.529953917050691},{"x":1380,"y":5.519779208831647},{"x":1381,"y":5.504587155963303},{"x":1382,"y":5.4945054945054945},{"x":1383,"y":5.484460694698355},{"x":1384,"y":5.479452054794521},{"x":1385,"y":5.474452554744525},{"x":1386,"y":5.474452554744525},{"x":1387,"y":5.469462169553327},{"x":1388,"y":5.474452554744525},{"x":1389,"y":5.474452554744525},{"x":1390,"y":5.479452054794521},{"x":1391,"y":5.484460694698355},{"x":1392,"y":5.4945054945054945},{"x":1393,"y":5.499541704857928},{"x":1394,"y":5.509641873278237},{"x":1395,"y":5.514705882352941},{"x":1396,"y":5.519779208831647},{"x":1397,"y":5.524861878453039},{"x":1398,"y":5.529953917050691},{"x":1399,"y":5.535055350553505},{"x":1400,"y":5.54016620498615},{"x":1401,"y":5.54016620498615},{"x":1402,"y":5.545286506469501},{"x":1403,"y":5.550416281221091},{"x":1404,"y":5.560704355885079},{"x":1405,"y":5.565862708719852},{"x":1406,"y":5.5762081784386615},{"x":1407,"y":5.5813953488372094},{"x":1408,"y":5.591798695246971},{"x":1409,"y":5.597014925373134},{"x":1410,"y":5.607476635514019},{"x":1411,"y":5.612722170252573},{"x":1412,"y":5.617977528089888},{"x":1413,"y":5.617977528089888},{"x":1414,"y":5.623242736644799},{"x":1415,"y":5.623242736644799},{"x":1416,"y":5.628517823639775},{"x":1417,"y":5.628517823639775},{"x":1418,"y":5.633802816901408},{"x":1419,"y":5.633802816901408},{"x":1420,"y":5.639097744360902},{"x":1421,"y":5.639097744360902},{"x":1422,"y":5.644402634054562},{"x":1423,"y":5.644402634054562},{"x":1424,"y":5.644402634054562},{"x":1425,"y":5.644402634054562},{"x":1426,"y":5.644402634054562},{"x":1427,"y":5.644402634054562},{"x":1428,"y":5.649717514124294},{"x":1429,"y":5.649717514124294},{"x":1430,"y":5.649717514124294},{"x":1431,"y":5.649717514124294},{"x":1432,"y":5.649717514124294},{"x":1433,"y":5.649717514124294},{"x":1434,"y":5.649717514124294},{"x":1435,"y":5.644402634054562},{"x":1436,"y":5.644402634054562},{"x":1437,"y":5.639097744360902},{"x":1438,"y":5.639097744360902},{"x":1439,"y":5.639097744360902},{"x":1440,"y":5.644402634054562},{"x":1441,"y":5.644402634054562},{"x":1442,"y":5.649717514124294},{"x":1443,"y":5.649717514124294},{"x":1444,"y":5.655042412818096},{"x":1445,"y":5.655042412818096},{"x":1446,"y":5.655042412818096},{"x":1447,"y":5.655042412818096},{"x":1448,"y":5.660377358490567},{"x":1449,"y":5.660377358490567},{"x":1450,"y":5.660377358490567},{"x":1451,"y":5.660377358490567},{"x":1452,"y":5.665722379603399},{"x":1453,"y":5.665722379603399},{"x":1454,"y":5.665722379603399},{"x":1455,"y":5.665722379603399},{"x":1456,"y":5.671077504725898},{"x":1457,"y":5.671077504725898},{"x":1458,"y":5.671077504725898},{"x":1459,"y":5.671077504725898},{"x":1460,"y":5.676442762535477},{"x":1461,"y":5.681818181818182},{"x":1462,"y":5.6872037914691935},{"x":1463,"y":5.692599620493359},{"x":1464,"y":5.698005698005699},{"x":1465,"y":5.7034220532319395},{"x":1466,"y":5.708848715509039},{"x":1467,"y":5.714285714285714},{"x":1468,"y":5.7251908396946565},{"x":1469,"y":5.730659025787965},{"x":1470,"y":5.741626794258374},{"x":1471,"y":5.752636625119846},{"x":1472,"y":5.763688760806916},{"x":1473,"y":5.7747834456207885},{"x":1474,"y":5.785920925747349},{"x":1475,"y":5.7915057915057915},{"x":1476,"y":5.802707930367505},{"x":1477,"y":5.813953488372093},{"x":1478,"y":5.830903790087464},{"x":1479,"y":5.842259006815969},{"x":1480,"y":5.859375},{"x":1481,"y":5.870841487279843},{"x":1482,"y":5.882352941176471},{"x":1483,"y":5.888125613346419},{"x":1484,"y":5.893909626719057},{"x":1485,"y":5.899705014749262},{"x":1486,"y":5.905511811023622},{"x":1487,"y":5.911330049261084},{"x":1488,"y":5.9171597633136095},{"x":1489,"y":5.9171597633136095},{"x":1490,"y":5.9171597633136095},{"x":1491,"y":5.9171597633136095},{"x":1492,"y":5.923000987166831},{"x":1493,"y":5.923000987166831},{"x":1494,"y":5.923000987166831},{"x":1495,"y":5.9171597633136095},{"x":1496,"y":5.9171597633136095},{"x":1497,"y":5.9171597633136095},{"x":1498,"y":5.9171597633136095},{"x":1499,"y":5.9171597633136095},{"x":1500,"y":5.9171597633136095},{"x":1501,"y":5.911330049261084},{"x":1502,"y":5.899705014749262},{"x":1503,"y":5.882352941176471},{"x":1504,"y":5.876591576885406},{"x":1505,"y":5.870841487279843},{"x":1506,"y":5.865102639296188},{"x":1507,"y":5.859375},{"x":1508,"y":5.859375},{"x":1509,"y":5.853658536585366},{"x":1510,"y":5.853658536585366},{"x":1511,"y":5.847953216374269},{"x":1512,"y":5.847953216374269},{"x":1513,"y":5.842259006815969},{"x":1514,"y":5.825242718446601},{"x":1515,"y":5.808325266214908},{"x":1516,"y":5.7915057915057915},{"x":1517,"y":5.7747834456207885},{"x":1518,"y":5.763688760806916},{"x":1519,"y":5.752636625119846},{"x":1520,"y":5.74712643678161},{"x":1521,"y":5.741626794258374},{"x":1522,"y":5.741626794258374},{"x":1523,"y":5.736137667304015},{"x":1524,"y":5.736137667304015},{"x":1525,"y":5.730659025787965},{"x":1526,"y":5.736137667304015},{"x":1527,"y":5.736137667304015},{"x":1528,"y":5.741626794258374},{"x":1529,"y":5.74712643678161},{"x":1530,"y":5.758157389635317},{"x":1531,"y":5.769230769230769},{"x":1532,"y":5.780346820809248},{"x":1533,"y":5.785920925747349},{"x":1534,"y":5.7915057915057915},{"x":1535,"y":5.797101449275362},{"x":1536,"y":5.813953488372093},{"x":1537,"y":5.825242718446601},{"x":1538,"y":5.853658536585366},{"x":1539,"y":5.876591576885406},{"x":1540,"y":5.905511811023622},{"x":1541,"y":5.934718100890208},{"x":1542,"y":5.9582919563058585},{"x":1543,"y":5.976095617529881},{"x":1544,"y":5.994005994005994},{"x":1545,"y":6.006006006006006},{"x":1546,"y":6.018054162487462},{"x":1547,"y":6.030150753768845},{"x":1548,"y":6.042296072507553},{"x":1549,"y":6.054490413723512},{"x":1550,"y":6.0606060606060606},{"x":1551,"y":6.066734074823053},{"x":1552,"y":6.072874493927125},{"x":1553,"y":6.079027355623101},{"x":1554,"y":6.085192697768763},{"x":1555,"y":6.085192697768763},{"x":1556,"y":6.091370558375635},{"x":1557,"y":6.097560975609756},{"x":1558,"y":6.103763987792472},{"x":1559,"y":6.103763987792472},{"x":1560,"y":6.103763987792472},{"x":1561,"y":6.103763987792472},{"x":1562,"y":6.103763987792472},{"x":1563,"y":6.103763987792472},{"x":1564,"y":6.103763987792472},{"x":1565,"y":6.103763987792472},{"x":1566,"y":6.103763987792472},{"x":1567,"y":6.097560975609756},{"x":1568,"y":6.097560975609756},{"x":1569,"y":6.091370558375635},{"x":1570,"y":6.091370558375635},{"x":1571,"y":6.085192697768763},{"x":1572,"y":6.085192697768763},{"x":1573,"y":6.079027355623101},{"x":1574,"y":6.079027355623101},{"x":1575,"y":6.072874493927125},{"x":1576,"y":6.066734074823053},{"x":1577,"y":6.0606060606060606},{"x":1578,"y":6.054490413723512},{"x":1579,"y":6.048387096774194},{"x":1580,"y":6.048387096774194},{"x":1581,"y":6.042296072507553},{"x":1582,"y":6.042296072507553},{"x":1583,"y":6.042296072507553},{"x":1584,"y":6.042296072507553},{"x":1585,"y":6.042296072507553},{"x":1586,"y":6.042296072507553},{"x":1587,"y":6.042296072507553},{"x":1588,"y":6.042296072507553},{"x":1589,"y":6.042296072507553},{"x":1590,"y":6.042296072507553},{"x":1591,"y":6.042296072507553},{"x":1592,"y":6.042296072507553},{"x":1593,"y":6.036217303822938},{"x":1594,"y":6.030150753768845},{"x":1595,"y":6.024096385542168},{"x":1596,"y":6.024096385542168},{"x":1597,"y":6.024096385542168},{"x":1598,"y":6.024096385542168},{"x":1599,"y":6.018054162487462},{"x":1600,"y":6.018054162487462},{"x":1601,"y":6.012024048096192},{"x":1602,"y":6.006006006006006},{"x":1603,"y":6},{"x":1604,"y":6},{"x":1605,"y":5.994005994005994},{"x":1606,"y":5.994005994005994},{"x":1607,"y":5.9880239520958085},{"x":1608,"y":5.9880239520958085},{"x":1609,"y":5.9880239520958085},{"x":1610,"y":5.9880239520958085},{"x":1611,"y":5.9880239520958085},{"x":1612,"y":5.9880239520958085},{"x":1613,"y":5.9880239520958085},{"x":1614,"y":5.9880239520958085},{"x":1615,"y":5.982053838484546},{"x":1616,"y":5.976095617529881},{"x":1617,"y":5.964214711729622},{"x":1618,"y":5.964214711729622},{"x":1619,"y":5.9582919563058585},{"x":1620,"y":5.9582919563058585},{"x":1621,"y":5.9523809523809526},{"x":1622,"y":5.9582919563058585},{"x":1623,"y":5.9582919563058585},{"x":1624,"y":5.964214711729622},{"x":1625,"y":5.964214711729622},{"x":1626,"y":5.970149253731343},{"x":1627,"y":5.970149253731343},{"x":1628,"y":5.976095617529881},{"x":1629,"y":5.976095617529881},{"x":1630,"y":5.976095617529881},{"x":1631,"y":5.976095617529881},{"x":1632,"y":5.982053838484546},{"x":1633,"y":5.982053838484546},{"x":1634,"y":5.982053838484546},{"x":1635,"y":5.982053838484546},{"x":1636,"y":5.982053838484546},{"x":1637,"y":5.976095617529881},{"x":1638,"y":5.976095617529881},{"x":1639,"y":5.970149253731343},{"x":1640,"y":5.964214711729622},{"x":1641,"y":5.9582919563058585},{"x":1642,"y":5.9582919563058585},{"x":1643,"y":5.9523809523809526},{"x":1644,"y":5.9523809523809526},{"x":1645,"y":5.946481665014867},{"x":1646,"y":5.946481665014867},{"x":1647,"y":5.946481665014867},{"x":1648,"y":5.946481665014867},{"x":1649,"y":5.9405940594059405},{"x":1650,"y":5.9405940594059405},{"x":1651,"y":5.934718100890208},{"x":1652,"y":5.934718100890208},{"x":1653,"y":5.928853754940712},{"x":1654,"y":5.923000987166831},{"x":1655,"y":5.9171597633136095},{"x":1656,"y":5.905511811023622},{"x":1657,"y":5.888125613346419},{"x":1658,"y":5.876591576885406},{"x":1659,"y":5.859375},{"x":1660,"y":5.847953216374269},{"x":1661,"y":5.830903790087464},{"x":1662,"y":5.819592628516004},{"x":1663,"y":5.802707930367505},{"x":1664,"y":5.785920925747349},{"x":1665,"y":5.769230769230769},{"x":1666,"y":5.763688760806916},{"x":1667,"y":5.752636625119846},{"x":1668,"y":5.752636625119846},{"x":1669,"y":5.74712643678161},{"x":1670,"y":5.752636625119846},{"x":1671,"y":5.758157389635317},{"x":1672,"y":5.763688760806916},{"x":1673,"y":5.769230769230769},{"x":1674,"y":5.7747834456207885},{"x":1675,"y":5.780346820809248},{"x":1676,"y":5.785920925747349},{"x":1677,"y":5.785920925747349},{"x":1678,"y":5.7915057915057915},{"x":1679,"y":5.7915057915057915},{"x":1680,"y":5.797101449275362},{"x":1681,"y":5.797101449275362},{"x":1682,"y":5.802707930367505},{"x":1683,"y":5.802707930367505},{"x":1684,"y":5.808325266214908},{"x":1685,"y":5.808325266214908},{"x":1686,"y":5.819592628516004},{"x":1687,"y":5.825242718446601},{"x":1688,"y":5.830903790087464},{"x":1689,"y":5.836575875486382},{"x":1690,"y":5.847953216374269},{"x":1691,"y":5.853658536585366},{"x":1692,"y":5.859375},{"x":1693,"y":5.865102639296188},{"x":1694,"y":5.870841487279843},{"x":1695,"y":5.876591576885406},{"x":1696,"y":5.882352941176471},{"x":1697,"y":5.882352941176471},{"x":1698,"y":5.888125613346419},{"x":1699,"y":5.888125613346419},{"x":1700,"y":5.893909626719057},{"x":1701,"y":5.899705014749262},{"x":1702,"y":5.911330049261084},{"x":1703,"y":5.923000987166831},{"x":1704,"y":5.934718100890208},{"x":1705,"y":5.9405940594059405},{"x":1706,"y":5.9523809523809526},{"x":1707,"y":5.9582919563058585},{"x":1708,"y":5.970149253731343},{"x":1709,"y":5.976095617529881},{"x":1710,"y":5.982053838484546},{"x":1711,"y":5.9880239520958085},{"x":1712,"y":5.9880239520958085},{"x":1713,"y":5.9880239520958085},{"x":1714,"y":5.9880239520958085},{"x":1715,"y":5.982053838484546},{"x":1716,"y":5.982053838484546},{"x":1717,"y":5.976095617529881},{"x":1718,"y":5.970149253731343},{"x":1719,"y":5.9582919563058585},{"x":1720,"y":5.9523809523809526},{"x":1721,"y":5.9405940594059405},{"x":1722,"y":5.934718100890208},{"x":1723,"y":5.923000987166831},{"x":1724,"y":5.9171597633136095},{"x":1725,"y":5.911330049261084},{"x":1726,"y":5.911330049261084},{"x":1727,"y":5.905511811023622},{"x":1728,"y":5.905511811023622},{"x":1729,"y":5.899705014749262},{"x":1730,"y":5.899705014749262},{"x":1731,"y":5.899705014749262},{"x":1732,"y":5.899705014749262},{"x":1733,"y":5.899705014749262},{"x":1734,"y":5.899705014749262},{"x":1735,"y":5.893909626719057},{"x":1736,"y":5.893909626719057},{"x":1737,"y":5.888125613346419},{"x":1738,"y":5.888125613346419},{"x":1739,"y":5.888125613346419},{"x":1740,"y":5.893909626719057},{"x":1741,"y":5.893909626719057},{"x":1742,"y":5.893909626719057},{"x":1743,"y":5.893909626719057},{"x":1744,"y":5.893909626719057},{"x":1745,"y":5.893909626719057},{"x":1746,"y":5.893909626719057},{"x":1747,"y":5.893909626719057},{"x":1748,"y":5.893909626719057},{"x":1749,"y":5.893909626719057},{"x":1750,"y":5.893909626719057},{"x":1751,"y":5.893909626719057},{"x":1752,"y":5.893909626719057},{"x":1753,"y":5.888125613346419},{"x":1754,"y":5.888125613346419},{"x":1755,"y":5.882352941176471},{"x":1756,"y":5.882352941176471},{"x":1757,"y":5.876591576885406},{"x":1758,"y":5.876591576885406},{"x":1759,"y":5.870841487279843},{"x":1760,"y":5.870841487279843},{"x":1761,"y":5.865102639296188},{"x":1762,"y":5.870841487279843},{"x":1763,"y":5.870841487279843},{"x":1764,"y":5.882352941176471},{"x":1765,"y":5.888125613346419},{"x":1766,"y":5.899705014749262},{"x":1767,"y":5.911330049261084},{"x":1768,"y":5.923000987166831},{"x":1769,"y":5.934718100890208},{"x":1770,"y":5.9405940594059405},{"x":1771,"y":5.946481665014867},{"x":1772,"y":5.946481665014867},{"x":1773,"y":5.946481665014867},{"x":1774,"y":5.946481665014867},{"x":1775,"y":5.946481665014867},{"x":1776,"y":5.946481665014867},{"x":1777,"y":5.9405940594059405},{"x":1778,"y":5.9405940594059405},{"x":1779,"y":5.934718100890208},{"x":1780,"y":5.934718100890208},{"x":1781,"y":5.934718100890208},{"x":1782,"y":5.934718100890208},{"x":1783,"y":5.928853754940712},{"x":1784,"y":5.928853754940712},{"x":1785,"y":5.928853754940712},{"x":1786,"y":5.928853754940712},{"x":1787,"y":5.928853754940712},{"x":1788,"y":5.928853754940712},{"x":1789,"y":5.928853754940712},{"x":1790,"y":5.928853754940712},{"x":1791,"y":5.923000987166831},{"x":1792,"y":5.923000987166831},{"x":1793,"y":5.9171597633136095},{"x":1794,"y":5.9171597633136095},{"x":1795,"y":5.911330049261084},{"x":1796,"y":5.911330049261084},{"x":1797,"y":5.905511811023622},{"x":1798,"y":5.905511811023622},{"x":1799,"y":5.899705014749262},{"x":1800,"y":5.899705014749262},{"x":1801,"y":5.893909626719057},{"x":1802,"y":5.893909626719057},{"x":1803,"y":5.888125613346419},{"x":1804,"y":5.888125613346419},{"x":1805,"y":5.882352941176471},{"x":1806,"y":5.882352941176471},{"x":1807,"y":5.882352941176471},{"x":1808,"y":5.882352941176471},{"x":1809,"y":5.876591576885406},{"x":1810,"y":5.876591576885406},{"x":1811,"y":5.876591576885406},{"x":1812,"y":5.882352941176471},{"x":1813,"y":5.882352941176471},{"x":1814,"y":5.888125613346419},{"x":1815,"y":5.888125613346419},{"x":1816,"y":5.905511811023622},{"x":1817,"y":5.9171597633136095},{"x":1818,"y":5.9405940594059405},{"x":1819,"y":5.964214711729622},{"x":1820,"y":5.982053838484546},{"x":1821,"y":5.994005994005994},{"x":1822,"y":6.006006006006006},{"x":1823,"y":6.018054162487462},{"x":1824,"y":6.024096385542168},{"x":1825,"y":6.030150753768845},{"x":1826,"y":6.036217303822938},{"x":1827,"y":6.042296072507553},{"x":1828,"y":6.042296072507553},{"x":1829,"y":6.042296072507553},{"x":1830,"y":6.048387096774194},{"x":1831,"y":6.048387096774194},{"x":1832,"y":6.048387096774194},{"x":1833,"y":6.048387096774194},{"x":1834,"y":6.048387096774194},{"x":1835,"y":6.048387096774194},{"x":1836,"y":6.054490413723512},{"x":1837,"y":6.054490413723512},{"x":1838,"y":6.0606060606060606},{"x":1839,"y":6.0606060606060606},{"x":1840,"y":6.066734074823053},{"x":1841,"y":6.066734074823053},{"x":1842,"y":6.079027355623101},{"x":1843,"y":6.085192697768763},{"x":1844,"y":6.097560975609756},{"x":1845,"y":6.103763987792472},{"x":1846,"y":6.109979633401222},{"x":1847,"y":6.116207951070336},{"x":1848,"y":6.122448979591836},{"x":1849,"y":6.122448979591836},{"x":1850,"y":6.128702757916241},{"x":1851,"y":6.128702757916241},{"x":1852,"y":6.134969325153374},{"x":1853,"y":6.134969325153374},{"x":1854,"y":6.141248720573183},{"x":1855,"y":6.141248720573183},{"x":1856,"y":6.147540983606557},{"x":1857,"y":6.147540983606557},{"x":1858,"y":6.147540983606557},{"x":1859,"y":6.147540983606557},{"x":1860,"y":6.147540983606557},{"x":1861,"y":6.141248720573183},{"x":1862,"y":6.134969325153374},{"x":1863,"y":6.128702757916241},{"x":1864,"y":6.122448979591836},{"x":1865,"y":6.116207951070336},{"x":1866,"y":6.109979633401222},{"x":1867,"y":6.097560975609756},{"x":1868,"y":6.091370558375635},{"x":1869,"y":6.079027355623101},{"x":1870,"y":6.079027355623101},{"x":1871,"y":6.072874493927125},{"x":1872,"y":6.079027355623101},{"x":1873,"y":6.085192697768763},{"x":1874,"y":6.091370558375635},{"x":1875,"y":6.097560975609756},{"x":1876,"y":6.103763987792472},{"x":1877,"y":6.109979633401222},{"x":1878,"y":6.109979633401222},{"x":1879,"y":6.109979633401222},{"x":1880,"y":6.109979633401222},{"x":1881,"y":6.103763987792472},{"x":1882,"y":6.103763987792472},{"x":1883,"y":6.103763987792472},{"x":1884,"y":6.103763987792472},{"x":1885,"y":6.097560975609756},{"x":1886,"y":6.091370558375635},{"x":1887,"y":6.085192697768763},{"x":1888,"y":6.085192697768763},{"x":1889,"y":6.079027355623101},{"x":1890,"y":6.072874493927125},{"x":1891,"y":6.066734074823053},{"x":1892,"y":6.066734074823053},{"x":1893,"y":6.066734074823053},{"x":1894,"y":6.072874493927125},{"x":1895,"y":6.072874493927125},{"x":1896,"y":6.079027355623101},{"x":1897,"y":6.079027355623101},{"x":1898,"y":6.079027355623101},{"x":1899,"y":6.079027355623101},{"x":1900,"y":6.072874493927125},{"x":1901,"y":6.066734074823053},{"x":1902,"y":6.042296072507553},{"x":1903,"y":6.018054162487462},{"x":1904,"y":6},{"x":1905,"y":5.982053838484546},{"x":1906,"y":5.970149253731343},{"x":1907,"y":5.9582919563058585},{"x":1908,"y":5.9523809523809526},{"x":1909,"y":5.946481665014867},{"x":1910,"y":5.946481665014867},{"x":1911,"y":5.9405940594059405},{"x":1912,"y":5.9405940594059405},{"x":1913,"y":5.9405940594059405},{"x":1914,"y":5.9405940594059405},{"x":1915,"y":5.9405940594059405},{"x":1916,"y":5.9405940594059405},{"x":1917,"y":5.934718100890208},{"x":1918,"y":5.9405940594059405},{"x":1919,"y":5.9405940594059405},{"x":1920,"y":5.9405940594059405},{"x":1921,"y":5.9405940594059405},{"x":1922,"y":5.946481665014867},{"x":1923,"y":5.9523809523809526},{"x":1924,"y":5.9582919563058585},{"x":1925,"y":5.9582919563058585},{"x":1926,"y":5.9582919563058585},{"x":1927,"y":5.9523809523809526},{"x":1928,"y":5.946481665014867},{"x":1929,"y":5.9405940594059405},{"x":1930,"y":5.9405940594059405},{"x":1931,"y":5.9405940594059405},{"x":1932,"y":5.9405940594059405},{"x":1933,"y":5.934718100890208},{"x":1934,"y":5.934718100890208},{"x":1935,"y":5.928853754940712},{"x":1936,"y":5.928853754940712},{"x":1937,"y":5.923000987166831},{"x":1938,"y":5.923000987166831},{"x":1939,"y":5.9171597633136095},{"x":1940,"y":5.9171597633136095},{"x":1941,"y":5.911330049261084},{"x":1942,"y":5.911330049261084},{"x":1943,"y":5.911330049261084},{"x":1944,"y":5.911330049261084},{"x":1945,"y":5.905511811023622},{"x":1946,"y":5.899705014749262},{"x":1947,"y":5.888125613346419},{"x":1948,"y":5.882352941176471},{"x":1949,"y":5.870841487279843},{"x":1950,"y":5.870841487279843},{"x":1951,"y":5.865102639296188},{"x":1952,"y":5.865102639296188},{"x":1953,"y":5.859375},{"x":1954,"y":5.859375},{"x":1955,"y":5.859375},{"x":1956,"y":5.870841487279843},{"x":1957,"y":5.876591576885406},{"x":1958,"y":5.893909626719057},{"x":1959,"y":5.905511811023622},{"x":1960,"y":5.928853754940712},{"x":1961,"y":5.946481665014867},{"x":1962,"y":5.964214711729622},{"x":1963,"y":5.982053838484546},{"x":1964,"y":5.994005994005994},{"x":1965,"y":6.006006006006006},{"x":1966,"y":6.018054162487462},{"x":1967,"y":6.024096385542168},{"x":1968,"y":6.030150753768845},{"x":1969,"y":6.036217303822938},{"x":1970,"y":6.042296072507553},{"x":1971,"y":6.042296072507553},{"x":1972,"y":6.042296072507553},{"x":1973,"y":6.042296072507553},{"x":1974,"y":6.048387096774194},{"x":1975,"y":6.048387096774194},{"x":1976,"y":6.048387096774194},{"x":1977,"y":6.048387096774194},{"x":1978,"y":6.048387096774194},{"x":1979,"y":6.048387096774194},{"x":1980,"y":6.048387096774194},{"x":1981,"y":6.048387096774194},{"x":1982,"y":6.054490413723512},{"x":1983,"y":6.054490413723512},{"x":1984,"y":6.0606060606060606},{"x":1985,"y":6.0606060606060606},{"x":1986,"y":6.0606060606060606},{"x":1987,"y":6.0606060606060606},{"x":1988,"y":6.0606060606060606},{"x":1989,"y":6.0606060606060606},{"x":1990,"y":6.066734074823053},{"x":1991,"y":6.066734074823053},{"x":1992,"y":6.072874493927125},{"x":1993,"y":6.072874493927125},{"x":1994,"y":6.079027355623101},{"x":1995,"y":6.079027355623101},{"x":1996,"y":6.085192697768763},{"x":1997,"y":6.085192697768763},{"x":1998,"y":6.091370558375635},{"x":1999,"y":6.091370558375635},{"x":2000,"y":6.091370558375635},{"x":2001,"y":6.091370558375635},{"x":2002,"y":6.091370558375635},{"x":2003,"y":6.091370558375635},{"x":2004,"y":6.085192697768763},{"x":2005,"y":6.079027355623101},{"x":2006,"y":6.079027355623101},{"x":2007,"y":6.072874493927125},{"x":2008,"y":6.066734074823053},{"x":2009,"y":6.0606060606060606},{"x":2010,"y":6.0606060606060606},{"x":2011,"y":6.054490413723512},{"x":2012,"y":6.054490413723512},{"x":2013,"y":6.054490413723512},{"x":2014,"y":6.054490413723512},{"x":2015,"y":6.048387096774194},{"x":2016,"y":6.048387096774194},{"x":2017,"y":6.048387096774194},{"x":2018,"y":6.048387096774194},{"x":2019,"y":6.048387096774194},{"x":2020,"y":6.054490413723512},{"x":2021,"y":6.054490413723512},{"x":2022,"y":6.054490413723512},{"x":2023,"y":6.054490413723512},{"x":2024,"y":6.054490413723512},{"x":2025,"y":6.054490413723512},{"x":2026,"y":6.054490413723512},{"x":2027,"y":6.054490413723512},{"x":2028,"y":6.054490413723512},{"x":2029,"y":6.048387096774194},{"x":2030,"y":6.048387096774194},{"x":2031,"y":6.048387096774194},{"x":2032,"y":6.048387096774194},{"x":2033,"y":6.048387096774194},{"x":2034,"y":6.048387096774194},{"x":2035,"y":6.042296072507553},{"x":2036,"y":6.042296072507553},{"x":2037,"y":6.042296072507553},{"x":2038,"y":6.042296072507553},{"x":2039,"y":6.042296072507553},{"x":2040,"y":6.048387096774194},{"x":2041,"y":6.048387096774194},{"x":2042,"y":6.054490413723512},{"x":2043,"y":6.054490413723512},{"x":2044,"y":6.0606060606060606},{"x":2045,"y":6.0606060606060606},{"x":2046,"y":6.066734074823053},{"x":2047,"y":6.066734074823053},{"x":2048,"y":6.072874493927125},{"x":2049,"y":6.079027355623101},{"x":2050,"y":6.085192697768763},{"x":2051,"y":6.085192697768763},{"x":2052,"y":6.091370558375635},{"x":2053,"y":6.097560975609756},{"x":2054,"y":6.103763987792472},{"x":2055,"y":6.103763987792472},{"x":2056,"y":6.109979633401222},{"x":2057,"y":6.109979633401222},{"x":2058,"y":6.116207951070336},{"x":2059,"y":6.116207951070336},{"x":2060,"y":6.122448979591836},{"x":2061,"y":6.122448979591836},{"x":2062,"y":6.122448979591836},{"x":2063,"y":6.122448979591836},{"x":2064,"y":6.122448979591836},{"x":2065,"y":6.116207951070336},{"x":2066,"y":6.109979633401222},{"x":2067,"y":6.103763987792472},{"x":2068,"y":6.097560975609756},{"x":2069,"y":6.091370558375635},{"x":2070,"y":6.085192697768763},{"x":2071,"y":6.079027355623101},{"x":2072,"y":6.072874493927125},{"x":2073,"y":6.066734074823053},{"x":2074,"y":6.0606060606060606},{"x":2075,"y":6.054490413723512},{"x":2076,"y":6.048387096774194},{"x":2077,"y":6.042296072507553},{"x":2078,"y":6.042296072507553},{"x":2079,"y":6.036217303822938},{"x":2080,"y":6.036217303822938},{"x":2081,"y":6.036217303822938},{"x":2082,"y":6.036217303822938},{"x":2083,"y":6.030150753768845},{"x":2084,"y":6.030150753768845},{"x":2085,"y":6.024096385542168},{"x":2086,"y":6.024096385542168},{"x":2087,"y":6.018054162487462},{"x":2088,"y":6.012024048096192},{"x":2089,"y":6.006006006006006},{"x":2090,"y":6},{"x":2091,"y":5.994005994005994},{"x":2092,"y":5.9880239520958085},{"x":2093,"y":5.982053838484546},{"x":2094,"y":5.976095617529881},{"x":2095,"y":5.970149253731343},{"x":2096,"y":5.9582919563058585},{"x":2097,"y":5.946481665014867},{"x":2098,"y":5.9405940594059405},{"x":2099,"y":5.934718100890208},{"x":2100,"y":5.934718100890208},{"x":2101,"y":5.934718100890208},{"x":2102,"y":5.946481665014867},{"x":2103,"y":5.9523809523809526},{"x":2104,"y":5.970149253731343},{"x":2105,"y":5.9880239520958085},{"x":2106,"y":6.006006006006006},{"x":2107,"y":6.024096385542168},{"x":2108,"y":6.036217303822938},{"x":2109,"y":6.048387096774194},{"x":2110,"y":6.054490413723512},{"x":2111,"y":6.0606060606060606},{"x":2112,"y":6.066734074823053},{"x":2113,"y":6.066734074823053},{"x":2114,"y":6.072874493927125},{"x":2115,"y":6.072874493927125},{"x":2116,"y":6.072874493927125},{"x":2117,"y":6.072874493927125},{"x":2118,"y":6.072874493927125},{"x":2119,"y":6.072874493927125},{"x":2120,"y":6.072874493927125},{"x":2121,"y":6.072874493927125},{"x":2122,"y":6.072874493927125},{"x":2123,"y":6.066734074823053},{"x":2124,"y":6.072874493927125},{"x":2125,"y":6.072874493927125},{"x":2126,"y":6.079027355623101},{"x":2127,"y":6.079027355623101},{"x":2128,"y":6.085192697768763},{"x":2129,"y":6.085192697768763},{"x":2130,"y":6.091370558375635},{"x":2131,"y":6.097560975609756},{"x":2132,"y":6.103763987792472},{"x":2133,"y":6.103763987792472},{"x":2134,"y":6.109979633401222},{"x":2135,"y":6.116207951070336},{"x":2136,"y":6.122448979591836},{"x":2137,"y":6.128702757916241},{"x":2138,"y":6.134969325153374},{"x":2139,"y":6.134969325153374},{"x":2140,"y":6.141248720573183},{"x":2141,"y":6.147540983606557},{"x":2142,"y":6.153846153846154},{"x":2143,"y":6.160164271047228},{"x":2144,"y":6.160164271047228},{"x":2145,"y":6.160164271047228},{"x":2146,"y":6.160164271047228},{"x":2147,"y":6.160164271047228},{"x":2148,"y":6.160164271047228},{"x":2149,"y":6.153846153846154},{"x":2150,"y":6.147540983606557},{"x":2151,"y":6.141248720573183},{"x":2152,"y":6.134969325153374},{"x":2153,"y":6.128702757916241},{"x":2154,"y":6.122448979591836},{"x":2155,"y":6.109979633401222},{"x":2156,"y":6.103763987792472},{"x":2157,"y":6.091370558375635},{"x":2158,"y":6.085192697768763},{"x":2159,"y":6.072874493927125},{"x":2160,"y":6.072874493927125},{"x":2161,"y":6.066734074823053},{"x":2162,"y":6.066734074823053},{"x":2163,"y":6.066734074823053},{"x":2164,"y":6.066734074823053},{"x":2165,"y":6.066734074823053},{"x":2166,"y":6.0606060606060606},{"x":2167,"y":6.048387096774194},{"x":2168,"y":6.036217303822938},{"x":2169,"y":6.018054162487462},{"x":2170,"y":6.012024048096192},{"x":2171,"y":6},{"x":2172,"y":5.994005994005994},{"x":2173,"y":5.9880239520958085},{"x":2174,"y":5.9880239520958085},{"x":2175,"y":5.982053838484546},{"x":2176,"y":5.982053838484546},{"x":2177,"y":5.976095617529881},{"x":2178,"y":5.976095617529881},{"x":2179,"y":5.970149253731343},{"x":2180,"y":5.970149253731343},{"x":2181,"y":5.964214711729622},{"x":2182,"y":5.964214711729622},{"x":2183,"y":5.9582919563058585},{"x":2184,"y":5.9582919563058585},{"x":2185,"y":5.9523809523809526},{"x":2186,"y":5.9523809523809526},{"x":2187,"y":5.946481665014867},{"x":2188,"y":5.946481665014867},{"x":2189,"y":5.9405940594059405},{"x":2190,"y":5.934718100890208},{"x":2191,"y":5.923000987166831},{"x":2192,"y":5.911330049261084},{"x":2193,"y":5.899705014749262},{"x":2194,"y":5.893909626719057},{"x":2195,"y":5.882352941176471},{"x":2196,"y":5.882352941176471},{"x":2197,"y":5.876591576885406},{"x":2198,"y":5.876591576885406},{"x":2199,"y":5.876591576885406},{"x":2200,"y":5.882352941176471},{"x":2201,"y":5.888125613346419},{"x":2202,"y":5.893909626719057},{"x":2203,"y":5.899705014749262},{"x":2204,"y":5.911330049261084},{"x":2205,"y":5.9171597633136095},{"x":2206,"y":5.923000987166831},{"x":2207,"y":5.923000987166831},{"x":2208,"y":5.928853754940712},{"x":2209,"y":5.928853754940712},{"x":2210,"y":5.934718100890208},{"x":2211,"y":5.934718100890208},{"x":2212,"y":5.934718100890208},{"x":2213,"y":5.934718100890208},{"x":2214,"y":5.934718100890208},{"x":2215,"y":5.934718100890208},{"x":2216,"y":5.934718100890208},{"x":2217,"y":5.928853754940712},{"x":2218,"y":5.928853754940712},{"x":2219,"y":5.928853754940712},{"x":2220,"y":5.928853754940712},{"x":2221,"y":5.928853754940712},{"x":2222,"y":5.934718100890208},{"x":2223,"y":5.934718100890208},{"x":2224,"y":5.9405940594059405},{"x":2225,"y":5.9405940594059405},{"x":2226,"y":5.9405940594059405},{"x":2227,"y":5.9405940594059405},{"x":2228,"y":5.9405940594059405},{"x":2229,"y":5.9405940594059405},{"x":2230,"y":5.946481665014867},{"x":2231,"y":5.946481665014867},{"x":2232,"y":5.9523809523809526},{"x":2233,"y":5.9523809523809526},{"x":2234,"y":5.9523809523809526},{"x":2235,"y":5.9523809523809526},{"x":2236,"y":5.9523809523809526},{"x":2237,"y":5.9523809523809526},{"x":2238,"y":5.946481665014867},{"x":2239,"y":5.934718100890208},{"x":2240,"y":5.928853754940712},{"x":2241,"y":5.923000987166831},{"x":2242,"y":5.923000987166831},{"x":2243,"y":5.9171597633136095},{"x":2244,"y":5.9171597633136095},{"x":2245,"y":5.911330049261084},{"x":2246,"y":5.911330049261084},{"x":2247,"y":5.911330049261084},{"x":2248,"y":5.9171597633136095},{"x":2249,"y":5.9171597633136095},{"x":2250,"y":5.923000987166831},{"x":2251,"y":5.928853754940712},{"x":2252,"y":5.9405940594059405},{"x":2253,"y":5.946481665014867},{"x":2254,"y":5.9523809523809526},{"x":2255,"y":5.9582919563058585},{"x":2256,"y":5.964214711729622},{"x":2257,"y":5.964214711729622},{"x":2258,"y":5.970149253731343},{"x":2259,"y":5.970149253731343},{"x":2260,"y":5.970149253731343},{"x":2261,"y":5.970149253731343},{"x":2262,"y":5.970149253731343},{"x":2263,"y":5.970149253731343},{"x":2264,"y":5.970149253731343},{"x":2265,"y":5.970149253731343},{"x":2266,"y":5.970149253731343},{"x":2267,"y":5.970149253731343},{"x":2268,"y":5.976095617529881},{"x":2269,"y":5.976095617529881},{"x":2270,"y":5.9880239520958085},{"x":2271,"y":5.994005994005994},{"x":2272,"y":6.006006006006006},{"x":2273,"y":6.018054162487462},{"x":2274,"y":6.030150753768845},{"x":2275,"y":6.036217303822938},{"x":2276,"y":6.042296072507553},{"x":2277,"y":6.048387096774194},{"x":2278,"y":6.054490413723512},{"x":2279,"y":6.0606060606060606},{"x":2280,"y":6.066734074823053},{"x":2281,"y":6.066734074823053},{"x":2282,"y":6.066734074823053},{"x":2283,"y":6.066734074823053},{"x":2284,"y":6.066734074823053},{"x":2285,"y":6.066734074823053},{"x":2286,"y":6.066734074823053},{"x":2287,"y":6.066734074823053},{"x":2288,"y":6.066734074823053},{"x":2289,"y":6.066734074823053},{"x":2290,"y":6.0606060606060606},{"x":2291,"y":6.054490413723512},{"x":2292,"y":6.048387096774194},{"x":2293,"y":6.036217303822938},{"x":2294,"y":6.030150753768845},{"x":2295,"y":6.024096385542168},{"x":2296,"y":6.018054162487462},{"x":2297,"y":6.012024048096192},{"x":2298,"y":6.012024048096192},{"x":2299,"y":6.006006006006006},{"x":2300,"y":6.006006006006006},{"x":2301,"y":6.006006006006006},{"x":2302,"y":6},{"x":2303,"y":5.994005994005994},{"x":2304,"y":5.994005994005994},{"x":2305,"y":5.9880239520958085},{"x":2306,"y":5.9880239520958085},{"x":2307,"y":5.982053838484546},{"x":2308,"y":5.982053838484546},{"x":2309,"y":5.982053838484546},{"x":2310,"y":5.9880239520958085},{"x":2311,"y":5.9880239520958085},{"x":2312,"y":5.994005994005994},{"x":2313,"y":5.994005994005994},{"x":2314,"y":5.994005994005994},{"x":2315,"y":5.994005994005994},{"x":2316,"y":6},{"x":2317,"y":6},{"x":2318,"y":6},{"x":2319,"y":6},{"x":2320,"y":6},{"x":2321,"y":5.994005994005994},{"x":2322,"y":5.994005994005994},{"x":2323,"y":5.994005994005994},{"x":2324,"y":5.994005994005994},{"x":2325,"y":5.994005994005994},{"x":2326,"y":5.994005994005994},{"x":2327,"y":5.9880239520958085},{"x":2328,"y":5.9880239520958085},{"x":2329,"y":5.9880239520958085},{"x":2330,"y":5.9880239520958085},{"x":2331,"y":5.9880239520958085},{"x":2332,"y":5.9880239520958085},{"x":2333,"y":5.9880239520958085},{"x":2334,"y":5.9880239520958085},{"x":2335,"y":5.982053838484546},{"x":2336,"y":5.982053838484546},{"x":2337,"y":5.982053838484546},{"x":2338,"y":5.982053838484546},{"x":2339,"y":5.982053838484546},{"x":2340,"y":5.9880239520958085},{"x":2341,"y":5.9880239520958085},{"x":2342,"y":5.994005994005994},{"x":2343,"y":5.994005994005994},{"x":2344,"y":6.006006006006006},{"x":2345,"y":6.012024048096192},{"x":2346,"y":6.018054162487462},{"x":2347,"y":6.024096385542168},{"x":2348,"y":6.030150753768845},{"x":2349,"y":6.036217303822938},{"x":2350,"y":6.042296072507553},{"x":2351,"y":6.042296072507553},{"x":2352,"y":6.042296072507553},{"x":2353,"y":6.042296072507553},{"x":2354,"y":6.048387096774194},{"x":2355,"y":6.048387096774194},{"x":2356,"y":6.048387096774194},{"x":2357,"y":6.048387096774194},{"x":2358,"y":6.048387096774194},{"x":2359,"y":6.042296072507553},{"x":2360,"y":6.042296072507553},{"x":2361,"y":6.036217303822938},{"x":2362,"y":6.036217303822938},{"x":2363,"y":6.036217303822938},{"x":2364,"y":6.036217303822938},{"x":2365,"y":6.030150753768845},{"x":2366,"y":6.030150753768845},{"x":2367,"y":6.024096385542168},{"x":2368,"y":6.018054162487462},{"x":2369,"y":6.012024048096192},{"x":2370,"y":6.006006006006006},{"x":2371,"y":6},{"x":2372,"y":6},{"x":2373,"y":5.994005994005994},{"x":2374,"y":5.994005994005994},{"x":2375,"y":5.9880239520958085},{"x":2376,"y":5.9880239520958085},{"x":2377,"y":5.982053838484546},{"x":2378,"y":5.982053838484546},{"x":2379,"y":5.976095617529881},{"x":2380,"y":5.970149253731343},{"x":2381,"y":5.9582919563058585},{"x":2382,"y":5.946481665014867},{"x":2383,"y":5.934718100890208},{"x":2384,"y":5.928853754940712},{"x":2385,"y":5.9171597633136095},{"x":2386,"y":5.911330049261084},{"x":2387,"y":5.899705014749262},{"x":2388,"y":5.893909626719057},{"x":2389,"y":5.882352941176471},{"x":2390,"y":5.882352941176471},{"x":2391,"y":5.876591576885406},{"x":2392,"y":5.876591576885406},{"x":2393,"y":5.870841487279843},{"x":2394,"y":5.876591576885406},{"x":2395,"y":5.876591576885406},{"x":2396,"y":5.876591576885406},{"x":2397,"y":5.876591576885406},{"x":2398,"y":5.876591576885406},{"x":2399,"y":5.870841487279843},{"x":2400,"y":5.870841487279843},{"x":2401,"y":5.870841487279843},{"x":2402,"y":5.870841487279843},{"x":2403,"y":5.870841487279843},{"x":2404,"y":5.870841487279843},{"x":2405,"y":5.870841487279843},{"x":2406,"y":5.870841487279843},{"x":2407,"y":5.870841487279843},{"x":2408,"y":5.870841487279843},{"x":2409,"y":5.870841487279843},{"x":2410,"y":5.876591576885406},{"x":2411,"y":5.876591576885406},{"x":2412,"y":5.876591576885406},{"x":2413,"y":5.876591576885406},{"x":2414,"y":5.876591576885406},{"x":2415,"y":5.876591576885406},{"x":2416,"y":5.876591576885406},{"x":2417,"y":5.870841487279843},{"x":2418,"y":5.870841487279843},{"x":2419,"y":5.865102639296188},{"x":2420,"y":5.859375},{"x":2421,"y":5.853658536585366},{"x":2422,"y":5.847953216374269},{"x":2423,"y":5.842259006815969},{"x":2424,"y":5.842259006815969},{"x":2425,"y":5.836575875486382},{"x":2426,"y":5.836575875486382},{"x":2427,"y":5.836575875486382},{"x":2428,"y":5.836575875486382},{"x":2429,"y":5.836575875486382},{"x":2430,"y":5.836575875486382},{"x":2431,"y":5.836575875486382},{"x":2432,"y":5.836575875486382},{"x":2433,"y":5.830903790087464},{"x":2434,"y":5.830903790087464},{"x":2435,"y":5.830903790087464},{"x":2436,"y":5.830903790087464},{"x":2437,"y":5.830903790087464},{"x":2438,"y":5.830903790087464},{"x":2439,"y":5.830903790087464},{"x":2440,"y":5.830903790087464},{"x":2441,"y":5.825242718446601},{"x":2442,"y":5.825242718446601},{"x":2443,"y":5.819592628516004},{"x":2444,"y":5.813953488372093},{"x":2445,"y":5.808325266214908},{"x":2446,"y":5.808325266214908},{"x":2447,"y":5.802707930367505},{"x":2448,"y":5.802707930367505},{"x":2449,"y":5.797101449275362},{"x":2450,"y":5.7915057915057915},{"x":2451,"y":5.785920925747349},{"x":2452,"y":5.785920925747349},{"x":2453,"y":5.780346820809248},{"x":2454,"y":5.780346820809248},{"x":2455,"y":5.7747834456207885},{"x":2456,"y":5.7747834456207885},{"x":2457,"y":5.769230769230769},{"x":2458,"y":5.769230769230769},{"x":2459,"y":5.769230769230769},{"x":2460,"y":5.769230769230769},{"x":2461,"y":5.763688760806916},{"x":2462,"y":5.763688760806916},{"x":2463,"y":5.763688760806916},{"x":2464,"y":5.763688760806916},{"x":2465,"y":5.763688760806916},{"x":2466,"y":5.763688760806916},{"x":2467,"y":5.758157389635317},{"x":2468,"y":5.758157389635317},{"x":2469,"y":5.758157389635317},{"x":2470,"y":5.758157389635317},{"x":2471,"y":5.752636625119846},{"x":2472,"y":5.752636625119846},{"x":2473,"y":5.752636625119846},{"x":2474,"y":5.752636625119846},{"x":2475,"y":5.752636625119846},{"x":2476,"y":5.752636625119846},{"x":2477,"y":5.752636625119846},{"x":2478,"y":5.752636625119846},{"x":2479,"y":5.752636625119846},{"x":2480,"y":5.752636625119846},{"x":2481,"y":5.752636625119846},{"x":2482,"y":5.752636625119846},{"x":2483,"y":5.752636625119846},{"x":2484,"y":5.752636625119846},{"x":2485,"y":5.752636625119846},{"x":2486,"y":5.758157389635317},{"x":2487,"y":5.758157389635317},{"x":2488,"y":5.763688760806916},{"x":2489,"y":5.769230769230769},{"x":2490,"y":5.7747834456207885},{"x":2491,"y":5.780346820809248},{"x":2492,"y":5.785920925747349},{"x":2493,"y":5.785920925747349},{"x":2494,"y":5.7915057915057915},{"x":2495,"y":5.797101449275362},{"x":2496,"y":5.802707930367505},{"x":2497,"y":5.802707930367505},{"x":2498,"y":5.802707930367505},{"x":2499,"y":5.802707930367505},{"x":2500,"y":5.808325266214908},{"x":2501,"y":5.808325266214908},{"x":2502,"y":5.808325266214908},{"x":2503,"y":5.808325266214908},{"x":2504,"y":5.813953488372093},{"x":2505,"y":5.813953488372093},{"x":2506,"y":5.813953488372093},{"x":2507,"y":5.813953488372093},{"x":2508,"y":5.825242718446601},{"x":2509,"y":5.830903790087464},{"x":2510,"y":5.842259006815969},{"x":2511,"y":5.853658536585366},{"x":2512,"y":5.865102639296188},{"x":2513,"y":5.870841487279843},{"x":2514,"y":5.876591576885406},{"x":2515,"y":5.882352941176471},{"x":2516,"y":5.888125613346419},{"x":2517,"y":5.888125613346419},{"x":2518,"y":5.893909626719057},{"x":2519,"y":5.893909626719057},{"x":2520,"y":5.899705014749262},{"x":2521,"y":5.899705014749262},{"x":2522,"y":5.899705014749262},{"x":2523,"y":5.899705014749262},{"x":2524,"y":5.899705014749262},{"x":2525,"y":5.899705014749262},{"x":2526,"y":5.899705014749262},{"x":2527,"y":5.893909626719057},{"x":2528,"y":5.899705014749262},{"x":2529,"y":5.899705014749262},{"x":2530,"y":5.905511811023622},{"x":2531,"y":5.911330049261084},{"x":2532,"y":5.9171597633136095},{"x":2533,"y":5.923000987166831},{"x":2534,"y":5.928853754940712},{"x":2535,"y":5.928853754940712},{"x":2536,"y":5.934718100890208},{"x":2537,"y":5.934718100890208},{"x":2538,"y":5.9405940594059405},{"x":2539,"y":5.946481665014867},{"x":2540,"y":5.9523809523809526},{"x":2541,"y":5.9523809523809526},{"x":2542,"y":5.9582919563058585},{"x":2543,"y":5.9582919563058585},{"x":2544,"y":5.9582919563058585},{"x":2545,"y":5.9582919563058585},{"x":2546,"y":5.964214711729622},{"x":2547,"y":5.964214711729622},{"x":2548,"y":5.970149253731343},{"x":2549,"y":5.970149253731343},{"x":2550,"y":5.976095617529881},{"x":2551,"y":5.976095617529881},{"x":2552,"y":5.982053838484546},{"x":2553,"y":5.9880239520958085},{"x":2554,"y":5.994005994005994},{"x":2555,"y":6},{"x":2556,"y":6.012024048096192},{"x":2557,"y":6.024096385542168},{"x":2558,"y":6.042296072507553},{"x":2559,"y":6.054490413723512},{"x":2560,"y":6.066734074823053},{"x":2561,"y":6.079027355623101},{"x":2562,"y":6.091370558375635},{"x":2563,"y":6.097560975609756},{"x":2564,"y":6.103763987792472},{"x":2565,"y":6.109979633401222},{"x":2566,"y":6.116207951070336},{"x":2567,"y":6.122448979591836},{"x":2568,"y":6.122448979591836},{"x":2569,"y":6.116207951070336},{"x":2570,"y":6.116207951070336},{"x":2571,"y":6.109979633401222},{"x":2572,"y":6.103763987792472},{"x":2573,"y":6.097560975609756},{"x":2574,"y":6.091370558375635},{"x":2575,"y":6.085192697768763},{"x":2576,"y":6.079027355623101},{"x":2577,"y":6.072874493927125},{"x":2578,"y":6.066734074823053},{"x":2579,"y":6.0606060606060606},{"x":2580,"y":6.048387096774194},{"x":2581,"y":6.036217303822938},{"x":2582,"y":6.024096385542168},{"x":2583,"y":6.012024048096192},{"x":2584,"y":6},{"x":2585,"y":5.9880239520958085},{"x":2586,"y":5.982053838484546},{"x":2587,"y":5.976095617529881},{"x":2588,"y":5.970149253731343},{"x":2589,"y":5.964214711729622},{"x":2590,"y":5.964214711729622},{"x":2591,"y":5.9582919563058585},{"x":2592,"y":5.9582919563058585},{"x":2593,"y":5.9582919563058585},{"x":2594,"y":5.9582919563058585},{"x":2595,"y":5.9523809523809526},{"x":2596,"y":5.9523809523809526},{"x":2597,"y":5.9523809523809526},{"x":2598,"y":5.9523809523809526},{"x":2599,"y":5.946481665014867},{"x":2600,"y":5.9405940594059405},{"x":2601,"y":5.934718100890208},{"x":2602,"y":5.934718100890208},{"x":2603,"y":5.928853754940712},{"x":2604,"y":5.923000987166831},{"x":2605,"y":5.9171597633136095},{"x":2606,"y":5.911330049261084},{"x":2607,"y":5.905511811023622},{"x":2608,"y":5.905511811023622},{"x":2609,"y":5.899705014749262},{"x":2610,"y":5.893909626719057},{"x":2611,"y":5.888125613346419},{"x":2612,"y":5.888125613346419},{"x":2613,"y":5.888125613346419},{"x":2614,"y":5.888125613346419},{"x":2615,"y":5.888125613346419},{"x":2616,"y":5.888125613346419},{"x":2617,"y":5.882352941176471},{"x":2618,"y":5.882352941176471},{"x":2619,"y":5.876591576885406},{"x":2620,"y":5.876591576885406},{"x":2621,"y":5.876591576885406},{"x":2622,"y":5.876591576885406},{"x":2623,"y":5.870841487279843},{"x":2624,"y":5.876591576885406},{"x":2625,"y":5.876591576885406},{"x":2626,"y":5.876591576885406},{"x":2627,"y":5.876591576885406},{"x":2628,"y":5.876591576885406},{"x":2629,"y":5.876591576885406},{"x":2630,"y":5.876591576885406},{"x":2631,"y":5.876591576885406},{"x":2632,"y":5.876591576885406},{"x":2633,"y":5.876591576885406},{"x":2634,"y":5.876591576885406},{"x":2635,"y":5.876591576885406},{"x":2636,"y":5.876591576885406},{"x":2637,"y":5.876591576885406},{"x":2638,"y":5.882352941176471},{"x":2639,"y":5.882352941176471},{"x":2640,"y":5.888125613346419},{"x":2641,"y":5.888125613346419},{"x":2642,"y":5.893909626719057},{"x":2643,"y":5.899705014749262},{"x":2644,"y":5.905511811023622},{"x":2645,"y":5.905511811023622},{"x":2646,"y":5.911330049261084},{"x":2647,"y":5.9171597633136095},{"x":2648,"y":5.923000987166831},{"x":2649,"y":5.923000987166831},{"x":2650,"y":5.928853754940712},{"x":2651,"y":5.934718100890208},{"x":2652,"y":5.9405940594059405},{"x":2653,"y":5.946481665014867},{"x":2654,"y":5.9523809523809526},{"x":2655,"y":5.9523809523809526},{"x":2656,"y":5.9523809523809526},{"x":2657,"y":5.946481665014867},{"x":2658,"y":5.946481665014867},{"x":2659,"y":5.946481665014867},{"x":2660,"y":5.946481665014867},{"x":2661,"y":5.9405940594059405},{"x":2662,"y":5.9405940594059405},{"x":2663,"y":5.934718100890208},{"x":2664,"y":5.928853754940712},{"x":2665,"y":5.923000987166831},{"x":2666,"y":5.9171597633136095},{"x":2667,"y":5.911330049261084},{"x":2668,"y":5.905511811023622},{"x":2669,"y":5.899705014749262},{"x":2670,"y":5.899705014749262},{"x":2671,"y":5.893909626719057},{"x":2672,"y":5.893909626719057},{"x":2673,"y":5.893909626719057},{"x":2674,"y":5.899705014749262},{"x":2675,"y":5.899705014749262},{"x":2676,"y":5.905511811023622},{"x":2677,"y":5.905511811023622},{"x":2678,"y":5.9171597633136095},{"x":2679,"y":5.923000987166831},{"x":2680,"y":5.928853754940712},{"x":2681,"y":5.934718100890208},{"x":2682,"y":5.9405940594059405},{"x":2683,"y":5.946481665014867},{"x":2684,"y":5.9523809523809526},{"x":2685,"y":5.9582919563058585},{"x":2686,"y":5.970149253731343},{"x":2687,"y":5.976095617529881},{"x":2688,"y":5.982053838484546},{"x":2689,"y":5.982053838484546},{"x":2690,"y":5.9880239520958085},{"x":2691,"y":5.9880239520958085},{"x":2692,"y":5.994005994005994},{"x":2693,"y":5.994005994005994},{"x":2694,"y":6},{"x":2695,"y":6},{"x":2696,"y":6.006006006006006},{"x":2697,"y":6.012024048096192},{"x":2698,"y":6.030150753768845},{"x":2699,"y":6.042296072507553},{"x":2700,"y":6.054490413723512},{"x":2701,"y":6.066734074823053},{"x":2702,"y":6.072874493927125},{"x":2703,"y":6.079027355623101},{"x":2704,"y":6.085192697768763},{"x":2705,"y":6.085192697768763},{"x":2706,"y":6.091370558375635},{"x":2707,"y":6.091370558375635},{"x":2708,"y":6.091370558375635},{"x":2709,"y":6.091370558375635},{"x":2710,"y":6.091370558375635},{"x":2711,"y":6.091370558375635},{"x":2712,"y":6.097560975609756},{"x":2713,"y":6.097560975609756},{"x":2714,"y":6.097560975609756},{"x":2715,"y":6.097560975609756},{"x":2716,"y":6.097560975609756},{"x":2717,"y":6.097560975609756},{"x":2718,"y":6.097560975609756},{"x":2719,"y":6.097560975609756}],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: 0, pointRadius: 0,
+      yAxisID: 'y',
+    }, {
+      label: '心率',
+      data: [{"x":0,"y":89},{"x":1,"y":89},{"x":2,"y":89},{"x":3,"y":89},{"x":4,"y":89},{"x":5,"y":89},{"x":6,"y":91},{"x":7,"y":93},{"x":8,"y":97},{"x":9,"y":100},{"x":10,"y":102},{"x":11,"y":102},{"x":12,"y":102},{"x":13,"y":102},{"x":14,"y":103},{"x":15,"y":103},{"x":16,"y":103},{"x":17,"y":104},{"x":18,"y":104},{"x":19,"y":105},{"x":20,"y":105},{"x":21,"y":105},{"x":22,"y":105},{"x":23,"y":105},{"x":24,"y":105},{"x":25,"y":105},{"x":26,"y":106},{"x":27,"y":106},{"x":28,"y":106},{"x":29,"y":107},{"x":30,"y":107},{"x":31,"y":107},{"x":32,"y":108},{"x":33,"y":108},{"x":34,"y":109},{"x":35,"y":110},{"x":36,"y":110},{"x":37,"y":111},{"x":38,"y":111},{"x":39,"y":111},{"x":40,"y":111},{"x":41,"y":112},{"x":42,"y":112},{"x":43,"y":112},{"x":44,"y":112},{"x":45,"y":111},{"x":46,"y":111},{"x":47,"y":111},{"x":48,"y":111},{"x":49,"y":111},{"x":50,"y":111},{"x":51,"y":112},{"x":52,"y":112},{"x":53,"y":112},{"x":54,"y":112},{"x":55,"y":113},{"x":56,"y":113},{"x":57,"y":113},{"x":58,"y":114},{"x":59,"y":114},{"x":60,"y":114},{"x":61,"y":115},{"x":62,"y":115},{"x":63,"y":115},{"x":64,"y":116},{"x":65,"y":116},{"x":66,"y":116},{"x":67,"y":116},{"x":68,"y":116},{"x":69,"y":116},{"x":70,"y":115},{"x":71,"y":115},{"x":72,"y":114},{"x":73,"y":113},{"x":74,"y":112},{"x":75,"y":112},{"x":76,"y":111},{"x":77,"y":111},{"x":78,"y":110},{"x":79,"y":110},{"x":80,"y":110},{"x":81,"y":110},{"x":82,"y":110},{"x":83,"y":111},{"x":84,"y":111},{"x":85,"y":112},{"x":86,"y":112},{"x":87,"y":112},{"x":88,"y":112},{"x":89,"y":112},{"x":90,"y":112},{"x":91,"y":112},{"x":92,"y":112},{"x":93,"y":112},{"x":94,"y":112},{"x":95,"y":112},{"x":96,"y":112},{"x":97,"y":112},{"x":98,"y":112},{"x":99,"y":112},{"x":100,"y":112},{"x":101,"y":113},{"x":102,"y":113},{"x":103,"y":114},{"x":104,"y":114},{"x":105,"y":115},{"x":106,"y":115},{"x":107,"y":115},{"x":108,"y":115},{"x":109,"y":115},{"x":110,"y":116},{"x":111,"y":116},{"x":112,"y":116},{"x":113,"y":116},{"x":114,"y":116},{"x":115,"y":116},{"x":116,"y":116},{"x":117,"y":116},{"x":118,"y":115},{"x":119,"y":115},{"x":120,"y":115},{"x":121,"y":115},{"x":122,"y":115},{"x":123,"y":115},{"x":124,"y":114},{"x":125,"y":114},{"x":126,"y":114},{"x":127,"y":115},{"x":128,"y":115},{"x":129,"y":115},{"x":130,"y":115},{"x":131,"y":116},{"x":132,"y":117},{"x":133,"y":117},{"x":134,"y":118},{"x":135,"y":118},{"x":136,"y":119},{"x":137,"y":119},{"x":138,"y":120},{"x":139,"y":120},{"x":140,"y":120},{"x":141,"y":120},{"x":142,"y":120},{"x":143,"y":120},{"x":144,"y":120},{"x":145,"y":120},{"x":146,"y":120},{"x":147,"y":120},{"x":148,"y":120},{"x":149,"y":120},{"x":150,"y":120},{"x":151,"y":120},{"x":152,"y":119},{"x":153,"y":119},{"x":154,"y":119},{"x":155,"y":119},{"x":156,"y":119},{"x":157,"y":119},{"x":158,"y":119},{"x":159,"y":119},{"x":160,"y":119},{"x":161,"y":119},{"x":162,"y":119},{"x":163,"y":119},{"x":164,"y":119},{"x":165,"y":119},{"x":166,"y":119},{"x":167,"y":118},{"x":168,"y":118},{"x":169,"y":118},{"x":170,"y":117},{"x":171,"y":117},{"x":172,"y":117},{"x":173,"y":117},{"x":174,"y":117},{"x":175,"y":117},{"x":176,"y":117},{"x":177,"y":117},{"x":178,"y":117},{"x":179,"y":118},{"x":180,"y":118},{"x":181,"y":118},{"x":182,"y":118},{"x":183,"y":119},{"x":184,"y":119},{"x":185,"y":119},{"x":186,"y":119},{"x":187,"y":119},{"x":188,"y":119},{"x":189,"y":119},{"x":190,"y":118},{"x":191,"y":117},{"x":192,"y":117},{"x":193,"y":116},{"x":194,"y":116},{"x":195,"y":115},{"x":196,"y":115},{"x":197,"y":115},{"x":198,"y":115},{"x":199,"y":115},{"x":200,"y":115},{"x":201,"y":115},{"x":202,"y":115},{"x":203,"y":116},{"x":204,"y":117},{"x":205,"y":118},{"x":206,"y":118},{"x":207,"y":118},{"x":208,"y":119},{"x":209,"y":119},{"x":210,"y":119},{"x":211,"y":119},{"x":212,"y":119},{"x":213,"y":119},{"x":214,"y":118},{"x":215,"y":118},{"x":216,"y":118},{"x":217,"y":118},{"x":218,"y":119},{"x":219,"y":119},{"x":220,"y":119},{"x":221,"y":119},{"x":222,"y":118},{"x":223,"y":118},{"x":224,"y":118},{"x":225,"y":117},{"x":226,"y":117},{"x":227,"y":117},{"x":228,"y":117},{"x":229,"y":117},{"x":230,"y":118},{"x":231,"y":118},{"x":232,"y":118},{"x":233,"y":119},{"x":234,"y":119},{"x":235,"y":119},{"x":236,"y":119},{"x":237,"y":120},{"x":238,"y":120},{"x":239,"y":120},{"x":240,"y":120},{"x":241,"y":120},{"x":242,"y":120},{"x":243,"y":119},{"x":244,"y":119},{"x":245,"y":119},{"x":246,"y":119},{"x":247,"y":119},{"x":248,"y":119},{"x":249,"y":119},{"x":250,"y":119},{"x":251,"y":119},{"x":252,"y":119},{"x":253,"y":119},{"x":254,"y":119},{"x":255,"y":119},{"x":256,"y":119},{"x":257,"y":119},{"x":258,"y":119},{"x":259,"y":119},{"x":260,"y":119},{"x":261,"y":119},{"x":262,"y":120},{"x":263,"y":120},{"x":264,"y":121},{"x":265,"y":121},{"x":266,"y":121},{"x":267,"y":122},{"x":268,"y":122},{"x":269,"y":122},{"x":270,"y":122},{"x":271,"y":122},{"x":272,"y":122},{"x":273,"y":122},{"x":274,"y":122},{"x":275,"y":122},{"x":276,"y":121},{"x":277,"y":121},{"x":278,"y":121},{"x":279,"y":121},{"x":280,"y":120},{"x":281,"y":120},{"x":282,"y":120},{"x":283,"y":120},{"x":284,"y":120},{"x":285,"y":120},{"x":286,"y":120},{"x":287,"y":120},{"x":288,"y":120},{"x":289,"y":120},{"x":290,"y":121},{"x":291,"y":121},{"x":292,"y":121},{"x":293,"y":121},{"x":294,"y":122},{"x":295,"y":122},{"x":296,"y":122},{"x":297,"y":123},{"x":298,"y":123},{"x":299,"y":124},{"x":300,"y":124},{"x":301,"y":125},{"x":302,"y":125},{"x":303,"y":126},{"x":304,"y":126},{"x":305,"y":126},{"x":306,"y":126},{"x":307,"y":126},{"x":308,"y":126},{"x":309,"y":126},{"x":310,"y":126},{"x":311,"y":126},{"x":312,"y":126},{"x":313,"y":126},{"x":314,"y":126},{"x":315,"y":126},{"x":316,"y":126},{"x":317,"y":126},{"x":318,"y":126},{"x":319,"y":126},{"x":320,"y":127},{"x":321,"y":127},{"x":322,"y":127},{"x":323,"y":127},{"x":324,"y":127},{"x":325,"y":127},{"x":326,"y":128},{"x":327,"y":128},{"x":328,"y":128},{"x":329,"y":128},{"x":330,"y":128},{"x":331,"y":128},{"x":332,"y":128},{"x":333,"y":128},{"x":334,"y":128},{"x":335,"y":128},{"x":336,"y":128},{"x":337,"y":128},{"x":338,"y":128},{"x":339,"y":127},{"x":340,"y":127},{"x":341,"y":127},{"x":342,"y":127},{"x":343,"y":127},{"x":344,"y":127},{"x":345,"y":127},{"x":346,"y":127},{"x":347,"y":127},{"x":348,"y":127},{"x":349,"y":127},{"x":350,"y":127},{"x":351,"y":127},{"x":352,"y":127},{"x":353,"y":127},{"x":354,"y":126},{"x":355,"y":126},{"x":356,"y":126},{"x":357,"y":126},{"x":358,"y":126},{"x":359,"y":125},{"x":360,"y":125},{"x":361,"y":124},{"x":362,"y":124},{"x":363,"y":124},{"x":364,"y":124},{"x":365,"y":123},{"x":366,"y":123},{"x":367,"y":123},{"x":368,"y":123},{"x":369,"y":123},{"x":370,"y":123},{"x":371,"y":123},{"x":372,"y":123},{"x":373,"y":123},{"x":374,"y":123},{"x":375,"y":123},{"x":376,"y":124},{"x":377,"y":124},{"x":378,"y":124},{"x":379,"y":125},{"x":380,"y":125},{"x":381,"y":125},{"x":382,"y":126},{"x":383,"y":126},{"x":384,"y":126},{"x":385,"y":126},{"x":386,"y":127},{"x":387,"y":127},{"x":388,"y":127},{"x":389,"y":127},{"x":390,"y":128},{"x":391,"y":128},{"x":392,"y":128},{"x":393,"y":128},{"x":394,"y":128},{"x":395,"y":128},{"x":396,"y":128},{"x":397,"y":129},{"x":398,"y":129},{"x":399,"y":129},{"x":400,"y":129},{"x":401,"y":129},{"x":402,"y":130},{"x":403,"y":130},{"x":404,"y":130},{"x":405,"y":131},{"x":406,"y":131},{"x":407,"y":131},{"x":408,"y":131},{"x":409,"y":131},{"x":410,"y":131},{"x":411,"y":131},{"x":412,"y":131},{"x":413,"y":131},{"x":414,"y":131},{"x":415,"y":131},{"x":416,"y":131},{"x":417,"y":131},{"x":418,"y":131},{"x":419,"y":130},{"x":420,"y":130},{"x":421,"y":130},{"x":422,"y":130},{"x":423,"y":130},{"x":424,"y":129},{"x":425,"y":129},{"x":426,"y":129},{"x":427,"y":128},{"x":428,"y":128},{"x":429,"y":127},{"x":430,"y":127},{"x":431,"y":127},{"x":432,"y":126},{"x":433,"y":126},{"x":434,"y":126},{"x":435,"y":126},{"x":436,"y":127},{"x":437,"y":127},{"x":438,"y":127},{"x":439,"y":127},{"x":440,"y":127},{"x":441,"y":127},{"x":442,"y":127},{"x":443,"y":127},{"x":444,"y":127},{"x":445,"y":127},{"x":446,"y":127},{"x":447,"y":127},{"x":448,"y":126},{"x":449,"y":126},{"x":450,"y":126},{"x":451,"y":126},{"x":452,"y":126},{"x":453,"y":126},{"x":454,"y":126},{"x":455,"y":126},{"x":456,"y":126},{"x":457,"y":126},{"x":458,"y":126},{"x":459,"y":126},{"x":460,"y":126},{"x":461,"y":127},{"x":462,"y":127},{"x":463,"y":127},{"x":464,"y":127},{"x":465,"y":128},{"x":466,"y":128},{"x":467,"y":129},{"x":468,"y":129},{"x":469,"y":129},{"x":470,"y":130},{"x":471,"y":130},{"x":472,"y":130},{"x":473,"y":131},{"x":474,"y":131},{"x":475,"y":131},{"x":476,"y":131},{"x":477,"y":131},{"x":478,"y":131},{"x":479,"y":131},{"x":480,"y":130},{"x":481,"y":130},{"x":482,"y":130},{"x":483,"y":130},{"x":484,"y":130},{"x":485,"y":130},{"x":486,"y":130},{"x":487,"y":129},{"x":488,"y":129},{"x":489,"y":129},{"x":490,"y":129},{"x":491,"y":129},{"x":492,"y":129},{"x":493,"y":129},{"x":494,"y":128},{"x":495,"y":128},{"x":496,"y":128},{"x":497,"y":128},{"x":498,"y":127},{"x":499,"y":127},{"x":500,"y":126},{"x":501,"y":126},{"x":502,"y":126},{"x":503,"y":125},{"x":504,"y":125},{"x":505,"y":125},{"x":506,"y":125},{"x":507,"y":125},{"x":508,"y":126},{"x":509,"y":126},{"x":510,"y":126},{"x":511,"y":126},{"x":512,"y":127},{"x":513,"y":127},{"x":514,"y":127},{"x":515,"y":127},{"x":516,"y":128},{"x":517,"y":128},{"x":518,"y":129},{"x":519,"y":129},{"x":520,"y":129},{"x":521,"y":130},{"x":522,"y":130},{"x":523,"y":130},{"x":524,"y":131},{"x":525,"y":131},{"x":526,"y":132},{"x":527,"y":132},{"x":528,"y":132},{"x":529,"y":132},{"x":530,"y":132},{"x":531,"y":132},{"x":532,"y":132},{"x":533,"y":132},{"x":534,"y":131},{"x":535,"y":131},{"x":536,"y":131},{"x":537,"y":131},{"x":538,"y":130},{"x":539,"y":130},{"x":540,"y":130},{"x":541,"y":130},{"x":542,"y":129},{"x":543,"y":129},{"x":544,"y":129},{"x":545,"y":129},{"x":546,"y":129},{"x":547,"y":128},{"x":548,"y":128},{"x":549,"y":128},{"x":550,"y":128},{"x":551,"y":128},{"x":552,"y":128},{"x":553,"y":127},{"x":554,"y":127},{"x":555,"y":127},{"x":556,"y":127},{"x":557,"y":127},{"x":558,"y":127},{"x":559,"y":127},{"x":560,"y":127},{"x":561,"y":127},{"x":562,"y":127},{"x":563,"y":127},{"x":564,"y":127},{"x":565,"y":127},{"x":566,"y":127},{"x":567,"y":127},{"x":568,"y":127},{"x":569,"y":127},{"x":570,"y":128},{"x":571,"y":128},{"x":572,"y":128},{"x":573,"y":128},{"x":574,"y":127},{"x":575,"y":127},{"x":576,"y":127},{"x":577,"y":127},{"x":578,"y":127},{"x":579,"y":127},{"x":580,"y":127},{"x":581,"y":127},{"x":582,"y":127},{"x":583,"y":126},{"x":584,"y":126},{"x":585,"y":126},{"x":586,"y":127},{"x":587,"y":127},{"x":588,"y":127},{"x":589,"y":127},{"x":590,"y":127},{"x":591,"y":127},{"x":592,"y":126},{"x":593,"y":126},{"x":594,"y":126},{"x":595,"y":126},{"x":596,"y":126},{"x":597,"y":126},{"x":597,"y":126},{"x":598,"y":126},{"x":599,"y":126},{"x":600,"y":126},{"x":601,"y":127},{"x":602,"y":127},{"x":603,"y":128},{"x":604,"y":128},{"x":605,"y":128},{"x":606,"y":129},{"x":607,"y":129},{"x":608,"y":129},{"x":609,"y":129},{"x":610,"y":130},{"x":611,"y":130},{"x":612,"y":130},{"x":613,"y":131},{"x":614,"y":131},{"x":615,"y":131},{"x":616,"y":131},{"x":617,"y":131},{"x":618,"y":131},{"x":619,"y":131},{"x":620,"y":131},{"x":621,"y":131},{"x":622,"y":132},{"x":623,"y":132},{"x":624,"y":133},{"x":625,"y":133},{"x":626,"y":133},{"x":627,"y":133},{"x":628,"y":133},{"x":629,"y":133},{"x":630,"y":133},{"x":631,"y":133},{"x":632,"y":133},{"x":633,"y":133},{"x":634,"y":133},{"x":635,"y":132},{"x":636,"y":132},{"x":637,"y":132},{"x":638,"y":132},{"x":639,"y":132},{"x":640,"y":133},{"x":641,"y":133},{"x":642,"y":133},{"x":643,"y":133},{"x":644,"y":133},{"x":645,"y":133},{"x":646,"y":133},{"x":647,"y":134},{"x":648,"y":134},{"x":649,"y":135},{"x":650,"y":135},{"x":651,"y":136},{"x":652,"y":136},{"x":653,"y":137},{"x":654,"y":137},{"x":655,"y":138},{"x":656,"y":138},{"x":657,"y":138},{"x":658,"y":138},{"x":659,"y":138},{"x":660,"y":138},{"x":661,"y":138},{"x":662,"y":139},{"x":663,"y":139},{"x":664,"y":139},{"x":665,"y":140},{"x":666,"y":140},{"x":667,"y":140},{"x":668,"y":139},{"x":669,"y":139},{"x":670,"y":139},{"x":671,"y":139},{"x":672,"y":139},{"x":673,"y":139},{"x":674,"y":138},{"x":675,"y":138},{"x":676,"y":138},{"x":677,"y":138},{"x":678,"y":138},{"x":679,"y":138},{"x":680,"y":138},{"x":681,"y":138},{"x":682,"y":138},{"x":683,"y":138},{"x":684,"y":137},{"x":685,"y":137},{"x":686,"y":137},{"x":687,"y":137},{"x":688,"y":137},{"x":689,"y":137},{"x":690,"y":137},{"x":691,"y":137},{"x":692,"y":137},{"x":693,"y":137},{"x":694,"y":137},{"x":695,"y":137},{"x":696,"y":136},{"x":697,"y":136},{"x":698,"y":136},{"x":699,"y":136},{"x":700,"y":136},{"x":701,"y":135},{"x":702,"y":135},{"x":703,"y":135},{"x":704,"y":135},{"x":705,"y":136},{"x":706,"y":136},{"x":707,"y":136},{"x":708,"y":136},{"x":709,"y":137},{"x":710,"y":137},{"x":711,"y":137},{"x":712,"y":137},{"x":713,"y":137},{"x":714,"y":137},{"x":715,"y":137},{"x":716,"y":137},{"x":717,"y":137},{"x":718,"y":137},{"x":719,"y":137},{"x":720,"y":137},{"x":721,"y":137},{"x":722,"y":137},{"x":723,"y":137},{"x":724,"y":137},{"x":725,"y":137},{"x":726,"y":137},{"x":727,"y":136},{"x":728,"y":136},{"x":729,"y":136},{"x":730,"y":135},{"x":731,"y":135},{"x":732,"y":134},{"x":733,"y":134},{"x":734,"y":134},{"x":735,"y":134},{"x":736,"y":134},{"x":737,"y":134},{"x":738,"y":134},{"x":739,"y":134},{"x":740,"y":135},{"x":741,"y":135},{"x":742,"y":134},{"x":743,"y":134},{"x":744,"y":134},{"x":745,"y":134},{"x":746,"y":134},{"x":747,"y":134},{"x":748,"y":134},{"x":749,"y":134},{"x":750,"y":134},{"x":751,"y":133},{"x":752,"y":133},{"x":753,"y":133},{"x":754,"y":132},{"x":755,"y":132},{"x":756,"y":132},{"x":757,"y":132},{"x":758,"y":132},{"x":759,"y":132},{"x":760,"y":132},{"x":761,"y":132},{"x":762,"y":132},{"x":763,"y":132},{"x":764,"y":133},{"x":765,"y":133},{"x":766,"y":133},{"x":767,"y":133},{"x":768,"y":133},{"x":769,"y":134},{"x":770,"y":134},{"x":771,"y":134},{"x":772,"y":134},{"x":773,"y":134},{"x":774,"y":135},{"x":775,"y":135},{"x":776,"y":135},{"x":777,"y":135},{"x":778,"y":135},{"x":779,"y":135},{"x":780,"y":136},{"x":781,"y":136},{"x":782,"y":136},{"x":783,"y":136},{"x":784,"y":136},{"x":785,"y":136},{"x":786,"y":136},{"x":787,"y":136},{"x":788,"y":135},{"x":789,"y":135},{"x":790,"y":135},{"x":791,"y":135},{"x":792,"y":136},{"x":793,"y":136},{"x":794,"y":136},{"x":795,"y":137},{"x":796,"y":137},{"x":797,"y":138},{"x":798,"y":138},{"x":799,"y":139},{"x":800,"y":139},{"x":801,"y":139},{"x":802,"y":139},{"x":803,"y":139},{"x":804,"y":138},{"x":805,"y":138},{"x":806,"y":137},{"x":807,"y":137},{"x":808,"y":137},{"x":809,"y":136},{"x":810,"y":136},{"x":811,"y":136},{"x":812,"y":136},{"x":813,"y":136},{"x":814,"y":135},{"x":815,"y":135},{"x":816,"y":135},{"x":817,"y":135},{"x":818,"y":136},{"x":819,"y":136},{"x":820,"y":137},{"x":821,"y":137},{"x":822,"y":137},{"x":823,"y":138},{"x":824,"y":138},{"x":825,"y":138},{"x":826,"y":138},{"x":827,"y":138},{"x":828,"y":138},{"x":829,"y":138},{"x":830,"y":138},{"x":831,"y":138},{"x":832,"y":138},{"x":833,"y":138},{"x":834,"y":138},{"x":835,"y":137},{"x":836,"y":137},{"x":837,"y":136},{"x":838,"y":136},{"x":839,"y":136},{"x":840,"y":136},{"x":841,"y":136},{"x":842,"y":136},{"x":843,"y":136},{"x":844,"y":136},{"x":845,"y":137},{"x":846,"y":137},{"x":847,"y":137},{"x":848,"y":138},{"x":849,"y":138},{"x":850,"y":138},{"x":851,"y":139},{"x":852,"y":139},{"x":853,"y":139},{"x":854,"y":139},{"x":855,"y":139},{"x":856,"y":139},{"x":857,"y":139},{"x":858,"y":139},{"x":859,"y":139},{"x":860,"y":139},{"x":861,"y":139},{"x":862,"y":140},{"x":863,"y":140},{"x":864,"y":140},{"x":865,"y":140},{"x":866,"y":141},{"x":867,"y":141},{"x":868,"y":141},{"x":869,"y":140},{"x":870,"y":140},{"x":871,"y":140},{"x":872,"y":140},{"x":873,"y":140},{"x":874,"y":140},{"x":875,"y":140},{"x":876,"y":140},{"x":877,"y":140},{"x":878,"y":140},{"x":879,"y":140},{"x":880,"y":140},{"x":881,"y":140},{"x":882,"y":140},{"x":883,"y":140},{"x":884,"y":140},{"x":885,"y":140},{"x":886,"y":139},{"x":887,"y":139},{"x":888,"y":139},{"x":889,"y":139},{"x":890,"y":139},{"x":891,"y":139},{"x":892,"y":139},{"x":893,"y":139},{"x":894,"y":139},{"x":895,"y":139},{"x":896,"y":139},{"x":897,"y":139},{"x":898,"y":139},{"x":899,"y":139},{"x":900,"y":139},{"x":901,"y":139},{"x":902,"y":139},{"x":903,"y":139},{"x":904,"y":139},{"x":905,"y":140},{"x":906,"y":140},{"x":907,"y":140},{"x":908,"y":141},{"x":909,"y":141},{"x":910,"y":141},{"x":911,"y":141},{"x":912,"y":141},{"x":913,"y":141},{"x":914,"y":141},{"x":915,"y":141},{"x":916,"y":141},{"x":917,"y":141},{"x":918,"y":141},{"x":919,"y":141},{"x":920,"y":141},{"x":921,"y":141},{"x":922,"y":141},{"x":923,"y":141},{"x":924,"y":141},{"x":925,"y":141},{"x":926,"y":141},{"x":927,"y":141},{"x":928,"y":141},{"x":929,"y":141},{"x":930,"y":140},{"x":931,"y":140},{"x":932,"y":140},{"x":933,"y":139},{"x":934,"y":139},{"x":935,"y":139},{"x":936,"y":139},{"x":937,"y":139},{"x":938,"y":138},{"x":939,"y":138},{"x":940,"y":138},{"x":941,"y":138},{"x":942,"y":138},{"x":943,"y":138},{"x":944,"y":137},{"x":945,"y":137},{"x":946,"y":137},{"x":947,"y":136},{"x":948,"y":136},{"x":949,"y":136},{"x":950,"y":136},{"x":951,"y":136},{"x":952,"y":136},{"x":953,"y":136},{"x":954,"y":136},{"x":955,"y":136},{"x":956,"y":136},{"x":957,"y":136},{"x":958,"y":136},{"x":959,"y":136},{"x":960,"y":137},{"x":961,"y":137},{"x":962,"y":137},{"x":963,"y":138},{"x":964,"y":139},{"x":965,"y":139},{"x":966,"y":139},{"x":967,"y":139},{"x":968,"y":139},{"x":969,"y":139},{"x":970,"y":139},{"x":971,"y":139},{"x":972,"y":139},{"x":973,"y":139},{"x":974,"y":139},{"x":975,"y":139},{"x":976,"y":139},{"x":977,"y":139},{"x":978,"y":140},{"x":979,"y":140},{"x":980,"y":140},{"x":981,"y":140},{"x":982,"y":140},{"x":983,"y":139},{"x":984,"y":139},{"x":985,"y":139},{"x":986,"y":139},{"x":987,"y":139},{"x":988,"y":139},{"x":989,"y":139},{"x":990,"y":139},{"x":991,"y":139},{"x":992,"y":139},{"x":993,"y":139},{"x":994,"y":139},{"x":995,"y":139},{"x":996,"y":139},{"x":997,"y":139},{"x":998,"y":139},{"x":999,"y":139},{"x":1000,"y":139},{"x":1001,"y":139},{"x":1002,"y":139},{"x":1003,"y":138},{"x":1004,"y":138},{"x":1005,"y":138},{"x":1006,"y":137},{"x":1007,"y":137},{"x":1008,"y":136},{"x":1009,"y":136},{"x":1010,"y":136},{"x":1011,"y":136},{"x":1012,"y":136},{"x":1013,"y":136},{"x":1014,"y":136},{"x":1015,"y":136},{"x":1016,"y":136},{"x":1017,"y":136},{"x":1018,"y":136},{"x":1019,"y":136},{"x":1020,"y":136},{"x":1021,"y":136},{"x":1022,"y":136},{"x":1023,"y":136},{"x":1024,"y":136},{"x":1025,"y":136},{"x":1026,"y":136},{"x":1027,"y":136},{"x":1028,"y":137},{"x":1029,"y":137},{"x":1030,"y":137},{"x":1031,"y":138},{"x":1032,"y":138},{"x":1033,"y":138},{"x":1034,"y":139},{"x":1035,"y":139},{"x":1036,"y":139},{"x":1037,"y":138},{"x":1038,"y":138},{"x":1039,"y":138},{"x":1040,"y":137},{"x":1041,"y":137},{"x":1042,"y":137},{"x":1043,"y":137},{"x":1044,"y":136},{"x":1045,"y":136},{"x":1046,"y":136},{"x":1047,"y":136},{"x":1048,"y":136},{"x":1049,"y":136},{"x":1050,"y":137},{"x":1051,"y":137},{"x":1052,"y":137},{"x":1053,"y":138},{"x":1054,"y":138},{"x":1055,"y":138},{"x":1056,"y":138},{"x":1057,"y":138},{"x":1058,"y":138},{"x":1059,"y":138},{"x":1060,"y":138},{"x":1061,"y":139},{"x":1062,"y":139},{"x":1063,"y":139},{"x":1064,"y":139},{"x":1065,"y":140},{"x":1066,"y":140},{"x":1067,"y":140},{"x":1068,"y":141},{"x":1069,"y":141},{"x":1070,"y":141},{"x":1071,"y":141},{"x":1072,"y":142},{"x":1073,"y":142},{"x":1074,"y":142},{"x":1075,"y":142},{"x":1076,"y":143},{"x":1077,"y":143},{"x":1078,"y":143},{"x":1079,"y":144},{"x":1080,"y":144},{"x":1081,"y":143},{"x":1082,"y":143},{"x":1083,"y":143},{"x":1084,"y":142},{"x":1085,"y":142},{"x":1086,"y":142},{"x":1087,"y":142},{"x":1088,"y":142},{"x":1089,"y":142},{"x":1090,"y":142},{"x":1091,"y":142},{"x":1092,"y":142},{"x":1093,"y":142},{"x":1094,"y":141},{"x":1095,"y":141},{"x":1096,"y":141},{"x":1097,"y":141},{"x":1098,"y":141},{"x":1099,"y":140},{"x":1100,"y":140},{"x":1101,"y":140},{"x":1102,"y":139},{"x":1103,"y":139},{"x":1104,"y":139},{"x":1105,"y":139},{"x":1106,"y":139},{"x":1107,"y":139},{"x":1108,"y":139},{"x":1109,"y":138},{"x":1110,"y":138},{"x":1111,"y":138},{"x":1112,"y":138},{"x":1113,"y":138},{"x":1114,"y":139},{"x":1115,"y":139},{"x":1116,"y":139},{"x":1117,"y":139},{"x":1118,"y":140},{"x":1119,"y":140},{"x":1120,"y":140},{"x":1121,"y":141},{"x":1122,"y":141},{"x":1123,"y":141},{"x":1124,"y":141},{"x":1125,"y":141},{"x":1126,"y":141},{"x":1127,"y":141},{"x":1128,"y":140},{"x":1129,"y":140},{"x":1130,"y":139},{"x":1131,"y":139},{"x":1132,"y":139},{"x":1133,"y":138},{"x":1134,"y":138},{"x":1135,"y":138},{"x":1136,"y":138},{"x":1137,"y":138},{"x":1138,"y":138},{"x":1139,"y":139},{"x":1140,"y":139},{"x":1141,"y":139},{"x":1142,"y":139},{"x":1143,"y":139},{"x":1144,"y":139},{"x":1145,"y":139},{"x":1146,"y":139},{"x":1147,"y":139},{"x":1148,"y":139},{"x":1149,"y":139},{"x":1150,"y":140},{"x":1151,"y":140},{"x":1152,"y":140},{"x":1153,"y":141},{"x":1154,"y":141},{"x":1155,"y":141},{"x":1156,"y":141},{"x":1157,"y":141},{"x":1158,"y":141},{"x":1159,"y":140},{"x":1160,"y":140},{"x":1161,"y":140},{"x":1162,"y":140},{"x":1163,"y":140},{"x":1164,"y":140},{"x":1165,"y":140},{"x":1166,"y":141},{"x":1167,"y":141},{"x":1168,"y":141},{"x":1169,"y":141},{"x":1170,"y":141},{"x":1171,"y":141},{"x":1172,"y":141},{"x":1173,"y":141},{"x":1174,"y":141},{"x":1175,"y":141},{"x":1176,"y":141},{"x":1177,"y":141},{"x":1178,"y":141},{"x":1179,"y":141},{"x":1180,"y":141},{"x":1181,"y":141},{"x":1182,"y":141},{"x":1183,"y":141},{"x":1184,"y":141},{"x":1185,"y":141},{"x":1186,"y":141},{"x":1187,"y":141},{"x":1188,"y":141},{"x":1189,"y":141},{"x":1190,"y":141},{"x":1191,"y":140},{"x":1192,"y":140},{"x":1193,"y":140},{"x":1194,"y":139},{"x":1195,"y":139},{"x":1196,"y":139},{"x":1197,"y":139},{"x":1198,"y":139},{"x":1199,"y":139},{"x":1200,"y":139},{"x":1201,"y":139},{"x":1202,"y":139},{"x":1203,"y":139},{"x":1204,"y":139},{"x":1205,"y":139},{"x":1206,"y":138},{"x":1207,"y":138},{"x":1208,"y":138},{"x":1209,"y":138},{"x":1210,"y":138},{"x":1211,"y":138},{"x":1212,"y":139},{"x":1213,"y":139},{"x":1214,"y":139},{"x":1215,"y":139},{"x":1216,"y":139},{"x":1217,"y":139},{"x":1218,"y":139},{"x":1219,"y":139},{"x":1220,"y":139},{"x":1221,"y":140},{"x":1222,"y":140},{"x":1223,"y":140},{"x":1224,"y":140},{"x":1225,"y":140},{"x":1226,"y":140},{"x":1227,"y":140},{"x":1228,"y":140},{"x":1229,"y":140},{"x":1230,"y":139},{"x":1231,"y":139},{"x":1232,"y":139},{"x":1233,"y":139},{"x":1234,"y":139},{"x":1235,"y":139},{"x":1236,"y":139},{"x":1237,"y":139},{"x":1238,"y":139},{"x":1239,"y":139},{"x":1240,"y":139},{"x":1241,"y":139},{"x":1242,"y":139},{"x":1243,"y":139},{"x":1244,"y":139},{"x":1245,"y":139},{"x":1246,"y":139},{"x":1247,"y":139},{"x":1248,"y":140},{"x":1249,"y":140},{"x":1250,"y":140},{"x":1251,"y":141},{"x":1252,"y":141},{"x":1253,"y":141},{"x":1254,"y":141},{"x":1255,"y":141},{"x":1256,"y":140},{"x":1257,"y":140},{"x":1258,"y":140},{"x":1259,"y":140},{"x":1260,"y":141},{"x":1261,"y":141},{"x":1262,"y":141},{"x":1263,"y":141},{"x":1264,"y":140},{"x":1265,"y":140},{"x":1266,"y":140},{"x":1267,"y":140},{"x":1268,"y":139},{"x":1269,"y":139},{"x":1270,"y":139},{"x":1271,"y":139},{"x":1272,"y":139},{"x":1273,"y":139},{"x":1274,"y":139},{"x":1275,"y":139},{"x":1276,"y":139},{"x":1277,"y":139},{"x":1278,"y":139},{"x":1279,"y":139},{"x":1280,"y":139},{"x":1281,"y":139},{"x":1282,"y":139},{"x":1283,"y":139},{"x":1284,"y":139},{"x":1285,"y":139},{"x":1286,"y":139},{"x":1287,"y":139},{"x":1288,"y":139},{"x":1289,"y":139},{"x":1290,"y":139},{"x":1291,"y":139},{"x":1292,"y":139},{"x":1293,"y":139},{"x":1294,"y":139},{"x":1295,"y":139},{"x":1296,"y":139},{"x":1297,"y":139},{"x":1298,"y":139},{"x":1299,"y":139},{"x":1300,"y":139},{"x":1301,"y":139},{"x":1302,"y":139},{"x":1303,"y":139},{"x":1304,"y":138},{"x":1305,"y":138},{"x":1306,"y":138},{"x":1307,"y":138},{"x":1308,"y":138},{"x":1309,"y":138},{"x":1310,"y":137},{"x":1311,"y":137},{"x":1312,"y":136},{"x":1313,"y":136},{"x":1314,"y":136},{"x":1315,"y":136},{"x":1316,"y":136},{"x":1317,"y":135},{"x":1318,"y":135},{"x":1319,"y":135},{"x":1320,"y":136},{"x":1321,"y":136},{"x":1322,"y":136},{"x":1323,"y":136},{"x":1324,"y":136},{"x":1325,"y":136},{"x":1326,"y":137},{"x":1327,"y":137},{"x":1328,"y":137},{"x":1329,"y":137},{"x":1330,"y":138},{"x":1331,"y":138},{"x":1332,"y":138},{"x":1333,"y":138},{"x":1334,"y":139},{"x":1335,"y":139},{"x":1336,"y":140},{"x":1337,"y":140},{"x":1338,"y":140},{"x":1339,"y":141},{"x":1340,"y":141},{"x":1341,"y":141},{"x":1342,"y":141},{"x":1343,"y":141},{"x":1344,"y":142},{"x":1345,"y":142},{"x":1346,"y":142},{"x":1347,"y":142},{"x":1348,"y":142},{"x":1349,"y":142},{"x":1350,"y":142},{"x":1351,"y":142},{"x":1352,"y":142},{"x":1353,"y":142},{"x":1354,"y":142},{"x":1355,"y":142},{"x":1356,"y":142},{"x":1357,"y":142},{"x":1358,"y":143},{"x":1359,"y":143},{"x":1360,"y":144},{"x":1361,"y":144},{"x":1362,"y":144},{"x":1363,"y":144},{"x":1364,"y":144},{"x":1365,"y":144},{"x":1366,"y":144},{"x":1367,"y":144},{"x":1368,"y":144},{"x":1369,"y":143},{"x":1370,"y":143},{"x":1371,"y":143},{"x":1372,"y":143},{"x":1373,"y":143},{"x":1374,"y":143},{"x":1375,"y":143},{"x":1376,"y":144},{"x":1377,"y":144},{"x":1378,"y":144},{"x":1379,"y":144},{"x":1380,"y":144},{"x":1381,"y":144},{"x":1382,"y":144},{"x":1383,"y":144},{"x":1384,"y":144},{"x":1385,"y":144},{"x":1386,"y":144},{"x":1387,"y":144},{"x":1388,"y":145},{"x":1389,"y":145},{"x":1390,"y":145},{"x":1391,"y":145},{"x":1392,"y":145},{"x":1393,"y":145},{"x":1394,"y":145},{"x":1395,"y":145},{"x":1396,"y":145},{"x":1397,"y":145},{"x":1398,"y":145},{"x":1399,"y":145},{"x":1400,"y":145},{"x":1401,"y":145},{"x":1402,"y":145},{"x":1403,"y":145},{"x":1404,"y":145},{"x":1405,"y":145},{"x":1406,"y":145},{"x":1407,"y":145},{"x":1408,"y":145},{"x":1409,"y":145},{"x":1410,"y":145},{"x":1411,"y":145},{"x":1412,"y":144},{"x":1413,"y":144},{"x":1414,"y":144},{"x":1415,"y":144},{"x":1416,"y":144},{"x":1417,"y":144},{"x":1418,"y":145},{"x":1419,"y":145},{"x":1420,"y":145},{"x":1421,"y":145},{"x":1422,"y":145},{"x":1423,"y":145},{"x":1424,"y":145},{"x":1425,"y":145},{"x":1426,"y":145},{"x":1427,"y":145},{"x":1428,"y":145},{"x":1429,"y":145},{"x":1430,"y":145},{"x":1431,"y":145},{"x":1432,"y":145},{"x":1433,"y":145},{"x":1434,"y":145},{"x":1435,"y":145},{"x":1436,"y":145},{"x":1437,"y":145},{"x":1438,"y":145},{"x":1439,"y":145},{"x":1440,"y":144},{"x":1441,"y":144},{"x":1442,"y":144},{"x":1443,"y":144},{"x":1444,"y":144},{"x":1445,"y":144},{"x":1446,"y":143},{"x":1447,"y":143},{"x":1448,"y":144},{"x":1449,"y":144},{"x":1450,"y":144},{"x":1451,"y":144},{"x":1452,"y":144},{"x":1453,"y":144},{"x":1454,"y":144},{"x":1455,"y":144},{"x":1456,"y":144},{"x":1457,"y":144},{"x":1458,"y":143},{"x":1459,"y":143},{"x":1460,"y":143},{"x":1461,"y":143},{"x":1462,"y":143},{"x":1463,"y":143},{"x":1464,"y":144},{"x":1465,"y":144},{"x":1466,"y":144},{"x":1467,"y":145},{"x":1468,"y":145},{"x":1469,"y":145},{"x":1470,"y":145},{"x":1471,"y":145},{"x":1472,"y":145},{"x":1473,"y":145},{"x":1474,"y":145},{"x":1475,"y":145},{"x":1476,"y":145},{"x":1477,"y":145},{"x":1478,"y":145},{"x":1479,"y":145},{"x":1480,"y":144},{"x":1481,"y":144},{"x":1482,"y":144},{"x":1483,"y":144},{"x":1484,"y":144},{"x":1485,"y":144},{"x":1486,"y":144},{"x":1487,"y":144},{"x":1488,"y":144},{"x":1489,"y":144},{"x":1490,"y":144},{"x":1491,"y":144},{"x":1492,"y":145},{"x":1493,"y":145},{"x":1494,"y":145},{"x":1495,"y":145},{"x":1496,"y":145},{"x":1497,"y":145},{"x":1498,"y":145},{"x":1499,"y":146},{"x":1500,"y":146},{"x":1501,"y":146},{"x":1502,"y":146},{"x":1503,"y":146},{"x":1504,"y":146},{"x":1505,"y":146},{"x":1506,"y":146},{"x":1507,"y":146},{"x":1508,"y":145},{"x":1509,"y":145},{"x":1510,"y":144},{"x":1511,"y":144},{"x":1512,"y":143},{"x":1513,"y":142},{"x":1514,"y":141},{"x":1515,"y":141},{"x":1516,"y":141},{"x":1517,"y":140},{"x":1518,"y":140},{"x":1519,"y":140},{"x":1520,"y":140},{"x":1521,"y":140},{"x":1522,"y":139},{"x":1523,"y":139},{"x":1524,"y":139},{"x":1525,"y":139},{"x":1526,"y":138},{"x":1527,"y":138},{"x":1528,"y":138},{"x":1529,"y":137},{"x":1530,"y":136},{"x":1531,"y":136},{"x":1532,"y":135},{"x":1533,"y":135},{"x":1534,"y":135},{"x":1535,"y":135},{"x":1536,"y":135},{"x":1537,"y":135},{"x":1538,"y":136},{"x":1539,"y":136},{"x":1540,"y":137},{"x":1541,"y":137},{"x":1542,"y":137},{"x":1543,"y":138},{"x":1544,"y":138},{"x":1545,"y":139},{"x":1546,"y":139},{"x":1547,"y":140},{"x":1548,"y":140},{"x":1549,"y":141},{"x":1550,"y":142},{"x":1551,"y":142},{"x":1552,"y":143},{"x":1553,"y":144},{"x":1554,"y":144},{"x":1555,"y":145},{"x":1556,"y":145},{"x":1557,"y":145},{"x":1558,"y":146},{"x":1559,"y":146},{"x":1560,"y":146},{"x":1561,"y":146},{"x":1562,"y":146},{"x":1563,"y":145},{"x":1564,"y":145},{"x":1565,"y":144},{"x":1566,"y":144},{"x":1567,"y":144},{"x":1568,"y":144},{"x":1569,"y":144},{"x":1570,"y":144},{"x":1571,"y":144},{"x":1572,"y":144},{"x":1573,"y":144},{"x":1574,"y":144},{"x":1575,"y":144},{"x":1576,"y":144},{"x":1577,"y":144},{"x":1578,"y":144},{"x":1579,"y":144},{"x":1580,"y":144},{"x":1581,"y":144},{"x":1582,"y":144},{"x":1583,"y":144},{"x":1584,"y":144},{"x":1585,"y":144},{"x":1586,"y":143},{"x":1587,"y":143},{"x":1588,"y":142},{"x":1589,"y":142},{"x":1590,"y":141},{"x":1591,"y":141},{"x":1592,"y":141},{"x":1593,"y":140},{"x":1594,"y":140},{"x":1595,"y":140},{"x":1596,"y":139},{"x":1597,"y":139},{"x":1598,"y":138},{"x":1599,"y":138},{"x":1600,"y":138},{"x":1601,"y":137},{"x":1602,"y":137},{"x":1603,"y":137},{"x":1604,"y":137},{"x":1605,"y":136},{"x":1606,"y":136},{"x":1607,"y":136},{"x":1608,"y":137},{"x":1609,"y":137},{"x":1610,"y":137},{"x":1611,"y":137},{"x":1612,"y":137},{"x":1613,"y":137},{"x":1614,"y":138},{"x":1615,"y":138},{"x":1616,"y":138},{"x":1617,"y":139},{"x":1618,"y":139},{"x":1619,"y":139},{"x":1620,"y":139},{"x":1621,"y":139},{"x":1622,"y":138},{"x":1623,"y":138},{"x":1624,"y":139},{"x":1625,"y":139},{"x":1626,"y":139},{"x":1627,"y":140},{"x":1628,"y":141},{"x":1629,"y":141},{"x":1630,"y":142},{"x":1631,"y":142},{"x":1632,"y":142},{"x":1633,"y":142},{"x":1634,"y":142},{"x":1635,"y":142},{"x":1636,"y":143},{"x":1637,"y":143},{"x":1638,"y":143},{"x":1639,"y":143},{"x":1640,"y":143},{"x":1641,"y":143},{"x":1642,"y":143},{"x":1643,"y":143},{"x":1644,"y":143},{"x":1645,"y":142},{"x":1646,"y":142},{"x":1647,"y":142},{"x":1648,"y":142},{"x":1649,"y":142},{"x":1650,"y":142},{"x":1651,"y":142},{"x":1652,"y":142},{"x":1653,"y":142},{"x":1654,"y":142},{"x":1655,"y":142},{"x":1656,"y":142},{"x":1657,"y":142},{"x":1658,"y":142},{"x":1659,"y":141},{"x":1660,"y":141},{"x":1661,"y":141},{"x":1662,"y":141},{"x":1663,"y":141},{"x":1664,"y":141},{"x":1665,"y":141},{"x":1666,"y":141},{"x":1667,"y":141},{"x":1668,"y":142},{"x":1669,"y":142},{"x":1670,"y":142},{"x":1671,"y":142},{"x":1672,"y":142},{"x":1673,"y":143},{"x":1674,"y":143},{"x":1675,"y":143},{"x":1676,"y":143},{"x":1677,"y":143},{"x":1678,"y":144},{"x":1679,"y":144},{"x":1680,"y":144},{"x":1681,"y":144},{"x":1682,"y":144},{"x":1683,"y":144},{"x":1684,"y":144},{"x":1685,"y":144},{"x":1686,"y":144},{"x":1687,"y":144},{"x":1688,"y":144},{"x":1689,"y":143},{"x":1690,"y":143},{"x":1691,"y":142},{"x":1692,"y":142},{"x":1693,"y":142},{"x":1694,"y":142},{"x":1695,"y":142},{"x":1696,"y":142},{"x":1697,"y":141},{"x":1698,"y":141},{"x":1699,"y":141},{"x":1700,"y":141},{"x":1701,"y":141},{"x":1702,"y":142},{"x":1703,"y":142},{"x":1704,"y":142},{"x":1705,"y":142},{"x":1706,"y":142},{"x":1707,"y":142},{"x":1708,"y":143},{"x":1709,"y":143},{"x":1710,"y":144},{"x":1711,"y":144},{"x":1712,"y":145},{"x":1713,"y":145},{"x":1714,"y":145},{"x":1715,"y":145},{"x":1716,"y":145},{"x":1717,"y":145},{"x":1718,"y":145},{"x":1719,"y":145},{"x":1720,"y":145},{"x":1721,"y":145},{"x":1722,"y":145},{"x":1723,"y":145},{"x":1724,"y":145},{"x":1725,"y":144},{"x":1726,"y":144},{"x":1727,"y":144},{"x":1728,"y":144},{"x":1729,"y":144},{"x":1730,"y":144},{"x":1731,"y":143},{"x":1732,"y":143},{"x":1733,"y":142},{"x":1734,"y":142},{"x":1735,"y":142},{"x":1736,"y":141},{"x":1737,"y":141},{"x":1738,"y":140},{"x":1739,"y":140},{"x":1740,"y":140},{"x":1741,"y":140},{"x":1742,"y":140},{"x":1743,"y":139},{"x":1744,"y":139},{"x":1745,"y":139},{"x":1746,"y":139},{"x":1747,"y":139},{"x":1748,"y":139},{"x":1749,"y":139},{"x":1750,"y":139},{"x":1751,"y":139},{"x":1752,"y":139},{"x":1753,"y":139},{"x":1754,"y":139},{"x":1755,"y":140},{"x":1756,"y":140},{"x":1757,"y":140},{"x":1758,"y":140},{"x":1759,"y":140},{"x":1760,"y":140},{"x":1761,"y":141},{"x":1762,"y":141},{"x":1763,"y":141},{"x":1764,"y":141},{"x":1765,"y":141},{"x":1766,"y":141},{"x":1767,"y":141},{"x":1768,"y":142},{"x":1769,"y":142},{"x":1770,"y":142},{"x":1771,"y":142},{"x":1772,"y":142},{"x":1773,"y":142},{"x":1774,"y":143},{"x":1775,"y":143},{"x":1776,"y":142},{"x":1777,"y":142},{"x":1778,"y":142},{"x":1779,"y":143},{"x":1780,"y":143},{"x":1781,"y":143},{"x":1782,"y":143},{"x":1783,"y":144},{"x":1784,"y":144},{"x":1785,"y":143},{"x":1786,"y":143},{"x":1787,"y":144},{"x":1788,"y":144},{"x":1789,"y":144},{"x":1790,"y":144},{"x":1791,"y":144},{"x":1792,"y":143},{"x":1793,"y":143},{"x":1794,"y":143},{"x":1795,"y":143},{"x":1796,"y":143},{"x":1797,"y":143},{"x":1798,"y":143},{"x":1799,"y":144},{"x":1800,"y":144},{"x":1801,"y":143},{"x":1802,"y":142},{"x":1803,"y":142},{"x":1804,"y":142},{"x":1805,"y":142},{"x":1806,"y":141},{"x":1807,"y":141},{"x":1808,"y":141},{"x":1809,"y":141},{"x":1810,"y":141},{"x":1811,"y":141},{"x":1812,"y":141},{"x":1813,"y":141},{"x":1814,"y":141},{"x":1815,"y":141},{"x":1816,"y":142},{"x":1817,"y":142},{"x":1818,"y":142},{"x":1819,"y":143},{"x":1820,"y":143},{"x":1821,"y":144},{"x":1822,"y":144},{"x":1823,"y":144},{"x":1824,"y":144},{"x":1825,"y":144},{"x":1826,"y":144},{"x":1827,"y":144},{"x":1828,"y":144},{"x":1829,"y":144},{"x":1830,"y":144},{"x":1831,"y":144},{"x":1832,"y":144},{"x":1833,"y":144},{"x":1834,"y":144},{"x":1835,"y":144},{"x":1836,"y":144},{"x":1837,"y":144},{"x":1838,"y":144},{"x":1839,"y":144},{"x":1840,"y":144},{"x":1841,"y":144},{"x":1842,"y":144},{"x":1843,"y":145},{"x":1844,"y":145},{"x":1845,"y":144},{"x":1846,"y":144},{"x":1847,"y":143},{"x":1848,"y":143},{"x":1849,"y":143},{"x":1850,"y":143},{"x":1851,"y":143},{"x":1852,"y":143},{"x":1853,"y":143},{"x":1854,"y":143},{"x":1855,"y":143},{"x":1856,"y":143},{"x":1857,"y":143},{"x":1858,"y":143},{"x":1859,"y":144},{"x":1860,"y":144},{"x":1861,"y":144},{"x":1862,"y":144},{"x":1863,"y":144},{"x":1864,"y":144},{"x":1865,"y":144},{"x":1866,"y":144},{"x":1867,"y":144},{"x":1868,"y":144},{"x":1869,"y":144},{"x":1870,"y":144},{"x":1871,"y":144},{"x":1872,"y":144},{"x":1873,"y":143},{"x":1874,"y":143},{"x":1875,"y":142},{"x":1876,"y":142},{"x":1877,"y":141},{"x":1878,"y":141},{"x":1879,"y":141},{"x":1880,"y":141},{"x":1881,"y":140},{"x":1882,"y":140},{"x":1883,"y":140},{"x":1884,"y":140},{"x":1885,"y":140},{"x":1886,"y":140},{"x":1887,"y":140},{"x":1888,"y":140},{"x":1889,"y":140},{"x":1890,"y":140},{"x":1891,"y":140},{"x":1892,"y":141},{"x":1893,"y":141},{"x":1894,"y":141},{"x":1895,"y":141},{"x":1896,"y":142},{"x":1897,"y":142},{"x":1898,"y":142},{"x":1899,"y":143},{"x":1900,"y":143},{"x":1901,"y":143},{"x":1902,"y":143},{"x":1903,"y":144},{"x":1904,"y":144},{"x":1905,"y":144},{"x":1906,"y":144},{"x":1907,"y":143},{"x":1908,"y":143},{"x":1909,"y":143},{"x":1910,"y":143},{"x":1911,"y":143},{"x":1912,"y":143},{"x":1913,"y":143},{"x":1914,"y":143},{"x":1915,"y":143},{"x":1916,"y":143},{"x":1917,"y":143},{"x":1918,"y":143},{"x":1919,"y":143},{"x":1920,"y":144},{"x":1921,"y":144},{"x":1922,"y":144},{"x":1923,"y":144},{"x":1924,"y":145},{"x":1925,"y":145},{"x":1926,"y":145},{"x":1927,"y":145},{"x":1928,"y":145},{"x":1929,"y":146},{"x":1930,"y":146},{"x":1931,"y":146},{"x":1932,"y":146},{"x":1933,"y":145},{"x":1934,"y":145},{"x":1935,"y":145},{"x":1936,"y":145},{"x":1937,"y":145},{"x":1938,"y":145},{"x":1939,"y":145},{"x":1940,"y":145},{"x":1941,"y":146},{"x":1942,"y":146},{"x":1943,"y":146},{"x":1944,"y":146},{"x":1945,"y":146},{"x":1946,"y":146},{"x":1947,"y":146},{"x":1948,"y":146},{"x":1949,"y":146},{"x":1950,"y":146},{"x":1951,"y":146},{"x":1952,"y":147},{"x":1953,"y":147},{"x":1954,"y":147},{"x":1955,"y":147},{"x":1956,"y":147},{"x":1957,"y":147},{"x":1958,"y":147},{"x":1959,"y":147},{"x":1960,"y":147},{"x":1961,"y":146},{"x":1962,"y":146},{"x":1963,"y":146},{"x":1964,"y":146},{"x":1965,"y":146},{"x":1966,"y":146},{"x":1967,"y":146},{"x":1968,"y":146},{"x":1969,"y":146},{"x":1970,"y":146},{"x":1971,"y":146},{"x":1972,"y":146},{"x":1973,"y":146},{"x":1974,"y":146},{"x":1975,"y":146},{"x":1976,"y":145},{"x":1977,"y":145},{"x":1978,"y":145},{"x":1979,"y":145},{"x":1980,"y":145},{"x":1981,"y":145},{"x":1982,"y":145},{"x":1983,"y":145},{"x":1984,"y":145},{"x":1985,"y":145},{"x":1986,"y":145},{"x":1987,"y":145},{"x":1988,"y":145},{"x":1989,"y":145},{"x":1990,"y":145},{"x":1991,"y":144},{"x":1992,"y":144},{"x":1993,"y":144},{"x":1994,"y":143},{"x":1995,"y":143},{"x":1996,"y":142},{"x":1997,"y":142},{"x":1998,"y":141},{"x":1999,"y":141},{"x":2000,"y":140},{"x":2001,"y":140},{"x":2002,"y":140},{"x":2003,"y":139},{"x":2004,"y":139},{"x":2005,"y":139},{"x":2006,"y":140},{"x":2007,"y":140},{"x":2008,"y":140},{"x":2009,"y":141},{"x":2010,"y":141},{"x":2011,"y":142},{"x":2012,"y":143},{"x":2013,"y":143},{"x":2014,"y":144},{"x":2015,"y":144},{"x":2016,"y":145},{"x":2017,"y":145},{"x":2018,"y":146},{"x":2019,"y":146},{"x":2020,"y":146},{"x":2021,"y":146},{"x":2022,"y":146},{"x":2023,"y":146},{"x":2024,"y":146},{"x":2025,"y":146},{"x":2026,"y":146},{"x":2027,"y":146},{"x":2028,"y":146},{"x":2029,"y":145},{"x":2030,"y":145},{"x":2031,"y":145},{"x":2032,"y":145},{"x":2033,"y":145},{"x":2034,"y":145},{"x":2035,"y":145},{"x":2036,"y":144},{"x":2037,"y":144},{"x":2038,"y":144},{"x":2039,"y":144},{"x":2040,"y":144},{"x":2041,"y":144},{"x":2042,"y":144},{"x":2043,"y":144},{"x":2044,"y":143},{"x":2045,"y":143},{"x":2046,"y":143},{"x":2047,"y":143},{"x":2048,"y":143},{"x":2049,"y":143},{"x":2050,"y":142},{"x":2051,"y":142},{"x":2052,"y":142},{"x":2053,"y":142},{"x":2054,"y":142},{"x":2055,"y":142},{"x":2056,"y":142},{"x":2057,"y":141},{"x":2058,"y":140},{"x":2059,"y":140},{"x":2060,"y":139},{"x":2061,"y":139},{"x":2062,"y":139},{"x":2063,"y":139},{"x":2064,"y":139},{"x":2065,"y":139},{"x":2066,"y":140},{"x":2067,"y":140},{"x":2068,"y":141},{"x":2069,"y":141},{"x":2070,"y":141},{"x":2071,"y":142},{"x":2072,"y":142},{"x":2073,"y":142},{"x":2074,"y":142},{"x":2075,"y":143},{"x":2076,"y":143},{"x":2077,"y":144},{"x":2078,"y":144},{"x":2079,"y":144},{"x":2080,"y":145},{"x":2081,"y":145},{"x":2082,"y":145},{"x":2083,"y":145},{"x":2084,"y":145},{"x":2085,"y":145},{"x":2086,"y":145},{"x":2087,"y":145},{"x":2088,"y":145},{"x":2089,"y":146},{"x":2090,"y":146},{"x":2091,"y":146},{"x":2092,"y":146},{"x":2093,"y":146},{"x":2094,"y":145},{"x":2095,"y":145},{"x":2096,"y":145},{"x":2097,"y":145},{"x":2098,"y":145},{"x":2099,"y":145},{"x":2100,"y":145},{"x":2101,"y":145},{"x":2102,"y":145},{"x":2103,"y":145},{"x":2104,"y":145},{"x":2105,"y":145},{"x":2106,"y":146},{"x":2107,"y":146},{"x":2108,"y":146},{"x":2109,"y":146},{"x":2110,"y":146},{"x":2111,"y":146},{"x":2112,"y":146},{"x":2113,"y":146},{"x":2114,"y":146},{"x":2115,"y":146},{"x":2116,"y":146},{"x":2117,"y":146},{"x":2118,"y":146},{"x":2119,"y":146},{"x":2120,"y":146},{"x":2121,"y":146},{"x":2122,"y":146},{"x":2123,"y":146},{"x":2124,"y":146},{"x":2125,"y":146},{"x":2126,"y":146},{"x":2127,"y":146},{"x":2128,"y":146},{"x":2129,"y":146},{"x":2130,"y":145},{"x":2131,"y":145},{"x":2132,"y":145},{"x":2133,"y":145},{"x":2134,"y":145},{"x":2135,"y":145},{"x":2136,"y":145},{"x":2137,"y":145},{"x":2138,"y":144},{"x":2139,"y":144},{"x":2140,"y":145},{"x":2141,"y":145},{"x":2142,"y":145},{"x":2143,"y":145},{"x":2144,"y":145},{"x":2145,"y":145},{"x":2146,"y":145},{"x":2147,"y":145},{"x":2148,"y":145},{"x":2149,"y":145},{"x":2150,"y":146},{"x":2151,"y":146},{"x":2152,"y":145},{"x":2153,"y":145},{"x":2154,"y":145},{"x":2155,"y":145},{"x":2156,"y":145},{"x":2157,"y":145},{"x":2158,"y":145},{"x":2159,"y":145},{"x":2160,"y":145},{"x":2161,"y":145},{"x":2162,"y":145},{"x":2163,"y":145},{"x":2164,"y":145},{"x":2165,"y":145},{"x":2166,"y":145},{"x":2167,"y":145},{"x":2168,"y":145},{"x":2169,"y":145},{"x":2170,"y":146},{"x":2171,"y":146},{"x":2172,"y":146},{"x":2173,"y":147},{"x":2174,"y":147},{"x":2175,"y":147},{"x":2176,"y":147},{"x":2177,"y":147},{"x":2178,"y":147},{"x":2179,"y":146},{"x":2180,"y":146},{"x":2181,"y":146},{"x":2182,"y":147},{"x":2183,"y":147},{"x":2184,"y":147},{"x":2185,"y":147},{"x":2186,"y":148},{"x":2187,"y":148},{"x":2188,"y":148},{"x":2189,"y":148},{"x":2190,"y":149},{"x":2191,"y":149},{"x":2192,"y":149},{"x":2193,"y":149},{"x":2194,"y":149},{"x":2195,"y":149},{"x":2196,"y":149},{"x":2197,"y":150},{"x":2198,"y":150},{"x":2199,"y":150},{"x":2200,"y":150},{"x":2201,"y":150},{"x":2202,"y":150},{"x":2203,"y":150},{"x":2204,"y":150},{"x":2205,"y":150},{"x":2206,"y":150},{"x":2207,"y":150},{"x":2208,"y":149},{"x":2209,"y":149},{"x":2210,"y":149},{"x":2211,"y":149},{"x":2212,"y":148},{"x":2213,"y":148},{"x":2214,"y":148},{"x":2215,"y":148},{"x":2216,"y":148},{"x":2217,"y":148},{"x":2218,"y":148},{"x":2219,"y":148},{"x":2220,"y":148},{"x":2221,"y":148},{"x":2222,"y":148},{"x":2223,"y":148},{"x":2224,"y":148},{"x":2225,"y":147},{"x":2226,"y":146},{"x":2227,"y":146},{"x":2228,"y":145},{"x":2229,"y":145},{"x":2230,"y":144},{"x":2231,"y":144},{"x":2232,"y":144},{"x":2233,"y":144},{"x":2234,"y":144},{"x":2235,"y":144},{"x":2236,"y":144},{"x":2237,"y":144},{"x":2238,"y":144},{"x":2239,"y":144},{"x":2240,"y":144},{"x":2241,"y":144},{"x":2242,"y":144},{"x":2243,"y":144},{"x":2244,"y":144},{"x":2245,"y":144},{"x":2246,"y":144},{"x":2247,"y":145},{"x":2248,"y":145},{"x":2249,"y":145},{"x":2250,"y":145},{"x":2251,"y":145},{"x":2252,"y":145},{"x":2253,"y":145},{"x":2254,"y":145},{"x":2255,"y":145},{"x":2256,"y":145},{"x":2257,"y":145},{"x":2258,"y":145},{"x":2259,"y":146},{"x":2260,"y":146},{"x":2261,"y":146},{"x":2262,"y":146},{"x":2263,"y":146},{"x":2264,"y":147},{"x":2265,"y":147},{"x":2266,"y":147},{"x":2267,"y":147},{"x":2268,"y":147},{"x":2269,"y":147},{"x":2270,"y":147},{"x":2271,"y":148},{"x":2272,"y":148},{"x":2273,"y":148},{"x":2274,"y":148},{"x":2275,"y":148},{"x":2276,"y":148},{"x":2277,"y":148},{"x":2278,"y":147},{"x":2279,"y":147},{"x":2280,"y":147},{"x":2281,"y":147},{"x":2282,"y":147},{"x":2283,"y":147},{"x":2284,"y":147},{"x":2285,"y":147},{"x":2286,"y":147},{"x":2287,"y":147},{"x":2288,"y":147},{"x":2289,"y":148},{"x":2290,"y":148},{"x":2291,"y":148},{"x":2292,"y":149},{"x":2293,"y":149},{"x":2294,"y":150},{"x":2295,"y":150},{"x":2296,"y":150},{"x":2297,"y":150},{"x":2298,"y":149},{"x":2299,"y":149},{"x":2300,"y":149},{"x":2301,"y":149},{"x":2302,"y":149},{"x":2303,"y":149},{"x":2304,"y":149},{"x":2305,"y":149},{"x":2306,"y":149},{"x":2307,"y":149},{"x":2308,"y":148},{"x":2309,"y":148},{"x":2310,"y":148},{"x":2311,"y":148},{"x":2312,"y":148},{"x":2313,"y":148},{"x":2314,"y":148},{"x":2315,"y":148},{"x":2316,"y":148},{"x":2317,"y":148},{"x":2318,"y":148},{"x":2319,"y":148},{"x":2320,"y":147},{"x":2321,"y":147},{"x":2322,"y":147},{"x":2323,"y":147},{"x":2324,"y":147},{"x":2325,"y":147},{"x":2326,"y":147},{"x":2327,"y":147},{"x":2328,"y":147},{"x":2329,"y":147},{"x":2330,"y":146},{"x":2331,"y":146},{"x":2332,"y":146},{"x":2333,"y":146},{"x":2334,"y":146},{"x":2335,"y":146},{"x":2336,"y":146},{"x":2337,"y":146},{"x":2338,"y":146},{"x":2339,"y":146},{"x":2340,"y":146},{"x":2341,"y":146},{"x":2342,"y":146},{"x":2343,"y":146},{"x":2344,"y":146},{"x":2345,"y":146},{"x":2346,"y":146},{"x":2347,"y":146},{"x":2348,"y":146},{"x":2349,"y":146},{"x":2350,"y":146},{"x":2351,"y":146},{"x":2352,"y":146},{"x":2353,"y":146},{"x":2354,"y":147},{"x":2355,"y":147},{"x":2356,"y":147},{"x":2357,"y":147},{"x":2358,"y":147},{"x":2359,"y":147},{"x":2360,"y":148},{"x":2361,"y":148},{"x":2362,"y":148},{"x":2363,"y":148},{"x":2364,"y":149},{"x":2365,"y":149},{"x":2366,"y":150},{"x":2367,"y":150},{"x":2368,"y":150},{"x":2369,"y":150},{"x":2370,"y":150},{"x":2371,"y":150},{"x":2372,"y":150},{"x":2373,"y":150},{"x":2374,"y":150},{"x":2375,"y":150},{"x":2376,"y":150},{"x":2377,"y":149},{"x":2378,"y":149},{"x":2379,"y":149},{"x":2380,"y":149},{"x":2381,"y":149},{"x":2382,"y":148},{"x":2383,"y":148},{"x":2384,"y":148},{"x":2385,"y":148},{"x":2386,"y":148},{"x":2387,"y":148},{"x":2388,"y":148},{"x":2389,"y":148},{"x":2390,"y":149},{"x":2391,"y":149},{"x":2392,"y":149},{"x":2393,"y":149},{"x":2394,"y":149},{"x":2395,"y":149},{"x":2396,"y":149},{"x":2397,"y":149},{"x":2398,"y":149},{"x":2399,"y":149},{"x":2400,"y":149},{"x":2401,"y":149},{"x":2402,"y":149},{"x":2403,"y":149},{"x":2404,"y":149},{"x":2405,"y":149},{"x":2406,"y":149},{"x":2407,"y":149},{"x":2408,"y":149},{"x":2409,"y":149},{"x":2410,"y":149},{"x":2411,"y":149},{"x":2412,"y":149},{"x":2413,"y":149},{"x":2414,"y":149},{"x":2415,"y":149},{"x":2416,"y":149},{"x":2417,"y":149},{"x":2418,"y":149},{"x":2419,"y":149},{"x":2420,"y":149},{"x":2421,"y":150},{"x":2422,"y":150},{"x":2423,"y":150},{"x":2424,"y":150},{"x":2425,"y":150},{"x":2426,"y":150},{"x":2427,"y":150},{"x":2428,"y":150},{"x":2429,"y":150},{"x":2430,"y":150},{"x":2431,"y":150},{"x":2432,"y":149},{"x":2433,"y":149},{"x":2434,"y":149},{"x":2435,"y":149},{"x":2436,"y":149},{"x":2437,"y":149},{"x":2438,"y":149},{"x":2439,"y":149},{"x":2440,"y":150},{"x":2441,"y":150},{"x":2442,"y":150},{"x":2443,"y":150},{"x":2444,"y":150},{"x":2445,"y":150},{"x":2446,"y":150},{"x":2447,"y":150},{"x":2448,"y":150},{"x":2449,"y":150},{"x":2450,"y":150},{"x":2451,"y":150},{"x":2452,"y":150},{"x":2453,"y":151},{"x":2454,"y":151},{"x":2455,"y":151},{"x":2456,"y":151},{"x":2457,"y":151},{"x":2458,"y":150},{"x":2459,"y":150},{"x":2460,"y":150},{"x":2461,"y":150},{"x":2462,"y":151},{"x":2463,"y":151},{"x":2464,"y":151},{"x":2465,"y":151},{"x":2466,"y":152},{"x":2467,"y":152},{"x":2468,"y":152},{"x":2469,"y":152},{"x":2470,"y":152},{"x":2471,"y":152},{"x":2472,"y":152},{"x":2473,"y":152},{"x":2474,"y":152},{"x":2475,"y":152},{"x":2476,"y":152},{"x":2477,"y":152},{"x":2478,"y":152},{"x":2479,"y":152},{"x":2480,"y":152},{"x":2481,"y":152},{"x":2482,"y":152},{"x":2483,"y":152},{"x":2484,"y":152},{"x":2485,"y":152},{"x":2486,"y":152},{"x":2487,"y":152},{"x":2488,"y":152},{"x":2489,"y":152},{"x":2490,"y":152},{"x":2491,"y":152},{"x":2492,"y":152},{"x":2493,"y":152},{"x":2494,"y":152},{"x":2495,"y":152},{"x":2496,"y":153},{"x":2497,"y":153},{"x":2498,"y":153},{"x":2499,"y":153},{"x":2500,"y":153},{"x":2501,"y":154},{"x":2502,"y":154},{"x":2503,"y":154},{"x":2504,"y":154},{"x":2505,"y":154},{"x":2506,"y":154},{"x":2507,"y":154},{"x":2508,"y":154},{"x":2509,"y":153},{"x":2510,"y":153},{"x":2511,"y":153},{"x":2512,"y":153},{"x":2513,"y":153},{"x":2514,"y":152},{"x":2515,"y":152},{"x":2516,"y":152},{"x":2517,"y":152},{"x":2518,"y":152},{"x":2519,"y":152},{"x":2520,"y":151},{"x":2521,"y":151},{"x":2522,"y":151},{"x":2523,"y":151},{"x":2524,"y":151},{"x":2525,"y":151},{"x":2526,"y":151},{"x":2527,"y":152},{"x":2528,"y":152},{"x":2529,"y":152},{"x":2530,"y":152},{"x":2531,"y":152},{"x":2532,"y":152},{"x":2533,"y":152},{"x":2534,"y":152},{"x":2535,"y":152},{"x":2536,"y":152},{"x":2537,"y":152},{"x":2538,"y":152},{"x":2539,"y":152},{"x":2540,"y":152},{"x":2541,"y":152},{"x":2542,"y":152},{"x":2543,"y":152},{"x":2544,"y":152},{"x":2545,"y":152},{"x":2546,"y":152},{"x":2547,"y":152},{"x":2548,"y":152},{"x":2549,"y":152},{"x":2550,"y":151},{"x":2551,"y":151},{"x":2552,"y":151},{"x":2553,"y":151},{"x":2554,"y":152},{"x":2555,"y":152},{"x":2556,"y":152},{"x":2557,"y":152},{"x":2558,"y":152},{"x":2559,"y":152},{"x":2560,"y":152},{"x":2561,"y":152},{"x":2562,"y":152},{"x":2563,"y":152},{"x":2564,"y":152},{"x":2565,"y":152},{"x":2566,"y":152},{"x":2567,"y":152},{"x":2568,"y":152},{"x":2569,"y":152},{"x":2570,"y":152},{"x":2571,"y":152},{"x":2572,"y":152},{"x":2573,"y":152},{"x":2574,"y":152},{"x":2575,"y":152},{"x":2576,"y":152},{"x":2577,"y":152},{"x":2578,"y":151},{"x":2579,"y":151},{"x":2580,"y":151},{"x":2581,"y":150},{"x":2582,"y":150},{"x":2583,"y":150},{"x":2584,"y":150},{"x":2585,"y":150},{"x":2586,"y":150},{"x":2587,"y":150},{"x":2588,"y":150},{"x":2589,"y":150},{"x":2590,"y":150},{"x":2591,"y":150},{"x":2592,"y":150},{"x":2593,"y":150},{"x":2594,"y":150},{"x":2595,"y":150},{"x":2596,"y":150},{"x":2597,"y":150},{"x":2598,"y":150},{"x":2599,"y":150},{"x":2600,"y":150},{"x":2601,"y":149},{"x":2602,"y":149},{"x":2603,"y":149},{"x":2604,"y":149},{"x":2605,"y":149},{"x":2606,"y":149},{"x":2607,"y":149},{"x":2608,"y":148},{"x":2609,"y":148},{"x":2610,"y":148},{"x":2611,"y":148},{"x":2612,"y":148},{"x":2613,"y":148},{"x":2614,"y":148},{"x":2615,"y":148},{"x":2616,"y":148},{"x":2617,"y":148},{"x":2618,"y":148},{"x":2619,"y":148},{"x":2620,"y":148},{"x":2621,"y":148},{"x":2622,"y":148},{"x":2623,"y":148},{"x":2624,"y":148},{"x":2625,"y":148},{"x":2626,"y":148},{"x":2627,"y":148},{"x":2628,"y":148},{"x":2629,"y":148},{"x":2630,"y":148},{"x":2631,"y":148},{"x":2632,"y":148},{"x":2633,"y":148},{"x":2634,"y":149},{"x":2635,"y":149},{"x":2636,"y":149},{"x":2637,"y":149},{"x":2638,"y":150},{"x":2639,"y":150},{"x":2640,"y":150},{"x":2641,"y":150},{"x":2642,"y":150},{"x":2643,"y":150},{"x":2644,"y":150},{"x":2645,"y":150},{"x":2646,"y":150},{"x":2647,"y":150},{"x":2648,"y":150},{"x":2649,"y":150},{"x":2650,"y":150},{"x":2651,"y":150},{"x":2652,"y":150},{"x":2653,"y":149},{"x":2654,"y":149},{"x":2655,"y":149},{"x":2656,"y":149},{"x":2657,"y":149},{"x":2658,"y":149},{"x":2659,"y":149},{"x":2660,"y":149},{"x":2661,"y":149},{"x":2662,"y":148},{"x":2663,"y":148},{"x":2664,"y":149},{"x":2665,"y":149},{"x":2666,"y":149},{"x":2667,"y":149},{"x":2668,"y":149},{"x":2669,"y":149},{"x":2670,"y":149},{"x":2671,"y":149},{"x":2672,"y":149},{"x":2673,"y":149},{"x":2674,"y":149},{"x":2675,"y":149},{"x":2676,"y":149},{"x":2677,"y":149},{"x":2678,"y":149},{"x":2679,"y":149},{"x":2680,"y":149},{"x":2681,"y":148},{"x":2682,"y":148},{"x":2683,"y":148},{"x":2684,"y":148},{"x":2685,"y":148},{"x":2686,"y":148},{"x":2687,"y":148},{"x":2688,"y":148},{"x":2689,"y":148},{"x":2690,"y":148},{"x":2691,"y":148},{"x":2692,"y":149},{"x":2693,"y":149},{"x":2694,"y":149},{"x":2695,"y":149},{"x":2696,"y":149},{"x":2697,"y":149},{"x":2698,"y":149},{"x":2699,"y":150},{"x":2700,"y":150},{"x":2701,"y":150},{"x":2702,"y":150},{"x":2703,"y":150},{"x":2704,"y":150},{"x":2705,"y":150},{"x":2706,"y":150},{"x":2707,"y":150},{"x":2708,"y":150},{"x":2709,"y":150},{"x":2710,"y":150},{"x":2711,"y":150},{"x":2712,"y":150},{"x":2713,"y":150},{"x":2714,"y":150},{"x":2715,"y":150},{"x":2716,"y":150},{"x":2717,"y":150},{"x":2718,"y":150},{"x":2719,"y":149}],
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: 0.3, pointRadius: 0,
+      yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: {
+        title: function(ctx) {
+          const sec = ctx[0].parsed.x;
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return m + ':' + String(s).padStart(2, '0');
+        },
+        label: function(ctx) {
+          if (ctx.datasetIndex === 0) return fmtPace(ctx.parsed.y) + '/km';
+          return ctx.parsed.y + ' bpm';
+        }
+      } }
+    },
+    scales: {
+      x: { type: 'linear', title: { display: true, text: '运动时间' },
+        min: 0, max: 2760,
+        ticks: { callback: function(v) {
+          const m = Math.floor(v / 60);
+          const s = Math.round(v % 60);
+          return m + ':' + String(s).padStart(2, '0');
+        } } },
+      y: { reverse: true, position: 'left', title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } } },
+      y1: { position: 'right', title: { display: true, text: '心率 (bpm)' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Sleep Chart — stacked bars (deep + light + REM) + sleep score line overlay
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: ["07/02","07/03","07/04","07/05","07/06","07/07","07/08"],
+    datasets: [{
+      label: '深睡',
+      data: [1.7,2.5,0.8,1.9,2.3,1.7,2],
+      backgroundColor: 'rgba(92,124,200,.8)',
+      yAxisID: 'y',
+    }, {
+      label: '浅睡',
+      data: [2.8,5.3,5.3,4.2,5.1,4.5,4.7],
+      backgroundColor: 'rgba(140,170,220,.7)',
+      yAxisID: 'y',
+    }, {
+      label: 'REM',
+      data: [1.6,1.3,1.4,2,1.1,1.7,1.4],
+      backgroundColor: 'rgba(200,215,240,.6)',
+      yAxisID: 'y',
+    }, {
+      label: '睡眠评分',
+      type: 'line',
+      data: [93,57,72,64,81,98,95],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: false, tension: .3, pointRadius: 5,
+      pointBackgroundColor: '#7ec882',
+      yAxisID: 'y1',
+      order: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.datasetIndex < 3) {
+          const h = Math.floor(ctx.parsed.y);
+          const m = Math.round((ctx.parsed.y - h) * 60);
+          return ctx.dataset.label + ': ' + h + 'h' + String(m).padStart(2, '0') + 'min';
+        }
+        return ctx.dataset.label + ': ' + ctx.parsed.y;
+      } } } },
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, position: 'left', min: 0, max: 12,
+        title: { display: true, text: '睡眠时长 (h)' },
+        ticks: { stepSize: 2 } },
+      y1: { position: 'right', min: 0, max: 100,
+        title: { display: true, text: '睡眠评分' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Theme toggle
+(function(){
+  const btn = document.getElementById('themeToggle');
+  const root = document.documentElement;
+  const saved = localStorage.getItem('coros-theme') || 'dark';
+  root.setAttribute('data-theme', saved); btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  btn.addEventListener('click', function(){
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('coros-theme', next);
+    updateChartColors();
+  });
+  function getThemeColor(varName) {
+    return getComputedStyle(root).getPropertyValue(varName).trim();
+  }
+  function updateChartColors() {
+    const gridColor = getThemeColor('--border');
+    const tickColor = getThemeColor('--muted');
+    Chart.defaults.color = tickColor;
+    Chart.defaults.borderColor = gridColor;
+    // Chart.js v4 兼容：使用 Object.entries 遍历实例，避免直接修改 scale 配置
+    var charts = Chart.instances;
+    if (charts) {
+      Object.keys(charts).forEach(function(id) {
+        var chart = charts[id];
+        if (!chart || !chart.options) return;
+        // 仅更新图例标签颜色（scale 颜色由 Chart.defaults 自动处理）
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+          chart.options.plugins.legend.labels.color = tickColor;
+        }
+        chart.update('none');
+      });
+    }
+  }
+  updateChartColors();
+})();
+</script>
+
+</body>
+</html>
