@@ -11,30 +11,29 @@
                        ▼
 ┌──────────────────────────────────────────────────────────┐
 │                 daily-review workflow                      │
-│    选择 LLM → 数据采集 → 深度分析 → 数据验证 → 报告生成      │
+│    选择 LLM → 数据采集 → 深度分析 → 数据验证 → 计划推送 → 报告生成      │
 └──────┬──────────────────────┬────────────────┬───────────┘
        │                      │                │
        ▼                      ▼                ▼
 ┌──────────────────┐  ┌──────────────┐  ┌──────────────────┐
-│   fetch.js       │  │ analyze.js   │  │   report.js      │
+│   fetch.js       │  │ analyze.js   │  │  push-plan.py   │
 │                  │  │              │  │                  │
-│ Coros MCP        │  │ LLM 复盘     │  │ HTML 生成        │
-│ 10 项数据采集    │  │ 训练计划生成  │  │ Chart.js 图表    │
-│ + TCX 下载+解析  │  │ 分析去重     │  │ 亮/暗主题        │
-│ + 增量/全量      │  │ LLM fallback │  │ 配速区间自动推导  │
-│ + TCX 数据修复   │  │ Token 优化   │  │                  │
-└──┬────────┬──────┘  └──────┬───────┘  └────────┬─────────┘
+│ Coros MCP        │  │ LLM 复盘     │  │ coros-training-  │
+│ 10 项数据采集    │  │ 训练计划生成  │  │ mcp (Python)     │
+│ + TCX 下载+解析  │  │ 分析去重     │  │ create_run_work- │
+│ + 增量/全量      │  │ LLM fallback │  │ out + schedule   │
+│ + TCX 数据修复   │  │ Token 优化   │  │ → COROS 日历     │
+└──┬────────┬──────┘  └──────┬───────┘  └──────────────────┘
    │        │                │                    │
-   │   ┌────┴─────┐         ▼                    ▼
-   │   │download  │  ┌──────────────┐    ┌──────────────────┐
-   │   │-tcx.js   │  │ daily/       │    │ reports/         │
-   │   │(子进程)  │  │ YYYYMMDD     │    │ YYYYMMDD-report  │
-   │   └────┬─────┘  │ -analysis    │    │ .html            │
-   │        │        │ .json        │    │ chart.min.js     │
-   │        ▼        └──────────────┘    └──────────────────┘
-   │  ┌──────────┐         ▲
-   │  │data/tcx/ │         │ 读取 daily JSON
-   │  │*.tcx     │         │ (含 tcxMetrics)
+   │   ┌────┴─────┐         ▼                    ┌──────────────────┐
+   │   │download  │  ┌──────────────┐    ┌───────┤  reports/        │
+   │   │-tcx.js   │  │ daily/       │    │       │  YYYYMMDD-report │
+   │   │(子进程)  │  │ YYYYMMDD     │    │       │  .html           │
+   │   └────┬─────┘  │ -analysis    │    │       │  chart.min.js    │
+   │        │        │ .json        │    │       └──────────────────┘
+   │        ▼        └──────┬───────┘    │              ▲
+   │  ┌──────────┐          │            │  report.js   │
+   │  │data/tcx/ │          │ 分析 JSON  │              │
    │  └──────────┘         │
    │                       │
    ▼                       │
@@ -131,7 +130,32 @@ analysis JSON ──> validate.js ──> { issues[], hasIssues, summary }
 - TCX 配速趋势标签与实际方向一致性
 - weeklyPlan 首日与报告日期对齐
 
-### 2.5 报告阶段（report.js）
+### 2.5 推送阶段（push-plan.py）
+
+```
+analysis JSON ──> 读取 weeklyPlan
+    │
+    ├── 有 workoutSteps? ──> 直接转换为 COROS steps（与详细计划一致）
+    └── 无 workoutSteps? ──> 规则引擎转换（传统回退）
+                              │
+                              └──> coros_api (Python)
+                                    ├──> build_run_workout_payload() ──> COROS 训练库
+                                    └──> schedule_workout() ──> COROS 手表日历
+```
+
+push-plan.py 直接导入 `coros_api` 模块（`coros-training-mcp` 包的底层库），绕过 MCP stdio 通信层，调用：
+- `build_run_workout_payload(name, steps)` + `create_workout_from_raw(auth, payload)` — 构建并创建训练计划
+- `schedule_workout(auth, workout_id, happen_day)` — 推送到指定日期
+
+**workoutSteps 优先路径**（推荐）：LLM 在 `weeklyPlan[].workoutSteps` 中输出结构化步骤数组，每步格式为 `{"kind":"warmup/training/cooldown","targetDistanceKm":数字,"pace":"X:XX-X:XX/km"}` 或间歇组 `{"repeat":组数,"steps":[...]}`。`push-plan.py` 直接使用这些值，确保推送计划与报告中的详细计划完全一致。
+
+**规则引擎回退**：当 `workoutSteps` 不存在时（历史分析文件），按训练类型（轻松跑/节奏跑/间歇/LSD）用固定比例（15%/12% 热身/冷身）分配距离，配速从 `context.paceZones` 中按区间查找。
+
+**配速值格式**：COROS 使用**秒/公里**（非毫秒/公里，尽管 `pace_parser.py` 文档写的是 ms）。例如 6:20/km → `intensity_value=380`（秒），`intensity_display_unit=0`（系统默认，显示 min/km）。
+
+**安全机制**：`--confirm` 标志区分预览/实际推送；推送前自动查询目标日期已有排程并删除（避免重复）；推送日志记录到 `data/push-logs/`。
+
+### 2.6 报告阶段（report.js）
 
 ```
 daily JSON ──> 内联分析逻辑 ──> HTML 模板 ──> reports/YYYYMMDD-report.html
@@ -156,6 +180,7 @@ analysis JSON ──> AI 分析数据 ──> 配速区间自动推导 ──> �
 | tcx-analyzer.js | TCX 解析与指标计算 | TCX 文件路径, maxHR | kmSplits/hrDrift/hrZones/paceCV/cadence/elevation |
 | analyze.js | LLM 深度复盘 + 训练计划（去重，Token 优化） | --date, --force, --provider | data/daily/YYYYMMDD-analysis.json |
 | validate.js | 数据一致性检查（无 LLM） | --date | JSON: { issues[], hasIssues, summary } |
+| **push-plan.py** | **AI 训练计划推送到 COROS 手表日历（直接调用 coros_api）** | **--date, --confirm** | **data/push-logs/*.json** |
 | report.js | HTML 报告生成（配速区间推导，本地 Chart.js） | --date | reports/YYYYMMDD-report.html |
 | cron.sh | 自动化调度入口 | --weekly | 调用上述脚本 |
 | com.coros.daily-review.plist | launchd 定时任务配置 | - | 每日 07:00 执行 |

@@ -214,6 +214,13 @@
 - 仅户外跑（sportType=100）有 avgPower；力量训练/无功率设备无数据
 - COROS 跑步不返回 Normalized Power (NP)，无逐秒功率数据；高阶指标（VI/EF/W'bal）暂不支持
 
+**功能点（v1.4 新增）**：
+
+- **F8.1 训练计划自动推送**：`push-plan.py` 读取 analysis JSON 的 `weeklyPlan`，优先使用 LLM 生成的 `workoutSteps`（确保与报告中的详细计划一致），无 `workoutSteps` 时回退到规则引擎。直接调用 `coros_api` 模块推送到手表日历
+- **F8.2 workoutSteps 结构化输出**：LLM 在 weeklyPlan 中输出 `workoutSteps[]` 数组，每步含 kind/targetDistanceKm/pace，确保推送计划与报告详细计划完全一致
+- **F8.3 规则引擎回退**：当 weeklyPlan 无 `workoutSteps` 时（历史分析文件），根据训练类型自动生成步骤，配速从 paceZones 取值
+- **F8.4 安全确认机制**：`--confirm` 标志区分预览和实际推送，默认 dry-run
+
 ### 24 周备战计划
 
 | 阶段 | 周数 | 周跑量 | 重点 |

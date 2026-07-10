@@ -1,11 +1,12 @@
 export const meta = {
   name: "daily-review",
-  description: "每日训练复盘：从 COROS 采集数据 → LLM 分析 → 数据验证 → HTML 报告",
+  description: "每日训练复盘：从 COROS 采集数据 → LLM 分析 → 数据验证 → 计划推送 → HTML 报告",
   phases: [
     { title: "选择 LLM", detail: "选择本次分析使用的 LLM 提供商" },
     { title: "数据采集", detail: "从 COROS MCP 获取最新训练数据" },
     { title: "深度分析", detail: "LLM 深度复盘 + 训练计划生成" },
     { title: "数据验证", detail: "验证分析结果的配速趋势、周跑量统计等数据一致性" },
+    { title: "计划推送", detail: "将 AI 生成的周计划推送到 COROS 手表日历" },
     { title: "报告生成", detail: "生成 HTML 可视化报告并打开" },
   ],
 };
@@ -117,6 +118,21 @@ if (verifyResult.hasIssues) {
 } else {
   log(`✅ 验证通过：${verifyResult.summary}`);
 }
+
+phase("计划推送");
+log("正在将 AI 生成的周计划推送到 COROS 手表...");
+const pushResult = await agent(
+  `将训练计划推送到 COROS 手表日历。
+
+  执行: scripts/push-plan.py --date ${dateStr}
+  先查看预览输出，确认无误后如果用户确认，执行:
+    scripts/push-plan.py --date ${dateStr} --confirm
+
+  查看 stdout，若包含 "推送完成" 则成功。如果出现认证错误，提示用户检查 COROS 账号配置。
+
+  注意：使用 Python 脚本 scripts/push-plan.py（不是 push-plan.js）。`,
+  { label: "push-plan" },
+);
 
 phase("报告生成");
 log("正在生成 HTML 可视化报告...");

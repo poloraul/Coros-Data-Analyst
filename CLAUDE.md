@@ -52,7 +52,8 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 1. `node scripts/fetch.js` — 采集最新数据 + 下载 TCX + TCX 解析（增量/全量自动判断）
 2. `node scripts/analyze.js` — LLM 深度复盘 + 训练计划生成，输出 `YYYYMMDD-analysis.json`
-3. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
+3. `node scripts/push-plan.js` — 将 AI 生成的周计划推送到 COROS 手表日历（`--confirm` 实际推送，默认 dry-run）
+4. `node scripts/report.js` — 生成 HTML 可视化报告，然后用 `open` 打开
 
 脚本支持 `--date YYYYMMDD` 参数指定日期。fetch.js 支持 `--full` 强制全量刷新，analyze.js 支持 `--force` 强制重新分析、`--provider <name>` 指定 LLM 提供商。
 

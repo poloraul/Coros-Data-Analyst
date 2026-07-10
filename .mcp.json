@@ -1,7 +1,11 @@
 {
   "mcpServers": {
     "coros": {
-      "command": "coros-mcp",
+      "command": "/opt/homebrew/bin/coros-mcp",
+      "args": []
+    },
+    "coros-training": {
+      "command": "/Users/jarvis/.local/bin/coros-mcp",
       "args": []
     }
   }

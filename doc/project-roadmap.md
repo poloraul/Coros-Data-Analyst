@@ -60,6 +60,17 @@
 | Chart.js 本地化 | ✅ | CDN 改为本地加载，离线可用 |
 | Workflow 验证优化 | ✅ | Phase 4 从 LLM Agent 改为 `validate.js` 脚本，节省 ~4 秒 |
 
+### V1.4 — 训练计划推送（2026-07-09 → 2026-07-10）
+
+| 功能 | 状态 | 说明 |
+|------|------|------|
+| coros-training-mcp 安装 | ✅ | `uv tool install`，独立 Python 虚拟环境 |
+| push-plan.js → push-plan.py | ✅ | 原 MCP stdio 方案超时，改用直接导入 `coros_api` 的 Python 脚本 |
+| MCP Server 配置 | ✅ | `.mcp.json` 新增 `coros-training`，修复 `coros` 路径 |
+| Workflow 集成 | ✅ | daily-review 新增"计划推送"Phase，使用 Python 脚本 |
+| 配速格式发现 | ✅ | COROS 使用**秒/公里**（非毫秒），`pace_parser.py` 文档有误 |
+| 测试清理 | ✅ | 删除 test-push-*.py、debug-intensity-check.py、push-plan.js |
+
 ---
 
 ## 3. 待优化/待开发功能
@@ -92,6 +103,59 @@
 ---
 
 ## 4. 变更日志
+
+### 2026-07-09 AI 训练计划推送功能上线（v1.4）
+
+**背景**：LLM 生成的周训练计划只停留在 JSON/HTML 中，无法推送到 COROS App/手表。引入 `dholliday3/coros-training-mcp`（第三方 Python MCP Server），通过 COROS Training Hub API 实现计划创建和日历排程。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `scripts/push-plan.js` | 新建。读取 `*-analysis.json` 的 `weeklyPlan`，通过规则引擎转换为 COROS 训练步骤，通过 JSON-RPC over stdio 调用 `create_run_workout` + `schedule_workout`。支持 `--confirm`（dry-run/实际推送）、`--day`（单天推送） |
+| `.mcp.json` | 新增 `coros-training` Server（Python venv 绝对路径）；`coros` Server 改为 `/opt/homebrew/bin/coros-mcp` 全路径（避免与 Python 版命令名冲突） |
+| `.claude/workflows/daily-review.js` | meta phases 新增"计划推送"阶段；数据验证后、报告生成前插入 agent 执行 push-plan.js |
+| `doc/system-design.md` | 架构图新增 push-plan.js 模块；新增 §2.5 推送阶段数据流说明 |
+
+**功能点**：
+- F8.1 AI 训练计划推送到 COROS 手表日历（create_run_workout + schedule_workout）
+- F8.2 规则引擎自动转换（weeklyPlan 类型→COROS 步骤结构，支持轻松跑/节奏跑/间歇/LSD/休息）
+- F8.3 安全确认机制（--confirm 标志，默认 dry-run 预览）
+- F8.4 Workflow 一键集成（daily-review 自动执行推送）
+
+**技术选型**：方案 A（独立 MCP Server + push-plan.js），而非重写 COROS API（方案 B）或子进程通信（方案 C）。
+
+**外部依赖**：`coros-training-mcp`（uv tool install，PyPI 包），COROS Training Hub 非官方 API。
+
+### 2026-07-10 推送脚本重构：js → Python + 配速格式修正
+
+**背景**：`push-plan.js` 的 MCP stdio 通信在初始化阶段超时，无法正常连接 `coros-training-mcp`。同时 COROS App 显示配速值异常：毫秒/公里格式（pace_parser.py 文档所述）在 App 中显示错误。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `scripts/push-plan.js` | 删除。MCP stdio 通信不可用（initialize 超时），由 Python 版本替代 |
+| `scripts/push-plan.py` | 新建。直接导入 `coros_api` 模块（底层库，绕过 MCP 层），调用 `build_run_workout_payload` + `create_workout_from_raw` + `schedule_workout`。配速值使用**秒/公里**格式（非毫秒） |
+| `.claude/workflows/daily-review.js` | "计划推送"阶段改为执行 `scripts/push-plan.py` |
+| `doc/system-design.md` | 架构图、§2.5、模块表更新为 push-plan.py |
+
+**配速格式发现**：`intensity_value` 使用**秒/公里**（如 6:20/km → 380），`intensity_display_unit=0`（系统默认 = min/km）。pace_parser.py 文档中"毫秒/公里"的描述与 COROS 实际格式不符。
+
+**测试文件清理**：删除 `test-push-v4.py`、`test-push-v5.py`、`test-push-seconds.py`、`debug-intensity-check.py`、`test-pace-format.py`。
+
+### 2026-07-10（续）workoutSteps 结构化输出：推送计划与详细计划一致
+
+**背景**：规则引擎用固定公式分配距离（15%/12% 热身/冷身比例），配速从 paceZones 取值，与 LLM 在详细计划中的具体描述（如热身1.5km@6:30-7:00）不一致。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `scripts/analyze.js` | weeklyPlan 输出 schema 新增 `workoutSteps[]` 字段；添加字段说明引导 LLM 输出结构化步骤，距离和配速必须与详细计划一致 |
+| `scripts/push-plan.py` | `build_workout_steps()` 优先使用 `workoutSteps`（直接转换），无则回退规则引擎；新增 `_step_from_llm_workout()` 支持热身/主训/冷身/间歇组/休息等多种格式 |
+| `doc/product-requirements.md` | F8.1-F8.4 更新：F8.2 workoutSteps 结构化输出，F8.3 规则引擎回退 |
+| `doc/system-design.md` | §2.5 数据流图改为双路径，新增 workoutSteps 优先说明 |
 
 ### 2026-07-06 功率数据采集与功能上线（v1.2）
 
@@ -221,8 +285,9 @@
 - 训练计划执行率可视化
 - 报告 UI 优化
 
-### M3: 智能化（2026-07 → 2026-09）
+### M3: 智能化 + 推送闭环（2026-07 → 2026-09 ✅ MCP推送已完成）
 
+- ✅ AI 训练计划推送到 COROS 手表日历（2026-07-09）
 - 异常告警机制
 - 基于历史数据的训练建议优化
 - 比赛配速模拟
