@@ -810,7 +810,11 @@ ${aiWorkoutReviews.length > 1 ? `
         <h4>身体状态评估</h4>
         <div class="body-assessment-level ${aiBodyAssessment.overallLevel || "green"}">${{green: "状态良好", yellow: "需要关注", red: "警告"}[aiBodyAssessment.overallLevel] || "状态良好"}</div>
         <p>${aiBodyAssessment.summary || ""}</p>
-        ${(aiBodyAssessment.details || []).length ? `<ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7">${aiBodyAssessment.details.map(d => `<li>${d}</li>`).join("")}</ul>` : ""}
+        ${(aiBodyAssessment.details || []).length ? `<ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7">${aiBodyAssessment.details.map(d => {
+          const title = d.title || '';
+          const desc = d.description || (typeof d === 'string' ? d : '');
+          return `<li>${title ? `<strong>${title}：</strong>` : ''}${desc}</li>`;
+        }).join("")}</ul>` : ""}
         ${(aiBodyAssessment.recommendations || []).length ? `<div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：${aiBodyAssessment.recommendations.join("；")}</div>` : ""}
       </div>
       ` : '<div class="review-box"><p style="color:var(--muted)">暂无身体状态评估数据</p></div>'}
