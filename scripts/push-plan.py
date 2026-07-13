@@ -372,16 +372,13 @@ async def main():
         print(f'  ⚠️ 查询已有排程失败（将继续推送）: {e}')
 
     results = []
-    for day, wname, steps in push_days:
-        if not steps:
-            continue
 
-        date_compact = day['date'].replace('-', '')
-        print(f'\n  🏃 {wname} ({day["date"]})')
-
-        # 先删除该日期已有的排程
-        old_entries = existing_by_date.get(date_compact, [])
-        for old in old_entries:
+    # 第一步：全量删除目标日期范围内所有旧排程
+    # （包括新计划中为休息日的日期，确保无遗留）
+    delete_count = 0
+    for date_compact_del in sorted(existing_by_date.keys()):
+        entries_del = existing_by_date[date_compact_del]
+        for old in entries_del:
             try:
                 await coros_api.remove_scheduled_workout(
                     auth,
@@ -389,9 +386,20 @@ async def main():
                     old['id_in_plan'],
                     plan_program_id=old.get('plan_program_id'),
                 )
-                print(f'     🗑️ 已删除原有计划: {old.get("name", "?")}')
+                print(f'  🗑️ 已删除: {date_compact_del} {old.get("name", "?")}')
+                delete_count += 1
             except Exception as e:
-                print(f'     ⚠️ 删除原有计划失败（将跳过）: {e}')
+                print(f'  ⚠️ 删除失败（跳过）: {date_compact_del} {old.get("name", "?")}: {e}')
+    if delete_count > 0:
+        print(f'  共删除 {delete_count} 个旧排程')
+
+    # 第二步：创建并排程新计划
+    for day, wname, steps in push_days:
+        if not steps:
+            continue
+
+        date_compact = day['date'].replace('-', '')
+        print(f'\n  🏃 {wname} ({day["date"]})')
 
         try:
             # 创建训练计划
