@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jarvis 训练复盘 20260720</title>
+<script src="chart.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
+[data-theme="dark"]{--bg:#1a1b26;--card:#24283b;--border:#3b4261;--text:#a9b1d6;--text-strong:#c0caf5;--muted:#565f89;--accent:#9ece6a;--accent2:#e0af68;--accent3:#f7768e;--accent4:#7aa2f7;--shadow:rgba(0,0,0,.2);--row-hover:rgba(158,206,106,.06);--finding-border:rgba(59,66,97,.6)}
+body{font-family:'Hiragino Sans','Yu Gothic',-apple-system,BlinkMacSystemFont,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding:20px;max-width:1200px;margin:0 auto;transition:background .3s,color .3s}
+h1{font-size:1.8rem;font-weight:800;color:var(--accent);margin-bottom:4px}
+.subtitle{color:var(--muted);font-size:.85rem;margin-bottom:28px}
+.section{margin-bottom:36px}
+.section-title{font-size:1.1rem;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.section-title::before{content:'';width:4px;height:18px;background:linear-gradient(135deg,var(--accent),#4db8a4);border-radius:2px}
+.section-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.section-title-row{display:flex;align-items:center;gap:10px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:24px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.card .label{font-size:.75rem;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:2px}
+.card .value{font-size:1.6rem;font-weight:800;color:var(--text-strong)}
+.card .sub{font-size:.72rem;color:var(--muted);margin-top:2px}
+.charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chart-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.chart-box h3{font-size:.85rem;font-weight:600;margin-bottom:10px;color:var(--muted)}
+.full-width{grid-column:1/-1}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th{text-align:left;color:var(--muted);font-weight:600;font-size:.72rem;text-transform:uppercase;letter-spacing:.4px;padding:8px 10px;border-bottom:2px solid var(--border)}
+td{padding:8px 10px;border-bottom:1px solid var(--border)}
+tr:hover td{background:var(--row-hover)}
+.recovery-indicator{display:inline-block;width:12px;height:12px;border-radius:50%;margin-right:6px}
+.badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:.7rem;font-weight:600;margin:2px}
+.badge-green{background:rgba(126,200,130,.2);color:#5aa65e}
+.badge-yellow{background:rgba(244,197,66,.2);color:#c9a030}
+.badge-red{background:rgba(232,152,152,.2);color:#c07070}
+.badge-blue{background:rgba(124,185,232,.2);color:#5a9ec7}
+.review-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.review-box{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.review-box h4{font-size:.85rem;font-weight:600;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.finding-item{font-size:.82rem;padding:4px 0;border-bottom:1px solid var(--finding-border)}
+.finding-item:last-child{border-bottom:none}
+.plan-today{background:rgba(77,184,164,.06)!important}
+[data-theme="dark"] .plan-today{background:rgba(158,206,106,.08)!important}
+.header-row{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:28px}
+.theme-toggle{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:6px 10px;cursor:pointer;font-size:1.1rem;line-height:1;color:var(--muted);transition:background .3s,border-color .3s}
+.theme-toggle:hover{color:var(--text-strong);border-color:var(--accent)}
+/* New styles */
+.source-badge{display:inline-block;padding:3px 10px;border-radius:12px;font-size:.7rem;font-weight:600;letter-spacing:.3px}
+.badge-ai{background:rgba(126,200,130,.15);color:#5aa65e;border:1px solid rgba(126,200,130,.3)}
+[data-theme="dark"] .badge-ai{background:rgba(158,206,106,.12);color:#9ece6a;border-color:rgba(158,206,106,.3)}
+.badge-rule{background:rgba(158,148,132,.15);color:#9e9484;border:1px solid rgba(158,148,132,.3)}
+[data-theme="dark"] .badge-rule{background:rgba(86,95,137,.15);color:#565f89;border-color:rgba(86,95,137,.3)}
+.ai-insight{background:var(--card);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:16px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+.ai-insight h4{font-size:.85rem;font-weight:600;margin-bottom:8px;color:var(--accent)}
+.ai-insight p{font-size:.85rem;line-height:1.7;margin-bottom:6px}
+.ai-insight .detail-text{font-size:.82rem;color:var(--text);line-height:1.8;white-space:pre-line}
+.coach-advice{background:linear-gradient(135deg,rgba(126,200,130,.08),rgba(77,184,164,.08));border:1px solid rgba(126,200,130,.2);border-left:4px solid var(--accent);border-radius:0 14px 14px 0;padding:20px;box-shadow:0 2px 6px var(--shadow);transition:background .3s,border-color .3s}
+[data-theme="dark"] .coach-advice{background:linear-gradient(135deg,rgba(158,206,106,.06),rgba(77,184,164,.06));border-color:rgba(158,206,106,.2)}
+.coach-advice h4{font-size:.9rem;font-weight:700;margin-bottom:10px;color:var(--accent);display:flex;align-items:center;gap:6px}
+.coach-advice p{font-size:.88rem;line-height:1.8}
+.progress-bar-container{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px;box-shadow:0 2px 6px var(--shadow);margin-bottom:14px;transition:background .3s,border-color .3s}
+.progress-bar-track{width:100%;height:10px;background:var(--border);border-radius:5px;overflow:hidden;margin:8px 0}
+.progress-bar-fill{height:100%;border-radius:5px;transition:width .6s ease}
+.progress-bar-labels{display:flex;justify-content:space-between;font-size:.72rem;color:var(--muted)}
+.analysis-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}
+.prescription-toggle{cursor:pointer;color:var(--accent);font-size:.75rem;text-decoration:underline;user-select:none}
+.prescription-detail{display:none;margin-top:8px;padding:10px 12px;background:rgba(126,200,130,.04);border-radius:8px;font-size:.78rem;line-height:1.7}
+.prescription-detail.open{display:block}
+[data-theme="dark"] .prescription-detail{background:rgba(158,206,106,.06)}
+.prescription-detail dt{font-weight:600;color:var(--muted);margin-top:4px}
+.prescription-detail dt:first-child{margin-top:0}
+.prescription-detail dd{margin-left:0;margin-bottom:4px}
+.body-assessment-level{display:inline-block;padding:4px 12px;border-radius:20px;font-size:.8rem;font-weight:700;margin-bottom:8px}
+.body-assessment-level.green{background:rgba(126,200,130,.15);color:#5aa65e}
+.body-assessment-level.yellow{background:rgba(244,197,66,.15);color:#c9a030}
+.body-assessment-level.red{background:rgba(232,152,152,.15);color:#c07070}
+[data-theme="dark"] .body-assessment-level.green{background:rgba(158,206,106,.12);color:#9ece6a}
+[data-theme="dark"] .body-assessment-level.yellow{background:rgba(224,175,104,.12);color:#e0af68}
+[data-theme="dark"] .body-assessment-level.red{background:rgba(247,118,142,.12);color:#f7768e}
+.tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:6px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:.72rem;font-weight:500}
+.tag-strength{background:rgba(126,200,130,.12);color:#5aa65e}
+.tag-risk{background:rgba(232,152,152,.12);color:#c07070}
+.tag-suggestion{background:rgba(124,185,232,.12);color:#5a9ec7}
+[data-theme="dark"] .tag-strength{background:rgba(158,206,106,.1);color:#9ece6a}
+[data-theme="dark"] .tag-risk{background:rgba(247,118,142,.1);color:#f7768e}
+[data-theme="dark"] .tag-suggestion{background:rgba(122,162,247,.1);color:#7aa2f7}
+@media(max-width:768px){.charts-grid,.review-grid,.analysis-grid{grid-template-columns:1fr}.cards{grid-template-columns:repeat(2,1fr)}body{padding:14px}h1{font-size:1.4rem}.subtitle{font-size:.78rem;margin-bottom:20px}.card .value{font-size:1.3rem}.card .sub{font-size:.65rem}.card{padding:12px}.section-title{font-size:.95rem}.section-header{flex-wrap:wrap;gap:8px}.header-row{flex-wrap:wrap;gap:10px}.charts-grid{gap:10px}.chart-box{padding:12px}.chart-box h3{font-size:.8rem}th,td{padding:6px 6px;font-size:.75rem}table{font-size:.75rem}.review-grid{gap:10px}.ai-insight,.review-box{padding:12px}.prescription-detail{font-size:.75rem}.coach-advice{padding:14px;font-size:.85rem}}
+@media(max-width:480px){body{padding:10px}h1{font-size:1.2rem}.subtitle{font-size:.72rem;margin-bottom:16px}.card .value{font-size:1.1rem}.cards{gap:8px}.charts-grid{gap:8px}th,td{padding:4px 4px;font-size:.7rem}}
+</style>
+</head>
+<body>
+
+<div class="header-row">
+  <div>
+    <h1>Jarvis 训练复盘</h1>
+    <p class="subtitle">20260720 | Jarvis | 距首马 20 周 (基础期 I) | 目标 3:30:00</p>
+  </div>
+  <button class="theme-toggle" id="themeToggle" title="切换主题">🌙</button>
+</div>
+
+<!-- ==================== Section 1: 个人训练关键指标 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">个人训练关键指标</div>
+    </div>
+  </div>
+  <div class="cards">
+    <div class="card"><div class="label">VO2max</div><div class="value">55</div><div class="sub">阈值配速 4:20/km</div></div>
+    <div class="card"><div class="label">全马预测</div><div class="value">3:19:27</div><div class="sub">目标 3:30:00</div></div>
+    <div class="card"><div class="label">距首马</div><div class="value">20<span style="font-size:.9rem">周</span></div><div class="sub">基础期 I W5 | 有氧耐力、建立跑量</div></div>
+    <div class="card"><div class="label">本周跑量</div><div class="value">0.0<span style="font-size:.9rem">km</span></div><div class="sub">目标 50-65km<br><span style="font-size:.65rem;color:var(--muted)">周期 07/20~07/26</span></div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">340<span style="font-size:.9rem">TL</span></div><div class="sub">负荷比 0.8（目标 0.8-1.3）</div></div>
+    <div class="card"><div class="label">恢复状态</div><div class="value" style="color:#7ec882">100%</div><div class="sub"><span class="recovery-indicator" style="background:#7ec882"></span>良好</div></div>
+    <div class="card"><div class="label">最新HRV</div><div class="value" style="color:#f4c542">59<span style="font-size:.9rem">ms</span></div><div class="sub"><span class="recovery-indicator" style="background:#f4c542"></span>偏低 | 基线 74ms</div></div>
+    <div class="card"><div class="label">平均功率（最近跑步）</div><div class="value">192<span style="font-size:.9rem">W</span></div><div class="sub">2.89 W/kg · Z5 速度耐力区</div></div>
+    <div class="card"><div class="label">估算 FTP</div><div class="value">179<span style="font-size:.9rem">W</span></div><div class="sub">2.7 W/kg · 置信度 high（n=3）</div></div>
+  </div>
+</div>
+
+<!-- ==================== Zone Section: 配速 & 心率 & 功率区间 ==================== -->
+
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">配速 &amp; 心率 &amp; 功率区间参考</div>
+      <span class="source-badge badge-rule">阈值配速 4:20/km · 乳酸阈心率 170 bpm · 估算 FTP 179W</span>
+    </div>
+  </div>
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>配速区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>配速范围</th><th>%阈值</th></tr>
+        <tr>
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>> 6:06/km</strong></td>
+            <td><71%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>6:06/km — 5:06/km</strong></td>
+            <td>71-85%</td>
+          </tr><tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>5:06/km — 4:40/km</strong></td>
+            <td>86-93%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>4:40/km — 4:15/km</strong></td>
+            <td>94-102%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>4:15/km — 3:52/km</strong></td>
+            <td>103-112%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>< 3:52/km</strong></td>
+            <td>>112%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练配速 (undefined/km) 所属区间</td></tr>
+      </table>
+    </div>
+    <div class="chart-box">
+      <h3>心率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>心率范围</th><th>%参考</th></tr>
+        <tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>< 136 bpm</strong></td>
+            <td><80%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>136 — 153 bpm</strong></td>
+            <td>80-90%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>153 — 163 bpm</strong></td>
+            <td>91-95%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>163 — 173 bpm</strong></td>
+            <td>96-102%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>173 — 180 bpm</strong></td>
+            <td>103-106%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>> 180 bpm</strong></td>
+            <td>>106%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最新训练心率 (114 bpm) 所属区间</td></tr>
+      </table>
+    </div>
+    
+    <div class="chart-box">
+      <h3>功率区间</h3>
+      <table>
+        <tr><th>区间</th><th>名称</th><th>功率范围</th><th>%FTP</th></tr>
+        <tr>
+            <td><span class="badge" style="background:#7ec88222;color:#7ec882;border:1px solid #7ec88244">Z1</span></td>
+            <td>积极恢复区</td>
+            <td><strong>< 98 W</strong></td>
+            <td><55%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#4db8a422;color:#4db8a4;border:1px solid #4db8a444">Z2</span></td>
+            <td>有氧耐力区</td>
+            <td><strong>98 — 134 W</strong></td>
+            <td>55-75%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#f4c54222;color:#f4c542;border:1px solid #f4c54244">Z3</span></td>
+            <td>有氧动力区</td>
+            <td><strong>134 — 161 W</strong></td>
+            <td>75-90%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#e8989822;color:#e89898;border:1px solid #e8989844">Z4</span></td>
+            <td>乳酸阈区</td>
+            <td><strong>161 — 188 W</strong></td>
+            <td>90-105%</td>
+          </tr><tr style="background:rgba(126,200,130,.08)">
+            <td><span class="badge" style="background:#c0707022;color:#c07070;border:1px solid #c0707044">Z5</span></td>
+            <td>速度耐力区</td>
+            <td><strong>188 — 215 W</strong></td>
+            <td>105-120%</td>
+          </tr><tr>
+            <td><span class="badge" style="background:#d94f4f22;color:#d94f4f;border:1px solid #d94f4f44">Z6</span></td>
+            <td>无氧动力区</td>
+            <td><strong>> 215 W</strong></td>
+            <td>>120%</td>
+          </tr>
+        <tr style="background:rgba(244,197,66,.08)"><td colspan="4" style="font-size:.75rem;color:var(--muted)">🟡 高亮行 = 最近跑步功率 (192W) 所属区间</td></tr>
+      </table>
+    </div>
+  </div>
+  <div style="margin-top:8px;font-size:.75rem;color:var(--muted);line-height:1.6">
+    <strong>使用说明：</strong>
+    配速区间基于阈值配速（4:20/km）按百分比计算；心率区间基于乳酸阈心率（170 bpm）计算；功率区间基于估算 FTP（179W，置信度 high）计算。
+    训练时应根据目标选择对应区间：轻松跑在 Z2、马拉松配速在 Z3、阈值跑在 Z4、间歇跑在 Z5。
+    
+  </div>
+</div>
+
+
+<!-- ==================== Section 2: 最近一次训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近一次训练分析（2026-07-19）</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+
+  <div class="cards" style="margin-bottom:16px">
+    <div class="card"><div class="label">距离/时间</div><div class="value">4.42<span style="font-size:.9rem">km</span></div><div class="sub">1:40:35</div></div>
+    <div class="card"><div class="label">配速</div><div class="value">undefined<span style="font-size:.9rem">/km</span></div><div class="sub">最快 - | 间歇区 (I区)</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">114<span style="font-size:.9rem">bpm</span></div><div class="sub">63% HRmax</div></div>
+    <div class="card"><div class="label">步频</div><div class="value">-<span style="font-size:.9rem">spm</span></div><div class="sub">达标</div></div>
+    <div class="card"><div class="label">训练负荷</div><div class="value">84<span style="font-size:.9rem">TL</span></div><div class="sub">-</div></div>
+    <div class="card"><div class="label">天气</div><div class="value" style="font-size:1.2rem">大雨</div><div class="sub">32°C 体感38.9°C 湿度100%</div></div>
+  </div>
+  
+  <div class="chart-box full-width" style="margin-bottom:16px;height:300px;display:flex;flex-direction:column">
+    <h3>逐秒配速 & 心率</h3>
+    <canvas id="secPaceHrChart" style="flex:1;min-height:0"></canvas>
+  </div>
+
+  <div class="review-grid">
+    <div class="ai-insight">
+      <h4>训练概要</h4>
+      <div style="margin-bottom:4px"><span class="badge badge-green">轻松跑</span></div>
+      <p>在暴雨湿热（30°C、97%湿度）中完成7km有氧跑，配速由6:28逐渐加速至5:48，心率漂移符合预期，步频步幅组合仍有提升空间。</p>
+      <div class="detail-text" style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">起跑因大雨影响，配速6:28偏慢，随后逐渐加速进入6:05-5:48区间，呈现负分段趋势。KM7主动冷身至6:10，心率从136降至接近起始水平，结构完整。心率漂移20.9%，结合极高的温湿度（校正后预期心率应增加约18-20bpm），实际表现属正常。步频175spm、步幅0.95m，经济性仍偏低。功率192W（2.89W/kg）属高级区间，但经济速度2.8m/s说明动作效率待优化。训练负荷66，符合恢复日定位。</div>
+      
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--finding-border)">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+          <span style="font-size:.75rem;font-weight:600;color:var(--muted)">训练结构</span>
+          <span class="badge badge-green">质量:good</span>
+        </div>
+        <div style="font-size:.78rem;line-height:1.7">
+          <div><span style="color:var(--muted)">热身:</span> 0-2km</div><div><span style="color:var(--muted)">主训练:</span> 2-6km</div><div><span style="color:var(--muted)">冷身:</span> 6-7km主动减速（最后1km 6:10，心率略降）</div>
+        </div>
+      </div>
+    </div>
+    <div class="review-box">
+      <h4>亮点</h4>
+      <div class="finding-item" style="color:#5aa65e">在暴雨极端天气下坚持完成有氧跑，意志力与适应力强</div><div class="finding-item" style="color:#5aa65e">主动冷身操作合理</div><div class="finding-item" style="color:#5aa65e">功率体重比接近精英水平</div>
+      <h4 style="margin-top:12px">改进方向</h4>
+      <div class="finding-item" style="color:#c9a030">步频175spm未达178→下次轻松跑设置节拍器178bpm，同时有意识缩小步幅以稳定转换</div><div class="finding-item" style="color:#c9a030">步幅不足需靠力量训练改善：建议每周2次单腿硬拉+臀桥，强化后链驱动</div>
+    </div>
+  </div>
+
+
+  <div style="margin-top:16px">
+    <div class="section-title" style="font-size:.95rem">其他近期训练（近7天）</div>
+    <table>
+      <tr><th>日期</th><th>概要</th><th>亮点</th><th>改进</th></tr>
+      <tr>
+        <td>2026-07-14</td>
+        <td style="max-width:300px">10km有氧跑，心率几乎无漂移且全程配速均匀加速，有氧耐力表现出色。步频176稍低于理想值，步幅不足仍影响经济性。</td>
+        <td><span class="badge badge-green">10km持续加速，心率却未明显漂移，有氧耐力进步显著</span><span class="badge badge-green">高温下心率始终保持在Z2，恢复能力强</span><span class="badge badge-green">节奏控制达到优秀级</span></td>
+        <td><span class="badge badge-yellow">步频176spm偏低 → 下次轻松跑启用节拍器178bpm，缩小步幅约3cm以过渡到自然高频</span><span class="badge badge-yellow">步幅不足（0.94m）导致经济速度2.8m/s，建议每周加入2次快速伸缩复合训练（如高抬腿跳、弓步跳）</span></td>
+      </tr><tr>
+        <td>2026-07-13</td>
+        <td style="max-width:300px">高温高湿环境下完成8.42km负分段加速跑，配速从5:55逐步提升至5:19，心率随加速上升但始终控制在Z2-Z3，有氧基础稳定。步频接近理想值，步幅偏小导致经济性偏低。</td>
+        <td><span class="badge badge-green">在极端高温高湿下仍能完成加速跑，且心率可控</span><span class="badge badge-green">配速控制精准，负分段节奏清晰</span><span class="badge badge-green">步频接近180spm，跑姿较高频</span></td>
+        <td><span class="badge badge-yellow">步幅偏小（0.95m），跑步经济性偏低；下周轻松跑可有意延长步幅5%，同时保持步频，每周加入2次髋屈肌+臀中肌力量训练</span><span class="badge badge-yellow">高温下心率漂移28%虽可接受，但仍需通过补水与降温策略进一步控制</span></td>
+      </tr>
+    </table>
+  </div>
+
+</div>
+
+<!-- ==================== Section 3: 最近7天训练分析 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">最近7天训练分析</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Charts -->
+  <div class="charts-grid">
+    <div class="chart-box">
+      <h3>HRV 7日趋势</h3>
+      <canvas id="hrvChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>训练负荷趋势</h3>
+      <canvas id="loadChart"></canvas>
+    </div>
+    <div class="chart-box">
+      <h3>最近训练配速 vs 阈值</h3>
+      <canvas id="paceChart"></canvas>
+    </div>
+    
+    <div class="chart-box">
+      <h3>睡眠质量趋势（近7天）</h3>
+      <canvas id="sleepChart"></canvas>
+    </div>
+    
+  </div>
+
+  <!-- Workouts Table -->
+  
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">近期训练一览（近7天）</div>
+    <table>
+      <tr><th>日期</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>训练负荷</th><th>表现</th><th>天气</th></tr>
+      <tr>
+        <td>2026-07-19</td>
+        <td>4.42km</td>
+        <td>undefined/km</td>
+        <td>114bpm (63%)</td>
+        <td>-spm</td>
+        <td>84TL</td>
+        <td>-</td>
+        <td>大雨 32°C</td>
+      </tr><tr>
+        <td>2026-07-19</td>
+        <td>7.05km</td>
+        <td>6:03/km</td>
+        <td>136bpm (75%)</td>
+        <td>175spm</td>
+        <td>66TL</td>
+        <td>Below Average</td>
+        <td>中雨 30°C</td>
+      </tr><tr>
+        <td>2026-07-18</td>
+        <td>1.06km</td>
+        <td>15:35/km</td>
+        <td>91bpm (50%)</td>
+        <td>99spm</td>
+        <td>2TL</td>
+        <td>-1</td>
+        <td>中雨 32.6°C</td>
+      </tr><tr>
+        <td>2026-07-18</td>
+        <td>1.69km</td>
+        <td>0:49/km</td>
+        <td>68bpm (37%)</td>
+        <td>-spm</td>
+        <td>-TL</td>
+        <td>-1</td>
+        <td>小雨 33°C</td>
+      </tr><tr>
+        <td>2026-07-17</td>
+        <td>1.02km</td>
+        <td>60:14/km</td>
+        <td>71bpm (39%)</td>
+        <td>24spm</td>
+        <td>1TL</td>
+        <td>-1</td>
+        <td>中毛毛雨 39.3°C</td>
+      </tr><tr>
+        <td>2026-07-14</td>
+        <td>10km</td>
+        <td>6:02/km</td>
+        <td>140bpm (77%)</td>
+        <td>176spm</td>
+        <td>106TL</td>
+        <td>Below Average</td>
+        <td>多云 36.8°C</td>
+      </tr><tr>
+        <td>2026-07-13</td>
+        <td>8.42km</td>
+        <td>5:37/km</td>
+        <td>140bpm (77%)</td>
+        <td>180spm</td>
+        <td>81TL</td>
+        <td>Below Average</td>
+        <td>中毛毛雨 33.8°C</td>
+      </tr>
+    </table>
+  </div>
+  
+
+  <!-- Recovery Detail Cards -->
+  <div style="margin-top:20px">
+    <div class="section-title" style="font-size:.95rem">恢复指标</div>
+    <div class="cards">
+      <div class="card"><div class="label">恢复度</div><div class="value" style="color:#7ec882">100%</div><div class="sub">Heavy training allowed</div></div>
+      <div class="card"><div class="label">HRV连续偏低</div><div class="value">1<span style="font-size:.9rem">天</span></div><div class="sub">正常</div></div>
+      <div class="card"><div class="label">睡眠(最新)</div><div class="value">42</div><div class="sub">2026 - 07</div></div>
+      <div class="card"><div class="label">负荷比</div><div class="value">0.8</div><div class="sub">Maintaining</div></div>
+      <div class="card"><div class="label">预计完全恢复</div><div class="value" style="color:#7ec882">完全恢复</div><div class="sub">Heavy training allowed</div></div>
+    </div>
+  </div>
+
+  <!-- AI Body Assessment & Training Pattern -->
+  
+  <div style="margin-top:14px">
+    <div class="analysis-grid">
+      
+      <div class="ai-insight">
+        <h4>身体状态评估</h4>
+        <div class="body-assessment-level yellow">需要关注</div>
+        <p>整体恢复充分（100%），但HRV连续1天低于正常基线，睡眠质量仅52分且深睡比例偏低，提示自主神经疲劳尚未完全恢复。短期与长期训练负荷比值0.8，负荷维持良好。跑者具备高级有氧能力基础，跑步经济性偏低是当前主要短板。</p>
+        <ul style="margin:8px 0 0 16px;font-size:.82rem;line-height:1.7"><li>HRV基线74，近期值59，低于正常范围，连续1天。虽未触发严重警告，但结合睡眠差，表明后续训练需控制强度，避免深度疲劳。</li><li>睡眠得分52，深睡比例22%，睡眠不足会限制有氧能力提升和肌肉修复，需优先改善。</li><li>训练负荷：短期49 vs 长期61，比值0.8，处于维持期，可适当增加训练量进入提升阶段，但需以睡眠恢复为前提。</li></ul>
+        <div style="margin-top:8px;font-size:.8rem;color:var(--muted)">建议：本周至少保证2天睡眠≥7.5小时，重点提高深睡比例（22%提升至25%以上），可尝试睡前1小时减少屏幕时间、降低室温；在HRV重新回到正常范围前，避免连续高强度课，高强度课安排后须跟至少1天恢复；每日补充电解质和碳水化合物，尤其高温环境下，以提升恢复质量</div>
+      </div>
+      
+
+      
+      <div class="ai-insight">
+        <h4>训练模式分析</h4>
+        <p>过去一周训练以Z2有氧轻松跑为主，均采用负分段加速策略，表明跑者具备良好的配速控制力和有氧耐力。但所有跑步步频未达到理想180spm，步幅均在0.94-0.95m，经济速度偏低，且未出现任何Z4+强度刺激，符合基础期两极化初期构建有氧容量的逻辑，但缺乏速度耐力刺激可能导致后期马拉松配速维持困难。</p>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">优势</div><div class="tag-list"><span class="tag tag-strength">有氧耐力扎实：即使在高温极端天气下，心率漂移可控，Z2-Z3占比合理</span><span class="tag tag-strength">节奏把控精准：多课次CV低于4%，负分段执行到位</span><span class="tag tag-strength">恢复能力好：每次跑步后心率能快速回归，无过度疲劳迹象</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">风险</div><div class="tag-list"><span class="tag tag-risk">步幅效率低（经济速度仅2.8m/s），当目标马配4:58/km时要求步频×步幅达约3.4m/s，当前水平需大幅提升步幅或步频，否则后半程容易掉速</span><span class="tag tag-risk">连续多日运动后HRV偏低、睡眠差，可能存在积累性疲劳，若贸然加量可能引发伤病</span><span class="tag tag-risk">长期缺乏强度刺激，乳酸阈能力可能退化，首马330的节奏跑配速（4:40-4:15）若从未训练，后期难以适应</span></div></div>
+        <div style="margin-top:8px"><div style="font-size:.75rem;color:var(--muted);margin-bottom:4px">建议</div><div class="tag-list"><span class="tag tag-suggestion">本周加入1次阈值跑或短间歇（如4x1km@4:30/km），刺激Z4-Z5区间，提升乳酸清除能力</span><span class="tag tag-suggestion">所有轻松跑强制加入节拍器178-180bpm，逐步改善步频，进而提升经济性</span><span class="tag tag-suggestion">每周2次力量训练：重点强化髋屈肌、臀中肌、核心抗旋转能力，为增大步幅奠定基础</span></div></div>
+      </div>
+      
+    </div>
+  </div>
+  
+</div>
+
+<!-- ==================== Section 4: 下一阶段训练计划 ==================== -->
+<div class="section">
+  <div class="section-header">
+    <div class="section-title-row">
+      <div class="section-title">下一阶段训练计划</div>
+      <span class="source-badge badge-ai">AI 大语言模型分析</span>
+    </div>
+  </div>
+
+  <!-- Phase info + Progress bar -->
+  <div style="margin-bottom:16px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+      <span style="font-size:.85rem;font-weight:600">基础期 I (W5) — 有氧耐力、建立跑量</span>
+      <span style="font-size:.8rem;color:var(--muted)">目标 50-65km/周</span>
+    </div>
+    <div class="progress-bar-container" style="margin-bottom:0">
+      <div class="progress-bar-labels">
+        <span>近7天已完成 33.7km</span>
+        <span>52%</span>
+        <span>目标 65km</span>
+      </div>
+      <div class="progress-bar-track">
+        <div class="progress-bar-fill" style="width:52%;background:#e89898"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Weekly Plan Table -->
+  
+  <table>
+    <tr><th>日期</th><th>类型</th><th>距离</th><th>配速区间</th><th>心率区间</th><th>说明</th><th>详细计划</th></tr>
+    <tr class="">
+        <td>周一 07-20</td>
+        <td>轻松跑</td>
+        <td>7km</td>
+        <td>Z2</td>
+        <td>Z2</td>
+        <td>恢复性轻松跑，强调高频小步幅，适应节拍器，促进恢复。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-1');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-1"><dt>热身</dt><dd>1.5km @ 6:10-6:20/km，心率逐步升至Z2</dd><dt>主课</dt><dd>4km @ 5:50-6:00/km，心率维持在142-148bpm（Z2），开启节拍器178bpm</dd><dt>冷身</dt><dd>1.5km @ 6:20-6:40/km，心率降至Z1</dd><dt>备注</dt><dd>全程监测步频，若无法稳定178bpm，可先定176bpm，下周再升；关注HRV恢复情况，若早晨HRV仍低于正常，可缩短至5km</dd></div></td>
+      </tr><tr class="">
+        <td>周二 07-21</td>
+        <td>轻松跑</td>
+        <td>8km</td>
+        <td>Z2</td>
+        <td>Z2</td>
+        <td>中等距离有氧跑，维持高频步幅，积累跑量。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-2');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-2"><dt>热身</dt><dd>1.5km @ 6:10-6:20/km</dd><dt>主课</dt><dd>5km @ 5:50-6:00/km，心率Z2（138-148bpm），步频178bpm，尝试自然增大步幅至0.96-0.98m</dd><dt>冷身</dt><dd>1.5km @ 6:20-6:40/km</dd><dt>备注</dt><dd>如遇高温（>30°C），配速允许放宽10s/km，心率优先；步幅增加需通过主动推髋，勿刻意跨步</dd></div></td>
+      </tr><tr class="">
+        <td>周三 07-22</td>
+        <td>间歇</td>
+        <td>8.5km</td>
+        <td>Z4-Z5</td>
+        <td>Z4-Z5</td>
+        <td>高质量间歇课，首次引入Z4+刺激，提升速度耐力和跑步经济性。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-3');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-3"><dt>热身</dt><dd>2km @ 6:00-6:10/km + 动态拉伸 + 3x100m渐加速</dd><dt>主课</dt><dd>4x1km @ 4:30-4:35/km（Z4-Z5），组间慢跑400m @ 6:30-7:00/km恢复</dd><dt>冷身</dt><dd>1.5km @ 6:20-6:40/km</dd><dt>备注</dt><dd>快速段配速不可快于4:25/km，重点保持步频180+，步幅尝试1.2m；若体力不足可减为3组；注意补水，每组心率冲至175-180bpm，恢复时降至140以下再开始下一组</dd></div></td>
+      </tr><tr class="">
+        <td>周四 07-23</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>主动恢复日，可选择散步30分钟或完全休息，促进肌肉修复。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-4');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-4"><dt>备注</dt><dd>若HRV已回升至正常范围，可进行30分钟极慢跑（>6:30/km）或散步；否则完全休息，关注睡眠质量</dd></div></td>
+      </tr><tr class="">
+        <td>周五 07-24</td>
+        <td>轻松跑</td>
+        <td>8km</td>
+        <td>Z2</td>
+        <td>Z2</td>
+        <td>轻松有氧跑，保持高频步频，为周末LSD做准备。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-5');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-5"><dt>热身</dt><dd>1.5km @ 6:10-6:20/km</dd><dt>主课</dt><dd>5km @ 5:50-6:00/km，步频178bpm，心率Z2</dd><dt>冷身</dt><dd>1.5km @ 6:20-6:40/km</dd><dt>备注</dt><dd>体感轻松即可，不必追求加速，重点完成时间而非配速</dd></div></td>
+      </tr><tr class="">
+        <td>周六 07-25</td>
+        <td>LSD</td>
+        <td>16km</td>
+        <td>Z2</td>
+        <td>Z2</td>
+        <td>长距离有氧跑，延长有氧耐力，适应比赛日距离的70%+。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-6');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-6"><dt>热身</dt><dd>2km @ 6:10-6:20/km</dd><dt>主课</dt><dd>12km @ 5:40-6:00/km，心率严格控制在Z2（140-150bpm），步频178-180bpm</dd><dt>冷身</dt><dd>2km @ 6:20-6:40/km，心率下降至Z1</dd><dt>备注</dt><dd>途中每5km补水一次，若温度>32°C可放宽配速至6:10/km；后程注意步频不掉，允许步幅轻微缩减</dd></div></td>
+      </tr><tr class="">
+        <td>周日 07-26</td>
+        <td>休息</td>
+        <td>-</td>
+        <td>-</td>
+        <td>-</td>
+        <td>完全休息，身体吸收本周训练刺激，为下周质量课蓄力。</td>
+        <td><span class="prescription-toggle" onclick="var el=document.getElementById('p-7');el.classList.toggle('open');this.textContent=el.classList.contains('open')?'收起详细':'展开详情'">展开详情</span><div class="prescription-detail" id="p-7"><dt>备注</dt><dd>可进行轻度拉伸，注意营养补充和充足睡眠</dd></div></td>
+      </tr>
+  </table>
+
+  <!-- Coach Advice -->
+  
+  <div class="coach-advice" style="margin-top:20px">
+    <h4>AI 教练建议</h4>
+    <p>过去一周在极端炎热天气下，你仍能高质量完成有氧跑，展示了扎实的毅力和进步中的有氧基础。但数据显示你的跑步经济性（步频×步幅）是当前主要短板——所有轻松跑的经济速度仅2.8m/s，而目标马配4:58/km对应的经济速度需达到3.4m/s。要跨越这个差距，接下来四周重点抓两件事：①用节拍器将步频稳定在178-180bpm，同时有意识地微微延长步幅（目标1.05-1.10m），这会给你的马拉松后半程储备关键效率；②每周至少一次高质量课（如本周的间歇）激活速度耐力和乳酸清除能力，让身体记住4:30-4:40/km的感觉。此外，你的HRV与睡眠已发出疲劳预警，请务必优先改善睡眠——连续熬夜或低质量睡眠会直接抵消训练收益。本周计划已适当控制强度，若HRV仍未回升，可将周三间歇降为法特莱克（6-8组200m快/200m慢），确保不陷入过度训练。相信自己，你正走在正确的轨道上。</p>
+  </div>
+  
+</div>
+
+<script>
+// HRV Chart
+new Chart(document.getElementById('hrvChart'), {
+  type: 'line',
+  data: {
+    labels: ["07-14","07-15","07-16","07-17","07-18","07-19","07-20"],
+    datasets: [{
+      label: 'HRV',
+      data: [74,57,73,65,83,66,59],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: .3, pointRadius: 4,
+    }, {
+      label: '基线',
+      data: Array(7).fill(74),
+      borderColor: '#9e9484', borderDash: [5, 5], pointRadius: 0, fill: false,
+    }, {
+      label: '正常下限',
+      data: Array(7).fill(61),
+      borderColor: '#e89898', borderDash: [3, 3], pointRadius: 0, fill: false,
+    }]
+  },
+  options: { responsive: true, plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 } } } }, scales: { y: { beginAtZero: false } } }
+});
+
+// Training Load Chart
+new Chart(document.getElementById('loadChart'), {
+  type: 'bar',
+  data: {
+    labels: ["07-14","07-15","07-16","07-17","07-18","07-19","07-20"],
+    datasets: [{
+      label: '短期负荷',
+      data: [76,65,56,48,42,57,49],
+      backgroundColor: 'rgba(124,185,232,.7)',
+      yAxisID: 'y',
+      order: 2,
+    }, {
+      label: '长期负荷',
+      data: [67,65,64,62,61,63,61],
+      backgroundColor: 'rgba(196,166,216,.5)',
+      yAxisID: 'y',
+      order: 3,
+    }, {
+      label: '负荷比',
+      type: 'line',
+      data: [1.13,1,0.87,0.77,0.68,0.9,0.8],
+      borderColor: 'rgba(232,152,152,.9)',
+      backgroundColor: 'rgba(232,152,152,.9)',
+      pointBackgroundColor: 'rgba(232,152,152,.9)',
+      pointRadius: 4,
+      pointHoverRadius: 6,
+      tension: 0.3,
+      yAxisID: 'y1',
+      order: 1,
+      fill: false,
+    }, {
+      label: '平衡线 (1.0)',
+      type: 'line',
+      data: Array(7).fill(1.0),
+      borderColor: 'rgba(150,150,150,.5)',
+      borderWidth: 1.5,
+      borderDash: [6, 4],
+      pointRadius: 0,
+      yAxisID: 'y1',
+      order: 3,
+      fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        position: 'left',
+        title: { display: true, text: 'TL', font: { size: 10 } }
+      },
+      y1: {
+        beginAtZero: false,
+        position: 'right',
+        min: 0.7,
+        max: 1.5,
+        grid: { drawOnChartArea: false },
+        title: { display: true, text: '负荷比', font: { size: 10 } }
+      }
+    }
+  }
+});
+
+// Z1-Z6 background stripe plugin
+Chart.register({
+  id: 'paceZones',
+  beforeDraw(chart) {
+    const stripes = chart.options.plugins?.paceZones?.stripes;
+    if (!stripes?.length) return;
+    const ctx = chart.ctx;
+    const yScale = chart.scales.y;
+    const area = chart.chartArea;
+    ctx.save();
+    for (const s of stripes) {
+      const y1 = s.slower != null ? yScale.getPixelForValue(s.slower) : area.bottom;
+      const y2 = s.faster != null ? yScale.getPixelForValue(s.faster) : area.top;
+      if (!isFinite(y1) || !isFinite(y2)) continue;
+      const top = Math.max(area.top, Math.min(y1, y2));
+      const bot = Math.min(area.bottom, Math.max(y1, y2));
+      if (top >= bot) continue;
+      ctx.fillStyle = s.color + '20';
+      ctx.fillRect(area.left, top, area.right - area.left, bot - top);
+    }
+    ctx.restore();
+  }
+});
+
+// Pace Chart
+function fmtPace(v) { const m = Math.floor(v); const s = Math.round((v - m) * 60); return m + ':' + String(s).padStart(2, '0'); }
+
+new Chart(document.getElementById('paceChart'), {
+  type: 'line',
+  data: {
+    labels: ["07-13","07-14","07-18","07-19"],
+    datasets: [{
+      label: '训练配速',
+      data: [5.616666666666666,6.033333333333333,0.8166666666666667,6.05],
+      showLine: false,
+      pointBackgroundColor: ["#4db8a4","#4db8a4","#d94f4f","#4db8a4"],
+      pointBorderColor: ["#4db8a4","#4db8a4","#d94f4f","#4db8a4"],
+      pointRadius: [14,14,7.042,14],
+      pointHoverRadius: [16,16,9.042,16],
+      pointBorderWidth: 1.5,
+    }, {
+      label: '阈值 ' + fmtPace(4.333) + '/km',
+      data: Array(4).fill(4.333),
+      type: 'line',
+      borderColor: '#e89898', borderWidth: 2, borderDash: [6, 4], pointRadius: 0, fill: false,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      paceZones: { stripes: [{"slower":null,"faster":6.1,"color":"#7ec882","key":"Z1","name":"积极恢复区"},{"slower":6.1,"faster":5.1,"color":"#4db8a4","key":"Z2","name":"有氧耐力区"},{"slower":5.1,"faster":4.666666666666667,"color":"#f4c542","key":"Z3","name":"有氧动力区"},{"slower":4.666666666666667,"faster":4.25,"color":"#e89898","key":"Z4","name":"乳酸阈区"},{"slower":4.25,"faster":3.8666666666666667,"color":"#c07070","key":"Z5","name":"速度耐力区"},{"slower":3.8666666666666667,"faster":null,"color":"#d94f4f","key":"Z6","name":"无氧动力区"}] },
+      tooltip: { callbacks: {
+        label: function(ctx) {
+          if (ctx.datasetIndex === 1) return ctx.dataset.label;
+          const v = ctx.parsed.y;
+          const idx = ctx.dataIndex;
+          const zi = [1,1,5,1][idx];
+          const zLabel = ["Z1 积极恢复区","Z2 有氧耐力区","Z3 有氧动力区","Z4 乳酸阈区","Z5 速度耐力区","Z6 无氧动力区"][zi] || '';
+          const ratio = v / 4.333;
+          return ['配速 ' + fmtPace(v) + '/km · ' + zLabel + ' · ' + Math.round(ratio * 100) + '%阈值'];
+        },
+        afterLabel: function(ctx) {
+          if (ctx.datasetIndex === 1) return;
+          const idx = ctx.dataIndex;
+          const d = [{"dist":8.42,"time":"47:18","hr":140,"tl":81,"perf":"Below Average"},{"dist":10,"time":"1:00:22","hr":140,"tl":106,"perf":"Below Average"},{"dist":1.69,"time":"1:23","hr":68,"perf":"-1"},{"dist":7.05,"time":"42:36","hr":136,"tl":66,"perf":"Below Average"}][idx];
+          if (!d) return;
+          const lines = [];
+          if (d.dist) lines.push('距离 ' + d.dist + 'km');
+          if (d.time) lines.push('时长 ' + d.time);
+          if (d.hr) lines.push('心率 ' + d.hr + 'bpm');
+          if (d.tl) lines.push('训练负荷 ' + d.tl);
+          if (d.perf && d.perf !== '-1') lines.push('表现 ' + d.perf);
+          return lines;
+        }
+      } }
+    },
+    scales: {
+      y: { reverse: true, min: 7.500, max: 3.500,
+        title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } }
+      }
+    }
+  }
+});
+
+
+
+// Vertical crosshair plugin for per-second chart (Chart.js v4 compatible)
+const crosshairPlugin = {
+  id: 'crosshair',
+  afterDraw: function(chart) {
+    const active = chart.tooltip?.active;
+    if (active && active.length) {
+      const ctx = chart.ctx;
+      const x = active[0].element.x;
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(x, chart.scales.y.top);
+      ctx.lineTo(x, chart.scales.y.bottom);
+      ctx.lineWidth = 1;
+      ctx.strokeStyle = '#9e9484';
+      ctx.setLineDash([4, 3]);
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+};
+Chart.register(crosshairPlugin);
+// Per-second Pace & HR Chart
+new Chart(document.getElementById('secPaceHrChart'), {
+  type: 'line',
+  data: {
+    datasets: [{
+      label: '配速',
+      data: [{"x":0,"y":14.851485148514852},{"x":1,"y":14.851485148514852},{"x":2,"y":14.962593516209477},{"x":35,"y":15},{"x":36,"y":14.888337468982629},{"x":37,"y":14.77832512315271},{"x":38,"y":14.66992665036675},{"x":39,"y":14.563106796116504},{"x":40,"y":14.457831325301203},{"x":41,"y":14.354066985645934},{"x":42,"y":14.251781472684085},{"x":43,"y":14.150943396226415},{"x":44,"y":14.084507042253522},{"x":45,"y":14.018691588785046},{"x":46,"y":13.953488372093023},{"x":47,"y":13.888888888888888},{"x":48,"y":13.856812933025404},{"x":49,"y":13.793103448275863},{"x":50,"y":13.729977116704806},{"x":51,"y":13.66742596810934},{"x":52,"y":13.605442176870747},{"x":53,"y":13.544018058690746},{"x":54,"y":13.513513513513512},{"x":55,"y":13.48314606741573},{"x":56,"y":13.452914798206278},{"x":57,"y":13.392857142857142},{"x":58,"y":13.392857142857142},{"x":59,"y":13.363028953229398},{"x":60,"y":13.363028953229398},{"x":61,"y":13.333333333333334},{"x":62,"y":13.333333333333334},{"x":63,"y":13.333333333333334},{"x":64,"y":13.333333333333334},{"x":65,"y":13.303769401330378},{"x":66,"y":13.333333333333334},{"x":67,"y":13.333333333333334},{"x":68,"y":13.363028953229398},{"x":69,"y":13.363028953229398},{"x":70,"y":13.392857142857142},{"x":71,"y":13.392857142857142},{"x":72,"y":13.392857142857142},{"x":73,"y":13.392857142857142},{"x":74,"y":13.422818791946309},{"x":75,"y":13.422818791946309},{"x":76,"y":13.452914798206278},{"x":77,"y":13.452914798206278},{"x":78,"y":13.48314606741573},{"x":79,"y":13.48314606741573},{"x":80,"y":13.513513513513512},{"x":81,"y":13.513513513513512},{"x":82,"y":13.513513513513512},{"x":83,"y":13.513513513513512},{"x":84,"y":13.513513513513512},{"x":85,"y":13.513513513513512},{"x":86,"y":13.513513513513512},{"x":87,"y":13.513513513513512},{"x":88,"y":13.513513513513512},{"x":89,"y":13.513513513513512},{"x":90,"y":13.513513513513512},{"x":91,"y":13.48314606741573},{"x":92,"y":13.48314606741573},{"x":93,"y":13.48314606741573},{"x":94,"y":13.48314606741573},{"x":95,"y":13.48314606741573},{"x":96,"y":13.48314606741573},{"x":97,"y":13.48314606741573},{"x":98,"y":13.48314606741573},{"x":99,"y":13.48314606741573},{"x":100,"y":13.48314606741573},{"x":101,"y":13.48314606741573},{"x":102,"y":13.513513513513512},{"x":103,"y":13.513513513513512},{"x":104,"y":13.513513513513512},{"x":105,"y":13.513513513513512},{"x":106,"y":13.513513513513512},{"x":107,"y":13.513513513513512},{"x":108,"y":13.513513513513512},{"x":109,"y":13.48314606741573},{"x":110,"y":13.48314606741573},{"x":111,"y":13.48314606741573},{"x":112,"y":13.48314606741573},{"x":113,"y":13.452914798206278},{"x":114,"y":13.452914798206278},{"x":115,"y":13.422818791946309},{"x":116,"y":13.422818791946309},{"x":117,"y":13.422818791946309},{"x":118,"y":13.422818791946309},{"x":119,"y":13.422818791946309},{"x":120,"y":13.452914798206278},{"x":121,"y":13.452914798206278},{"x":122,"y":13.452914798206278},{"x":123,"y":13.452914798206278},{"x":124,"y":13.452914798206278},{"x":125,"y":13.452914798206278},{"x":126,"y":13.452914798206278},{"x":127,"y":13.452914798206278},{"x":128,"y":13.48314606741573},{"x":129,"y":13.48314606741573},{"x":130,"y":13.48314606741573},{"x":131,"y":13.48314606741573},{"x":132,"y":13.513513513513512},{"x":133,"y":13.513513513513512},{"x":134,"y":13.513513513513512},{"x":135,"y":13.513513513513512},{"x":136,"y":13.544018058690746},{"x":137,"y":13.544018058690746},{"x":138,"y":13.574660633484163},{"x":139,"y":13.574660633484163},{"x":140,"y":13.574660633484163},{"x":141,"y":13.574660633484163},{"x":142,"y":13.605442176870747},{"x":143,"y":13.605442176870747},{"x":144,"y":13.605442176870747},{"x":145,"y":13.605442176870747},{"x":146,"y":13.636363636363635},{"x":147,"y":13.636363636363635},{"x":148,"y":13.66742596810934},{"x":149,"y":13.698630136986301},{"x":150,"y":13.729977116704806},{"x":151,"y":13.729977116704806},{"x":152,"y":13.761467889908255},{"x":153,"y":13.761467889908255},{"x":154,"y":13.793103448275863},{"x":155,"y":13.793103448275863},{"x":156,"y":13.824884792626728},{"x":157,"y":13.824884792626728},{"x":158,"y":13.856812933025404},{"x":159,"y":13.856812933025404},{"x":160,"y":13.888888888888888},{"x":161,"y":13.888888888888888},{"x":162,"y":13.92111368909513},{"x":163,"y":13.92111368909513},{"x":164,"y":13.953488372093023},{"x":165,"y":13.953488372093023},{"x":166,"y":13.953488372093023},{"x":167,"y":13.953488372093023},{"x":168,"y":13.986013986013987},{"x":169,"y":13.986013986013987},{"x":170,"y":14.018691588785046},{"x":171,"y":14.018691588785046},{"x":172,"y":14.051522248243561},{"x":173,"y":14.051522248243561},{"x":174,"y":14.051522248243561},{"x":175,"y":14.051522248243561},{"x":176,"y":14.084507042253522},{"x":177,"y":14.084507042253522},{"x":178,"y":14.117647058823529},{"x":179,"y":14.150943396226415},{"x":180,"y":14.184397163120567},{"x":181,"y":14.218009478672986},{"x":182,"y":14.251781472684085},{"x":183,"y":14.285714285714285},{"x":184,"y":14.31980906921241},{"x":185,"y":14.354066985645934},{"x":186,"y":14.388489208633093},{"x":187,"y":14.388489208633093},{"x":188,"y":14.423076923076923},{"x":189,"y":14.457831325301203},{"x":190,"y":14.492753623188406},{"x":191,"y":14.492753623188406},{"x":192,"y":14.527845036319613},{"x":193,"y":14.563106796116504},{"x":194,"y":14.888337468982629},{"x":317,"y":14.851485148514852},{"x":505,"y":14.814814814814815},{"x":506,"y":13.636363636363635},{"x":507,"y":12.631578947368421},{"x":508,"y":12.096774193548388},{"x":509,"y":11.583011583011583},{"x":510,"y":11.363636363636363},{"x":511,"y":11.131725417439704},{"x":512,"y":11.1731843575419},{"x":513,"y":11.214953271028039},{"x":514,"y":11.49425287356322},{"x":515,"y":11.787819253438114},{"x":516,"y":11.881188118811881},{"x":517,"y":11.952191235059763},{"x":518,"y":12.096774193548388},{"x":519,"y":12.219959266802444},{"x":520,"y":12.526096033402922},{"x":521,"y":12.847965738758031},{"x":522,"y":13.157894736842106},{"x":523,"y":13.48314606741573},{"x":524,"y":13.48314606741573},{"x":525,"y":13.452914798206278},{"x":526,"y":13.48314606741573},{"x":527,"y":13.513513513513512},{"x":528,"y":13.513513513513512},{"x":529,"y":13.513513513513512},{"x":530,"y":13.574660633484163},{"x":531,"y":13.636363636363635},{"x":532,"y":13.824884792626728},{"x":533,"y":13.986013986013987},{"x":534,"y":14.018691588785046},{"x":535,"y":14.018691588785046},{"x":536,"y":13.953488372093023},{"x":537,"y":13.888888888888888},{"x":538,"y":13.856812933025404},{"x":539,"y":13.793103448275863},{"x":540,"y":13.793103448275863},{"x":541,"y":13.761467889908255},{"x":542,"y":13.761467889908255},{"x":543,"y":13.761467889908255},{"x":544,"y":13.793103448275863},{"x":545,"y":13.793103448275863},{"x":546,"y":13.856812933025404},{"x":547,"y":13.888888888888888},{"x":548,"y":13.953488372093023},{"x":549,"y":14.018691588785046},{"x":550,"y":14.084507042253522},{"x":551,"y":14.150943396226415},{"x":552,"y":14.218009478672986},{"x":553,"y":14.251781472684085},{"x":554,"y":14.285714285714285},{"x":555,"y":14.31980906921241},{"x":570,"y":13.698630136986301},{"x":571,"y":12.396694214876034},{"x":572,"y":12.903225806451612},{"x":573,"y":13.452914798206278},{"x":574,"y":13.793103448275863},{"x":575,"y":14.117647058823529},{"x":576,"y":14.018691588785046},{"x":577,"y":13.888888888888888},{"x":578,"y":13.953488372093023},{"x":579,"y":13.986013986013987},{"x":580,"y":14.527845036319613},{"x":605,"y":15},{"x":606,"y":14.92537313432836},{"x":607,"y":14.851485148514852},{"x":608,"y":14.77832512315271},{"x":609,"y":14.705882352941176},{"x":610,"y":14.66992665036675},{"x":611,"y":14.634146341463415},{"x":612,"y":14.634146341463415},{"x":613,"y":14.5985401459854},{"x":614,"y":14.634146341463415},{"x":615,"y":14.634146341463415},{"x":616,"y":14.66992665036675},{"x":617,"y":14.66992665036675},{"x":618,"y":14.705882352941176},{"x":619,"y":14.705882352941176},{"x":620,"y":14.74201474201474},{"x":621,"y":14.77832512315271},{"x":622,"y":14.814814814814815},{"x":623,"y":14.814814814814815},{"x":624,"y":14.814814814814815},{"x":625,"y":14.814814814814815},{"x":626,"y":14.814814814814815},{"x":627,"y":14.77832512315271},{"x":628,"y":14.77832512315271},{"x":629,"y":14.74201474201474},{"x":630,"y":14.77832512315271},{"x":631,"y":14.77832512315271},{"x":632,"y":14.814814814814815},{"x":633,"y":14.851485148514852},{"x":634,"y":14.888337468982629},{"x":635,"y":14.888337468982629},{"x":636,"y":14.962593516209477},{"x":637,"y":15},{"x":641,"y":15},{"x":642,"y":14.962593516209477},{"x":643,"y":14.92537313432836},{"x":644,"y":14.888337468982629},{"x":645,"y":14.851485148514852},{"x":646,"y":14.851485148514852},{"x":647,"y":14.814814814814815},{"x":648,"y":14.814814814814815},{"x":649,"y":14.77832512315271},{"x":650,"y":14.77832512315271},{"x":651,"y":14.77832512315271},{"x":652,"y":14.814814814814815},{"x":653,"y":14.814814814814815},{"x":654,"y":14.814814814814815},{"x":655,"y":14.814814814814815},{"x":656,"y":14.851485148514852},{"x":657,"y":14.851485148514852},{"x":658,"y":14.851485148514852},{"x":659,"y":14.851485148514852},{"x":660,"y":14.851485148514852},{"x":661,"y":14.851485148514852},{"x":662,"y":14.851485148514852},{"x":663,"y":14.851485148514852},{"x":664,"y":14.888337468982629},{"x":665,"y":14.888337468982629},{"x":854,"y":15},{"x":855,"y":14.92537313432836},{"x":856,"y":14.888337468982629},{"x":857,"y":14.851485148514852},{"x":858,"y":14.814814814814815},{"x":859,"y":14.77832512315271},{"x":860,"y":14.74201474201474},{"x":861,"y":14.705882352941176},{"x":862,"y":14.66992665036675},{"x":863,"y":14.634146341463415},{"x":864,"y":14.5985401459854},{"x":865,"y":14.563106796116504},{"x":866,"y":14.563106796116504},{"x":867,"y":14.527845036319613},{"x":868,"y":14.492753623188406},{"x":869,"y":14.457831325301203},{"x":870,"y":14.457831325301203},{"x":871,"y":14.423076923076923},{"x":872,"y":14.423076923076923},{"x":873,"y":14.423076923076923},{"x":874,"y":14.423076923076923},{"x":875,"y":14.423076923076923},{"x":876,"y":14.423076923076923},{"x":877,"y":14.423076923076923},{"x":878,"y":14.423076923076923},{"x":879,"y":14.423076923076923},{"x":880,"y":14.423076923076923},{"x":881,"y":14.423076923076923},{"x":882,"y":14.423076923076923},{"x":883,"y":14.388489208633093},{"x":884,"y":14.388489208633093},{"x":885,"y":14.388489208633093},{"x":886,"y":14.388489208633093},{"x":887,"y":14.388489208633093},{"x":888,"y":14.388489208633093},{"x":889,"y":14.354066985645934},{"x":890,"y":14.354066985645934},{"x":891,"y":14.31980906921241},{"x":892,"y":14.31980906921241},{"x":893,"y":14.31980906921241},{"x":894,"y":14.354066985645934},{"x":895,"y":14.354066985645934},{"x":896,"y":14.388489208633093},{"x":897,"y":14.388489208633093},{"x":898,"y":14.423076923076923},{"x":899,"y":14.423076923076923},{"x":900,"y":14.457831325301203},{"x":901,"y":14.457831325301203},{"x":902,"y":14.492753623188406},{"x":903,"y":14.492753623188406},{"x":904,"y":14.492753623188406},{"x":905,"y":14.492753623188406},{"x":906,"y":14.527845036319613},{"x":907,"y":14.527845036319613},{"x":908,"y":14.527845036319613},{"x":909,"y":14.527845036319613},{"x":910,"y":14.527845036319613},{"x":911,"y":14.527845036319613},{"x":912,"y":14.527845036319613},{"x":913,"y":14.527845036319613},{"x":914,"y":14.527845036319613},{"x":915,"y":14.527845036319613},{"x":916,"y":14.563106796116504},{"x":917,"y":14.563106796116504},{"x":918,"y":14.563106796116504},{"x":919,"y":14.563106796116504},{"x":920,"y":14.5985401459854},{"x":921,"y":14.5985401459854},{"x":922,"y":14.634146341463415},{"x":923,"y":14.634146341463415},{"x":924,"y":14.66992665036675},{"x":925,"y":14.66992665036675},{"x":926,"y":14.705882352941176},{"x":927,"y":14.705882352941176},{"x":928,"y":14.705882352941176},{"x":929,"y":14.705882352941176},{"x":930,"y":14.705882352941176},{"x":931,"y":14.705882352941176},{"x":932,"y":14.705882352941176},{"x":933,"y":14.705882352941176},{"x":934,"y":14.705882352941176},{"x":935,"y":14.705882352941176},{"x":936,"y":14.705882352941176},{"x":937,"y":14.705882352941176},{"x":938,"y":14.705882352941176},{"x":939,"y":14.705882352941176},{"x":940,"y":14.705882352941176},{"x":941,"y":14.705882352941176},{"x":942,"y":14.705882352941176},{"x":943,"y":14.66992665036675},{"x":944,"y":14.66992665036675},{"x":945,"y":14.66992665036675},{"x":946,"y":14.66992665036675},{"x":947,"y":14.66992665036675},{"x":948,"y":14.66992665036675},{"x":949,"y":14.66992665036675},{"x":950,"y":14.66992665036675},{"x":951,"y":14.66992665036675},{"x":952,"y":14.77832512315271},{"x":953,"y":14.851485148514852},{"x":970,"y":15},{"x":971,"y":14.457831325301203},{"x":972,"y":13.824884792626728},{"x":973,"y":13.215859030837004},{"x":974,"y":12.793176972281449},{"x":975,"y":12.371134020618557},{"x":976,"y":13.043478260869566},{"x":977,"y":13.793103448275863},{"x":978,"y":14.31980906921241},{"x":979,"y":14.851485148514852},{"x":1050,"y":15},{"x":1051,"y":14.92537313432836},{"x":1052,"y":14.888337468982629},{"x":1053,"y":14.814814814814815},{"x":1054,"y":14.77832512315271},{"x":1055,"y":14.74201474201474},{"x":1056,"y":14.705882352941176},{"x":1057,"y":14.66992665036675},{"x":1058,"y":14.634146341463415},{"x":1059,"y":14.5985401459854},{"x":1060,"y":14.563106796116504},{"x":1061,"y":14.527845036319613},{"x":1062,"y":14.492753623188406},{"x":1063,"y":14.457831325301203},{"x":1064,"y":14.423076923076923},{"x":1065,"y":14.388489208633093},{"x":1066,"y":14.388489208633093},{"x":1067,"y":14.354066985645934},{"x":1068,"y":14.31980906921241},{"x":1069,"y":14.285714285714285},{"x":1070,"y":14.285714285714285},{"x":1071,"y":14.251781472684085},{"x":1072,"y":14.218009478672986},{"x":1073,"y":14.184397163120567},{"x":1074,"y":14.184397163120567},{"x":1075,"y":14.150943396226415},{"x":1076,"y":14.117647058823529},{"x":1077,"y":14.084507042253522},{"x":1078,"y":14.084507042253522},{"x":1079,"y":14.051522248243561},{"x":1080,"y":14.018691588785046},{"x":1081,"y":13.986013986013987},{"x":1082,"y":13.953488372093023},{"x":1083,"y":13.92111368909513},{"x":1084,"y":13.92111368909513},{"x":1084,"y":13.92111368909513},{"x":1085,"y":13.888888888888888},{"x":1086,"y":13.856812933025404},{"x":1087,"y":13.824884792626728},{"x":1088,"y":13.824884792626728},{"x":1089,"y":13.793103448275863},{"x":1090,"y":13.793103448275863},{"x":1091,"y":13.761467889908255},{"x":1092,"y":13.761467889908255},{"x":1093,"y":13.729977116704806},{"x":1094,"y":13.698630136986301},{"x":1095,"y":13.66742596810934},{"x":1096,"y":13.66742596810934},{"x":1097,"y":13.636363636363635},{"x":1098,"y":13.636363636363635},{"x":1099,"y":13.605442176870747},{"x":1100,"y":13.605442176870747},{"x":1101,"y":13.574660633484163},{"x":1102,"y":13.574660633484163},{"x":1103,"y":13.544018058690746},{"x":1104,"y":13.544018058690746},{"x":1105,"y":13.544018058690746},{"x":1106,"y":13.544018058690746},{"x":1107,"y":13.513513513513512},{"x":1108,"y":13.513513513513512},{"x":1109,"y":13.513513513513512},{"x":1110,"y":13.513513513513512},{"x":1111,"y":13.513513513513512},{"x":1112,"y":13.513513513513512},{"x":1113,"y":13.48314606741573},{"x":1114,"y":13.48314606741573},{"x":1115,"y":13.48314606741573},{"x":1116,"y":13.48314606741573},{"x":1117,"y":13.48314606741573},{"x":1118,"y":13.513513513513512},{"x":1119,"y":13.513513513513512},{"x":1120,"y":13.513513513513512},{"x":1121,"y":13.513513513513512},{"x":1122,"y":13.513513513513512},{"x":1123,"y":13.513513513513512},{"x":1124,"y":13.513513513513512},{"x":1125,"y":13.513513513513512},{"x":1126,"y":13.513513513513512},{"x":1127,"y":13.513513513513512},{"x":1128,"y":13.544018058690746},{"x":1129,"y":13.544018058690746},{"x":1130,"y":13.544018058690746},{"x":1131,"y":13.544018058690746},{"x":1132,"y":13.544018058690746},{"x":1133,"y":13.544018058690746},{"x":1134,"y":13.544018058690746},{"x":1135,"y":13.544018058690746},{"x":1136,"y":13.544018058690746},{"x":1137,"y":13.544018058690746},{"x":1138,"y":13.544018058690746},{"x":1139,"y":13.513513513513512},{"x":1140,"y":13.513513513513512},{"x":1141,"y":13.513513513513512},{"x":1142,"y":13.513513513513512},{"x":1143,"y":13.513513513513512},{"x":1144,"y":13.513513513513512},{"x":1145,"y":13.513513513513512},{"x":1146,"y":13.513513513513512},{"x":1147,"y":13.513513513513512},{"x":1148,"y":13.574660633484163},{"x":1149,"y":13.605442176870747},{"x":1150,"y":13.698630136986301},{"x":1151,"y":13.793103448275863},{"x":1152,"y":13.856812933025404},{"x":1153,"y":13.92111368909513},{"x":1154,"y":13.986013986013987},{"x":1155,"y":14.018691588785046},{"x":1156,"y":14.051522248243561},{"x":1157,"y":14.084507042253522},{"x":1158,"y":14.117647058823529},{"x":1159,"y":14.150943396226415},{"x":1160,"y":14.184397163120567},{"x":1161,"y":14.184397163120567},{"x":1162,"y":14.218009478672986},{"x":1163,"y":14.218009478672986},{"x":1164,"y":14.251781472684085},{"x":1165,"y":14.285714285714285},{"x":1166,"y":14.31980906921241},{"x":1167,"y":14.354066985645934},{"x":1168,"y":14.388489208633093},{"x":1169,"y":14.423076923076923},{"x":1170,"y":14.457831325301203},{"x":1171,"y":14.457831325301203},{"x":1172,"y":14.492753623188406},{"x":1173,"y":14.492753623188406},{"x":1174,"y":14.492753623188406},{"x":1175,"y":14.457831325301203},{"x":1176,"y":14.457831325301203},{"x":1177,"y":14.423076923076923},{"x":1178,"y":14.423076923076923},{"x":1179,"y":14.388489208633093},{"x":1180,"y":14.388489208633093},{"x":1181,"y":14.354066985645934},{"x":1182,"y":14.354066985645934},{"x":1183,"y":14.354066985645934},{"x":1184,"y":14.354066985645934},{"x":1185,"y":14.354066985645934},{"x":1186,"y":14.354066985645934},{"x":1187,"y":14.354066985645934},{"x":1188,"y":14.354066985645934},{"x":1189,"y":14.354066985645934},{"x":1190,"y":14.354066985645934},{"x":1191,"y":14.354066985645934},{"x":1192,"y":14.354066985645934},{"x":1193,"y":14.354066985645934},{"x":1194,"y":14.354066985645934},{"x":1195,"y":14.354066985645934},{"x":1196,"y":14.354066985645934},{"x":1197,"y":14.31980906921241},{"x":1198,"y":14.31980906921241},{"x":1199,"y":14.31980906921241},{"x":1200,"y":14.285714285714285},{"x":1201,"y":14.251781472684085},{"x":1202,"y":14.218009478672986},{"x":1203,"y":14.184397163120567},{"x":1204,"y":14.184397163120567},{"x":1205,"y":14.150943396226415},{"x":1206,"y":14.150943396226415},{"x":1207,"y":14.117647058823529},{"x":1208,"y":14.117647058823529},{"x":1209,"y":14.117647058823529},{"x":1210,"y":14.117647058823529},{"x":1211,"y":14.084507042253522},{"x":1212,"y":14.084507042253522},{"x":1213,"y":14.084507042253522},{"x":1214,"y":14.084507042253522},{"x":1215,"y":14.051522248243561},{"x":1216,"y":14.051522248243561},{"x":1217,"y":14.018691588785046},{"x":1218,"y":14.018691588785046},{"x":1219,"y":13.986013986013987},{"x":1220,"y":13.986013986013987},{"x":1221,"y":13.953488372093023},{"x":1222,"y":13.953488372093023},{"x":1223,"y":13.953488372093023},{"x":1224,"y":13.953488372093023},{"x":1225,"y":13.92111368909513},{"x":1226,"y":13.92111368909513},{"x":1227,"y":13.92111368909513},{"x":1228,"y":13.92111368909513},{"x":1229,"y":13.92111368909513},{"x":1230,"y":13.92111368909513},{"x":1231,"y":13.92111368909513},{"x":1232,"y":13.92111368909513},{"x":1233,"y":13.92111368909513},{"x":1234,"y":13.92111368909513},{"x":1235,"y":13.92111368909513},{"x":1236,"y":13.92111368909513},{"x":1237,"y":13.92111368909513},{"x":1238,"y":13.92111368909513},{"x":1239,"y":13.92111368909513},{"x":1240,"y":13.92111368909513},{"x":1241,"y":13.92111368909513},{"x":1242,"y":13.92111368909513},{"x":1243,"y":13.92111368909513},{"x":1244,"y":13.92111368909513},{"x":1245,"y":13.92111368909513},{"x":1246,"y":13.92111368909513},{"x":1247,"y":13.92111368909513},{"x":1248,"y":13.953488372093023},{"x":1249,"y":13.986013986013987},{"x":1250,"y":14.051522248243561},{"x":1251,"y":14.117647058823529},{"x":1252,"y":14.184397163120567},{"x":1253,"y":14.251781472684085},{"x":1254,"y":14.31980906921241},{"x":1255,"y":14.354066985645934},{"x":1256,"y":14.388489208633093},{"x":1257,"y":14.388489208633093},{"x":1258,"y":14.388489208633093},{"x":1259,"y":14.388489208633093},{"x":1260,"y":14.388489208633093},{"x":1261,"y":14.354066985645934},{"x":1262,"y":14.31980906921241},{"x":1263,"y":14.285714285714285},{"x":1264,"y":14.218009478672986},{"x":1265,"y":14.150943396226415},{"x":1266,"y":11.811023622047244},{"x":1267,"y":10.135135135135135},{"x":1268,"y":9.287925696594428},{"x":1269,"y":8.571428571428571},{"x":1270,"y":7.926023778071334},{"x":1271,"y":7.361963190184048},{"x":1272,"y":6.984866123399302},{"x":1273,"y":6.64451827242525},{"x":1274,"y":6.4935064935064934},{"x":1275,"y":6.342494714587737},{"x":1276,"y":6.315789473684211},{"x":1277,"y":6.282722513089005},{"x":1278,"y":6.4655172413793105},{"x":1279,"y":6.659267480577137},{"x":1280,"y":7.009345794392523},{"x":1281,"y":7.398273736128237},{"x":1282,"y":7.633587786259541},{"x":1283,"y":7.874015748031496},{"x":1284,"y":8.053691275167784},{"x":1285,"y":8.23045267489712},{"x":1286,"y":8.608321377331421},{"x":1287,"y":9.00900900900901},{"x":1288,"y":9.30232558139535},{"x":1289,"y":9.615384615384615},{"x":1290,"y":9.819967266775777},{"x":1291,"y":10.03344481605351},{"x":1292,"y":10.169491525423728},{"x":1293,"y":10.309278350515463},{"x":1294,"y":10.398613518197575},{"x":1295,"y":10.471204188481675},{"x":1296,"y":10.526315789473683},{"x":1297,"y":10.582010582010582},{"x":1298,"y":10.676156583629894},{"x":1299,"y":10.75268817204301},{"x":1300,"y":10.849909584086799},{"x":1301,"y":10.92896174863388},{"x":1302,"y":11.009174311926605},{"x":1303,"y":11.07011070110701},{"x":1304,"y":11.152416356877323},{"x":1305,"y":11.235955056179776},{"x":1306,"y":11.299435028248588},{"x":1307,"y":11.363636363636363},{"x":1308,"y":11.428571428571429},{"x":1309,"y":11.49425287356322},{"x":1310,"y":11.538461538461538},{"x":1311,"y":11.583011583011583},{"x":1312,"y":11.627906976744185},{"x":1313,"y":11.650485436893202},{"x":1314,"y":11.695906432748538},{"x":1315,"y":11.71875},{"x":1316,"y":11.787819253438114},{"x":1317,"y":11.857707509881424},{"x":1318,"y":11.928429423459244},{"x":1319,"y":12},{"x":1320,"y":12.096774193548388},{"x":1321,"y":12.170385395537526},{"x":1322,"y":12.244897959183673},{"x":1323,"y":12.320328542094456},{"x":1324,"y":12.371134020618557},{"x":1325,"y":12.422360248447205},{"x":1326,"y":12.474012474012476},{"x":1327,"y":12.526096033402922},{"x":1328,"y":12.552301255230125},{"x":1329,"y":12.578616352201259},{"x":1330,"y":12.605042016806724},{"x":1331,"y":12.631578947368421},{"x":1332,"y":12.658227848101266},{"x":1333,"y":12.684989429175474},{"x":1334,"y":12.711864406779661},{"x":1335,"y":12.738853503184714},{"x":1336,"y":12.793176972281449},{"x":1337,"y":12.820512820512821},{"x":1338,"y":12.847965738758031},{"x":1339,"y":12.875536480686694},{"x":1340,"y":12.931034482758621},{"x":1341,"y":12.958963282937365},{"x":1342,"y":12.987012987012987},{"x":1343,"y":12.987012987012987},{"x":1344,"y":13.015184381778742},{"x":1345,"y":13.043478260869566},{"x":1346,"y":13.071895424836601},{"x":1347,"y":13.100436681222707},{"x":1348,"y":13.100436681222707},{"x":1349,"y":13.100436681222707},{"x":1350,"y":13.100436681222707},{"x":1351,"y":13.100436681222707},{"x":1352,"y":13.129102844638949},{"x":1353,"y":13.129102844638949},{"x":1354,"y":13.129102844638949},{"x":1355,"y":13.129102844638949},{"x":1363,"y":14.888337468982629},{"x":1364,"y":14.634146341463415},{"x":1365,"y":14.354066985645934},{"x":1366,"y":14.285714285714285},{"x":1367,"y":14.218009478672986},{"x":1368,"y":14.150943396226415},{"x":1369,"y":14.084507042253522},{"x":1370,"y":14.051522248243561},{"x":1371,"y":14.018691588785046},{"x":1372,"y":13.986013986013987},{"x":1373,"y":13.92111368909513},{"x":1374,"y":13.92111368909513},{"x":1375,"y":13.888888888888888},{"x":1376,"y":13.856812933025404},{"x":1377,"y":13.824884792626728},{"x":1378,"y":13.824884792626728},{"x":1379,"y":13.793103448275863},{"x":1380,"y":13.793103448275863},{"x":1381,"y":13.761467889908255},{"x":1382,"y":13.761467889908255},{"x":1383,"y":13.729977116704806},{"x":1384,"y":13.698630136986301},{"x":1385,"y":13.66742596810934},{"x":1386,"y":13.66742596810934},{"x":1387,"y":13.636363636363635},{"x":1388,"y":13.636363636363635},{"x":1389,"y":13.605442176870747},{"x":1390,"y":13.605442176870747},{"x":1391,"y":13.605442176870747},{"x":1392,"y":13.605442176870747},{"x":1393,"y":13.605442176870747},{"x":1394,"y":13.605442176870747},{"x":1395,"y":13.605442176870747},{"x":1396,"y":13.605442176870747},{"x":1397,"y":13.574660633484163},{"x":1398,"y":13.574660633484163},{"x":1399,"y":13.544018058690746},{"x":1400,"y":13.544018058690746},{"x":1401,"y":13.513513513513512},{"x":1402,"y":13.48314606741573},{"x":1403,"y":13.452914798206278},{"x":1404,"y":13.452914798206278},{"x":1405,"y":13.422818791946309},{"x":1406,"y":13.392857142857142},{"x":1407,"y":13.363028953229398},{"x":1408,"y":13.363028953229398},{"x":1409,"y":13.333333333333334},{"x":1410,"y":13.333333333333334},{"x":1411,"y":13.303769401330378},{"x":1412,"y":13.303769401330378},{"x":1413,"y":13.303769401330378},{"x":1414,"y":13.303769401330378},{"x":1415,"y":13.274336283185843},{"x":1416,"y":13.245033112582782},{"x":1417,"y":13.215859030837004},{"x":1418,"y":13.215859030837004},{"x":1419,"y":13.186813186813188},{"x":1420,"y":13.186813186813188},{"x":1421,"y":13.157894736842106},{"x":1422,"y":13.157894736842106},{"x":1423,"y":13.129102844638949},{"x":1424,"y":13.100436681222707},{"x":1425,"y":13.071895424836601},{"x":1426,"y":13.071895424836601},{"x":1427,"y":13.043478260869566},{"x":1428,"y":13.043478260869566},{"x":1429,"y":13.015184381778742},{"x":1430,"y":13.015184381778742},{"x":1431,"y":12.987012987012987},{"x":1432,"y":12.987012987012987},{"x":1433,"y":12.987012987012987},{"x":1434,"y":12.987012987012987},{"x":1435,"y":12.987012987012987},{"x":1436,"y":12.987012987012987},{"x":1437,"y":12.987012987012987},{"x":1438,"y":13.015184381778742},{"x":1439,"y":13.015184381778742},{"x":1440,"y":13.015184381778742},{"x":1441,"y":13.015184381778742},{"x":1442,"y":13.015184381778742},{"x":1443,"y":13.015184381778742},{"x":1444,"y":13.043478260869566},{"x":1445,"y":13.043478260869566},{"x":1446,"y":13.043478260869566},{"x":1447,"y":13.043478260869566},{"x":1448,"y":13.043478260869566},{"x":1449,"y":13.043478260869566},{"x":1450,"y":13.071895424836601},{"x":1451,"y":13.071895424836601},{"x":1452,"y":13.071895424836601},{"x":1453,"y":13.071895424836601},{"x":1454,"y":13.071895424836601},{"x":1455,"y":13.071895424836601},{"x":1456,"y":13.071895424836601},{"x":1457,"y":13.071895424836601},{"x":1458,"y":13.100436681222707},{"x":1459,"y":13.100436681222707},{"x":1460,"y":13.100436681222707},{"x":1461,"y":13.100436681222707},{"x":1462,"y":13.100436681222707},{"x":1463,"y":13.100436681222707},{"x":1464,"y":13.100436681222707},{"x":1465,"y":13.100436681222707},{"x":1466,"y":13.100436681222707},{"x":1467,"y":13.100436681222707},{"x":1468,"y":13.100436681222707},{"x":1469,"y":13.100436681222707},{"x":1470,"y":13.129102844638949},{"x":1471,"y":13.157894736842106},{"x":1480,"y":14.92537313432836},{"x":1481,"y":14.77832512315271},{"x":1482,"y":14.084507042253522},{"x":1483,"y":13.422818791946309},{"x":1484,"y":13.245033112582782},{"x":1485,"y":13.043478260869566},{"x":1486,"y":13.043478260869566},{"x":1487,"y":13.015184381778742},{"x":1488,"y":13.071895424836601},{"x":1489,"y":13.129102844638949},{"x":1490,"y":13.215859030837004},{"x":1491,"y":13.274336283185843},{"x":1492,"y":13.363028953229398},{"x":1493,"y":13.452914798206278},{"x":1494,"y":13.544018058690746},{"x":1495,"y":13.605442176870747},{"x":1496,"y":13.636363636363635},{"x":1497,"y":13.636363636363635},{"x":1498,"y":13.66742596810934},{"x":1499,"y":13.66742596810934},{"x":1500,"y":13.66742596810934},{"x":1501,"y":13.636363636363635},{"x":1502,"y":13.636363636363635},{"x":1503,"y":13.605442176870747},{"x":1504,"y":13.605442176870747},{"x":1505,"y":13.605442176870747},{"x":1506,"y":13.605442176870747},{"x":1507,"y":13.605442176870747},{"x":1508,"y":13.605442176870747},{"x":1509,"y":13.605442176870747},{"x":1510,"y":13.605442176870747},{"x":1511,"y":13.574660633484163},{"x":1512,"y":13.574660633484163},{"x":1513,"y":13.544018058690746},{"x":1514,"y":13.574660633484163},{"x":1515,"y":13.574660633484163},{"x":1516,"y":13.605442176870747},{"x":1517,"y":13.636363636363635},{"x":1518,"y":13.729977116704806},{"x":1519,"y":13.793103448275863},{"x":1520,"y":13.856812933025404},{"x":1521,"y":13.888888888888888},{"x":1522,"y":13.92111368909513},{"x":1523,"y":13.953488372093023},{"x":1524,"y":13.986013986013987},{"x":1525,"y":14.018691588785046},{"x":1526,"y":14.051522248243561},{"x":1527,"y":14.051522248243561},{"x":1528,"y":14.051522248243561},{"x":1529,"y":14.051522248243561},{"x":1530,"y":14.051522248243561},{"x":1531,"y":14.018691588785046},{"x":1532,"y":13.986013986013987},{"x":1533,"y":13.953488372093023},{"x":1534,"y":13.92111368909513},{"x":1535,"y":13.888888888888888},{"x":1536,"y":13.856812933025404},{"x":1537,"y":13.824884792626728},{"x":1538,"y":13.824884792626728},{"x":1539,"y":13.824884792626728},{"x":1540,"y":13.824884792626728},{"x":1541,"y":13.824884792626728},{"x":1542,"y":13.824884792626728},{"x":1543,"y":13.793103448275863},{"x":1544,"y":13.824884792626728},{"x":1545,"y":13.824884792626728},{"x":1546,"y":13.824884792626728},{"x":1547,"y":13.824884792626728},{"x":1548,"y":13.856812933025404},{"x":1549,"y":13.856812933025404},{"x":1550,"y":13.856812933025404},{"x":1551,"y":13.824884792626728},{"x":1552,"y":13.824884792626728},{"x":1553,"y":13.824884792626728},{"x":1554,"y":13.824884792626728},{"x":1555,"y":13.824884792626728},{"x":1556,"y":13.824884792626728},{"x":1557,"y":13.824884792626728},{"x":1558,"y":13.824884792626728},{"x":1559,"y":13.824884792626728},{"x":1560,"y":13.824884792626728},{"x":1561,"y":13.793103448275863},{"x":1562,"y":13.793103448275863},{"x":1563,"y":13.761467889908255},{"x":1564,"y":13.761467889908255},{"x":1565,"y":13.729977116704806},{"x":1566,"y":13.729977116704806},{"x":1567,"y":13.698630136986301},{"x":1568,"y":13.698630136986301},{"x":1569,"y":13.66742596810934},{"x":1570,"y":13.66742596810934},{"x":1571,"y":13.66742596810934},{"x":1572,"y":13.66742596810934},{"x":1573,"y":13.66742596810934},{"x":1574,"y":13.66742596810934},{"x":1575,"y":13.636363636363635},{"x":1576,"y":13.636363636363635},{"x":1577,"y":13.636363636363635},{"x":1578,"y":13.636363636363635},{"x":1579,"y":13.636363636363635},{"x":1580,"y":13.636363636363635},{"x":1581,"y":13.636363636363635},{"x":1582,"y":13.66742596810934},{"x":1583,"y":13.66742596810934},{"x":1584,"y":13.66742596810934},{"x":1585,"y":13.66742596810934},{"x":1586,"y":13.66742596810934},{"x":1587,"y":13.636363636363635},{"x":1588,"y":13.636363636363635},{"x":1589,"y":13.636363636363635},{"x":1590,"y":13.636363636363635},{"x":1591,"y":13.605442176870747},{"x":1592,"y":13.605442176870747},{"x":1593,"y":13.605442176870747},{"x":1594,"y":13.605442176870747},{"x":1595,"y":13.605442176870747},{"x":1596,"y":13.605442176870747},{"x":1597,"y":13.605442176870747},{"x":1598,"y":13.605442176870747},{"x":1599,"y":13.605442176870747},{"x":1600,"y":13.605442176870747},{"x":1601,"y":13.605442176870747},{"x":1602,"y":13.605442176870747},{"x":1603,"y":13.605442176870747},{"x":1604,"y":13.605442176870747},{"x":1605,"y":13.605442176870747},{"x":1606,"y":13.605442176870747},{"x":1607,"y":13.605442176870747},{"x":1608,"y":13.605442176870747},{"x":1609,"y":13.605442176870747},{"x":1610,"y":13.605442176870747},{"x":1611,"y":13.605442176870747},{"x":1612,"y":13.605442176870747},{"x":1613,"y":13.605442176870747},{"x":1614,"y":13.605442176870747},{"x":1615,"y":13.605442176870747},{"x":1616,"y":13.605442176870747},{"x":1617,"y":13.605442176870747},{"x":1618,"y":13.605442176870747},{"x":1619,"y":13.605442176870747},{"x":1620,"y":13.605442176870747},{"x":1621,"y":13.605442176870747},{"x":1622,"y":13.605442176870747},{"x":1623,"y":13.605442176870747},{"x":1624,"y":13.605442176870747},{"x":1625,"y":13.605442176870747},{"x":1626,"y":13.605442176870747},{"x":1627,"y":13.574660633484163},{"x":1628,"y":13.574660633484163},{"x":1629,"y":13.574660633484163},{"x":1630,"y":13.574660633484163},{"x":1631,"y":13.574660633484163},{"x":1632,"y":13.605442176870747},{"x":1633,"y":13.605442176870747},{"x":1634,"y":13.605442176870747},{"x":1635,"y":13.605442176870747},{"x":1636,"y":13.605442176870747},{"x":1637,"y":13.605442176870747},{"x":1638,"y":13.605442176870747},{"x":1639,"y":13.605442176870747},{"x":1640,"y":13.605442176870747},{"x":1641,"y":13.605442176870747},{"x":1642,"y":13.605442176870747},{"x":1643,"y":13.605442176870747},{"x":1644,"y":13.636363636363635},{"x":1645,"y":13.636363636363635},{"x":1646,"y":13.636363636363635},{"x":1647,"y":13.636363636363635},{"x":1648,"y":13.636363636363635},{"x":1649,"y":13.605442176870747},{"x":1650,"y":13.605442176870747},{"x":1651,"y":13.605442176870747},{"x":1652,"y":13.605442176870747},{"x":1653,"y":13.605442176870747},{"x":1654,"y":13.605442176870747},{"x":1655,"y":13.605442176870747},{"x":1656,"y":13.605442176870747},{"x":1657,"y":13.605442176870747},{"x":1658,"y":13.605442176870747},{"x":1659,"y":13.574660633484163},{"x":1660,"y":13.574660633484163},{"x":1661,"y":13.544018058690746},{"x":1662,"y":13.544018058690746},{"x":1663,"y":13.513513513513512},{"x":1664,"y":13.513513513513512},{"x":1665,"y":13.513513513513512},{"x":1666,"y":13.513513513513512},{"x":1667,"y":13.48314606741573},{"x":1668,"y":13.48314606741573},{"x":1669,"y":13.48314606741573},{"x":1670,"y":13.48314606741573},{"x":1671,"y":13.452914798206278},{"x":1672,"y":13.452914798206278},{"x":1673,"y":13.422818791946309},{"x":1674,"y":13.422818791946309},{"x":1675,"y":13.392857142857142},{"x":1676,"y":13.392857142857142},{"x":1677,"y":13.363028953229398},{"x":1678,"y":13.363028953229398},{"x":1679,"y":13.333333333333334},{"x":1680,"y":13.333333333333334},{"x":1681,"y":13.333333333333334},{"x":1682,"y":13.333333333333334},{"x":1683,"y":13.303769401330378},{"x":1684,"y":13.303769401330378},{"x":1685,"y":13.274336283185843},{"x":1686,"y":13.274336283185843},{"x":1687,"y":13.274336283185843},{"x":1688,"y":13.274336283185843},{"x":1689,"y":13.274336283185843},{"x":1690,"y":13.274336283185843},{"x":1691,"y":13.274336283185843},{"x":1692,"y":13.274336283185843},{"x":1693,"y":13.274336283185843},{"x":1694,"y":13.274336283185843},{"x":1695,"y":13.274336283185843},{"x":1696,"y":13.303769401330378},{"x":1697,"y":13.303769401330378},{"x":1698,"y":13.333333333333334},{"x":1699,"y":13.333333333333334},{"x":1700,"y":13.333333333333334},{"x":1701,"y":13.333333333333334},{"x":1702,"y":13.333333333333334},{"x":1703,"y":13.333333333333334},{"x":1704,"y":13.363028953229398},{"x":1705,"y":13.363028953229398},{"x":1706,"y":13.363028953229398},{"x":1707,"y":13.363028953229398},{"x":1708,"y":13.363028953229398},{"x":1709,"y":13.363028953229398},{"x":1710,"y":13.363028953229398},{"x":1711,"y":13.363028953229398},{"x":1712,"y":13.363028953229398},{"x":1713,"y":13.363028953229398},{"x":1714,"y":13.363028953229398},{"x":1715,"y":13.333333333333334},{"x":1716,"y":13.333333333333334},{"x":1717,"y":13.333333333333334},{"x":1718,"y":13.333333333333334},{"x":1719,"y":13.303769401330378},{"x":1720,"y":13.303769401330378},{"x":1721,"y":13.303769401330378},{"x":1722,"y":13.303769401330378},{"x":1723,"y":13.274336283185843},{"x":1724,"y":13.274336283185843},{"x":1725,"y":13.274336283185843},{"x":1726,"y":13.274336283185843},{"x":1727,"y":13.245033112582782},{"x":1728,"y":13.245033112582782},{"x":1729,"y":13.215859030837004},{"x":1730,"y":13.215859030837004},{"x":1731,"y":13.186813186813188},{"x":1732,"y":13.186813186813188},{"x":1733,"y":13.186813186813188},{"x":1734,"y":13.186813186813188},{"x":1735,"y":13.157894736842106},{"x":1736,"y":13.157894736842106},{"x":1737,"y":13.157894736842106},{"x":1738,"y":13.157894736842106},{"x":1739,"y":13.129102844638949},{"x":1740,"y":13.129102844638949},{"x":1741,"y":13.129102844638949},{"x":1742,"y":13.129102844638949},{"x":1743,"y":13.129102844638949},{"x":1744,"y":13.129102844638949},{"x":1745,"y":13.129102844638949},{"x":1746,"y":13.129102844638949},{"x":1747,"y":13.129102844638949},{"x":1748,"y":13.129102844638949},{"x":1749,"y":13.129102844638949},{"x":1750,"y":13.129102844638949},{"x":1751,"y":13.129102844638949},{"x":1752,"y":13.129102844638949},{"x":1753,"y":13.100436681222707},{"x":1754,"y":13.100436681222707},{"x":1755,"y":13.100436681222707},{"x":1756,"y":13.100436681222707},{"x":1757,"y":13.100436681222707},{"x":1758,"y":13.100436681222707},{"x":1759,"y":13.100436681222707},{"x":1760,"y":13.100436681222707},{"x":1761,"y":13.100436681222707},{"x":1762,"y":13.100436681222707},{"x":1763,"y":13.100436681222707},{"x":1764,"y":13.129102844638949},{"x":1765,"y":13.129102844638949},{"x":1766,"y":13.129102844638949},{"x":1767,"y":13.129102844638949},{"x":1768,"y":13.129102844638949},{"x":1769,"y":13.129102844638949},{"x":1770,"y":13.157894736842106},{"x":1771,"y":13.157894736842106},{"x":1772,"y":13.157894736842106},{"x":1773,"y":13.157894736842106},{"x":1774,"y":13.157894736842106},{"x":1775,"y":13.157894736842106},{"x":1776,"y":13.186813186813188},{"x":1777,"y":13.186813186813188},{"x":1778,"y":13.186813186813188},{"x":1779,"y":13.186813186813188},{"x":1780,"y":13.186813186813188},{"x":1781,"y":13.186813186813188},{"x":1782,"y":13.186813186813188},{"x":1783,"y":13.157894736842106},{"x":1784,"y":13.157894736842106},{"x":1785,"y":13.157894736842106},{"x":1786,"y":13.157894736842106},{"x":1787,"y":13.157894736842106},{"x":1788,"y":13.157894736842106},{"x":1789,"y":13.129102844638949},{"x":1790,"y":13.129102844638949},{"x":1791,"y":13.129102844638949},{"x":1792,"y":13.129102844638949},{"x":1793,"y":13.100436681222707},{"x":1794,"y":13.100436681222707},{"x":1795,"y":13.071895424836601},{"x":1796,"y":13.071895424836601},{"x":1797,"y":13.043478260869566},{"x":1798,"y":13.043478260869566},{"x":1799,"y":13.043478260869566},{"x":1800,"y":13.071895424836601},{"x":1801,"y":13.071895424836601},{"x":1802,"y":13.071895424836601},{"x":1803,"y":13.071895424836601},{"x":1804,"y":13.129102844638949},{"x":1805,"y":13.157894736842106},{"x":1806,"y":13.245033112582782},{"x":1807,"y":13.303769401330378},{"x":1808,"y":13.392857142857142},{"x":1809,"y":13.452914798206278},{"x":1810,"y":13.48314606741573},{"x":1811,"y":13.48314606741573},{"x":1812,"y":13.452914798206278},{"x":1813,"y":13.422818791946309},{"x":1814,"y":13.303769401330378},{"x":1815,"y":13.186813186813188},{"x":1816,"y":13.071895424836601},{"x":1817,"y":12.931034482758621},{"x":1818,"y":12.847965738758031},{"x":1819,"y":12.738853503184714},{"x":1820,"y":12.684989429175474},{"x":1821,"y":12.605042016806724},{"x":1822,"y":12.578616352201259},{"x":1823,"y":12.526096033402922},{"x":1824,"y":12.552301255230125},{"x":1825,"y":12.552301255230125},{"x":1826,"y":12.552301255230125},{"x":1827,"y":12.552301255230125},{"x":1828,"y":12.578616352201259},{"x":1829,"y":12.605042016806724},{"x":1830,"y":12.631578947368421},{"x":1831,"y":12.658227848101266},{"x":1832,"y":12.684989429175474},{"x":1833,"y":12.711864406779661},{"x":1834,"y":12.711864406779661},{"x":1835,"y":12.711864406779661},{"x":1836,"y":12.711864406779661},{"x":1837,"y":12.711864406779661},{"x":1838,"y":12.738853503184714},{"x":1839,"y":12.738853503184714},{"x":1840,"y":12.738853503184714},{"x":1841,"y":12.738853503184714},{"x":1842,"y":12.738853503184714},{"x":1843,"y":12.738853503184714},{"x":1844,"y":12.711864406779661},{"x":1845,"y":12.684989429175474},{"x":1846,"y":12.684989429175474},{"x":1847,"y":12.684989429175474},{"x":1848,"y":12.684989429175474},{"x":1849,"y":12.684989429175474},{"x":1850,"y":12.684989429175474},{"x":1851,"y":12.684989429175474},{"x":1852,"y":12.711864406779661},{"x":1853,"y":12.711864406779661},{"x":1854,"y":12.711864406779661},{"x":1855,"y":12.711864406779661},{"x":1856,"y":12.711864406779661},{"x":1857,"y":12.711864406779661},{"x":1858,"y":12.711864406779661},{"x":1859,"y":12.711864406779661},{"x":1860,"y":12.711864406779661},{"x":1861,"y":12.711864406779661},{"x":1862,"y":12.738853503184714},{"x":1863,"y":12.738853503184714},{"x":1864,"y":12.738853503184714},{"x":1865,"y":12.738853503184714},{"x":1866,"y":12.76595744680851},{"x":1867,"y":12.76595744680851},{"x":1868,"y":12.76595744680851},{"x":1869,"y":12.76595744680851},{"x":1870,"y":12.76595744680851},{"x":1871,"y":12.738853503184714},{"x":1872,"y":12.738853503184714},{"x":1873,"y":12.738853503184714},{"x":1874,"y":12.738853503184714},{"x":1875,"y":12.738853503184714},{"x":1876,"y":12.738853503184714},{"x":1877,"y":12.711864406779661},{"x":1878,"y":12.711864406779661},{"x":1879,"y":12.711864406779661},{"x":1880,"y":12.711864406779661},{"x":1881,"y":12.684989429175474},{"x":1882,"y":12.684989429175474},{"x":1883,"y":12.658227848101266},{"x":1884,"y":12.631578947368421},{"x":1885,"y":12.605042016806724},{"x":1886,"y":12.605042016806724},{"x":1887,"y":12.578616352201259},{"x":1888,"y":12.578616352201259},{"x":1889,"y":12.552301255230125},{"x":1890,"y":12.552301255230125},{"x":1891,"y":12.552301255230125},{"x":1892,"y":12.552301255230125},{"x":1893,"y":12.552301255230125},{"x":1894,"y":12.552301255230125},{"x":1895,"y":12.526096033402922},{"x":1896,"y":12.5},{"x":1897,"y":12.474012474012476},{"x":1898,"y":12.474012474012476},{"x":1898,"y":12.474012474012476},{"x":1899,"y":12.448132780082986},{"x":1900,"y":12.448132780082986},{"x":1901,"y":12.422360248447205},{"x":1902,"y":12.422360248447205},{"x":1903,"y":12.422360248447205},{"x":1904,"y":12.422360248447205},{"x":1905,"y":12.422360248447205},{"x":1906,"y":12.422360248447205},{"x":1907,"y":12.422360248447205},{"x":1908,"y":12.422360248447205},{"x":1909,"y":12.422360248447205},{"x":1910,"y":12.422360248447205},{"x":1911,"y":12.422360248447205},{"x":1912,"y":12.422360248447205},{"x":1913,"y":12.422360248447205},{"x":1914,"y":12.422360248447205},{"x":1915,"y":12.422360248447205},{"x":1916,"y":12.448132780082986},{"x":1917,"y":12.448132780082986},{"x":1918,"y":12.448132780082986},{"x":1919,"y":12.448132780082986},{"x":1920,"y":12.474012474012476},{"x":1921,"y":12.474012474012476},{"x":1922,"y":12.474012474012476},{"x":1923,"y":12.474012474012476},{"x":1924,"y":12.5},{"x":1925,"y":12.5},{"x":1926,"y":12.526096033402922},{"x":1927,"y":12.526096033402922},{"x":1928,"y":12.526096033402922},{"x":1929,"y":12.526096033402922},{"x":1930,"y":12.552301255230125},{"x":1931,"y":12.552301255230125},{"x":1932,"y":12.552301255230125},{"x":1933,"y":12.552301255230125},{"x":1934,"y":12.552301255230125},{"x":1935,"y":12.552301255230125},{"x":1936,"y":12.552301255230125},{"x":1937,"y":12.526096033402922},{"x":1938,"y":12.526096033402922},{"x":1939,"y":12.526096033402922},{"x":1940,"y":12.526096033402922},{"x":1941,"y":12.526096033402922},{"x":1942,"y":12.526096033402922},{"x":1943,"y":12.526096033402922},{"x":1944,"y":12.552301255230125},{"x":1945,"y":12.552301255230125},{"x":1946,"y":12.578616352201259},{"x":1947,"y":12.578616352201259},{"x":1948,"y":12.578616352201259},{"x":1949,"y":12.578616352201259},{"x":1950,"y":12.578616352201259},{"x":1951,"y":12.578616352201259},{"x":1952,"y":12.605042016806724},{"x":1953,"y":12.605042016806724},{"x":1954,"y":12.605042016806724},{"x":1955,"y":12.605042016806724},{"x":1956,"y":12.605042016806724},{"x":1957,"y":12.605042016806724},{"x":1958,"y":12.605042016806724},{"x":1959,"y":12.605042016806724},{"x":1960,"y":12.605042016806724},{"x":1961,"y":12.605042016806724},{"x":1962,"y":12.605042016806724},{"x":1963,"y":12.605042016806724},{"x":1964,"y":12.605042016806724},{"x":1965,"y":12.605042016806724},{"x":1966,"y":12.631578947368421},{"x":1967,"y":12.631578947368421},{"x":1968,"y":12.711864406779661},{"x":1969,"y":12.76595744680851},{"x":1970,"y":12.875536480686694},{"x":1971,"y":12.987012987012987},{"x":1972,"y":13.186813186813188},{"x":1973,"y":13.363028953229398},{"x":1974,"y":13.605442176870747},{"x":1975,"y":13.824884792626728},{"x":1976,"y":14.084507042253522},{"x":1977,"y":14.31980906921241},{"x":1978,"y":14.527845036319613},{"x":1979,"y":14.705882352941176},{"x":1980,"y":14.814814814814815},{"x":1981,"y":14.888337468982629},{"x":1982,"y":14.888337468982629},{"x":1983,"y":14.851485148514852},{"x":1984,"y":14.77832512315271},{"x":1985,"y":14.66992665036675},{"x":1986,"y":14.5985401459854},{"x":1987,"y":14.492753623188406},{"x":1988,"y":14.423076923076923},{"x":1989,"y":14.31980906921241},{"x":1990,"y":14.218009478672986},{"x":1991,"y":14.117647058823529},{"x":1992,"y":14.018691588785046},{"x":1993,"y":13.888888888888888},{"x":1994,"y":13.793103448275863},{"x":1995,"y":13.66742596810934},{"x":1996,"y":13.574660633484163},{"x":1997,"y":13.452914798206278},{"x":1998,"y":13.392857142857142},{"x":1999,"y":13.333333333333334},{"x":2000,"y":13.303769401330378},{"x":2001,"y":13.274336283185843},{"x":2002,"y":13.274336283185843},{"x":2003,"y":13.245033112582782},{"x":2004,"y":13.274336283185843},{"x":2005,"y":13.303769401330378},{"x":2006,"y":13.392857142857142},{"x":2007,"y":13.452914798206278},{"x":2008,"y":13.605442176870747},{"x":2009,"y":13.761467889908255},{"x":2010,"y":13.92111368909513},{"x":2011,"y":14.084507042253522},{"x":2012,"y":14.184397163120567},{"x":2013,"y":14.251781472684085},{"x":2014,"y":14.285714285714285},{"x":2015,"y":14.285714285714285},{"x":2016,"y":14.285714285714285},{"x":2017,"y":14.251781472684085},{"x":2018,"y":14.218009478672986},{"x":2019,"y":14.150943396226415},{"x":2020,"y":14.117647058823529},{"x":2021,"y":14.051522248243561},{"x":2022,"y":13.986013986013987},{"x":2023,"y":13.92111368909513},{"x":2024,"y":13.888888888888888},{"x":2025,"y":13.856812933025404},{"x":2026,"y":13.793103448275863},{"x":2027,"y":13.729977116704806},{"x":2028,"y":13.66742596810934},{"x":2029,"y":13.605442176870747},{"x":2030,"y":13.544018058690746},{"x":2031,"y":13.452914798206278},{"x":2032,"y":13.392857142857142},{"x":2033,"y":13.333333333333334},{"x":2034,"y":13.274336283185843},{"x":2035,"y":13.215859030837004},{"x":2036,"y":13.157894736842106},{"x":2037,"y":13.100436681222707},{"x":2038,"y":13.071895424836601},{"x":2039,"y":13.043478260869566},{"x":2040,"y":13.043478260869566},{"x":2041,"y":13.015184381778742},{"x":2042,"y":13.015184381778742},{"x":2043,"y":12.987012987012987},{"x":2044,"y":12.987012987012987},{"x":2045,"y":12.987012987012987},{"x":2046,"y":12.987012987012987},{"x":2047,"y":12.987012987012987},{"x":2048,"y":13.015184381778742},{"x":2049,"y":13.015184381778742},{"x":2050,"y":13.043478260869566},{"x":2051,"y":13.043478260869566},{"x":2052,"y":13.071895424836601},{"x":2053,"y":13.071895424836601},{"x":2054,"y":13.071895424836601},{"x":2055,"y":13.071895424836601},{"x":2056,"y":13.100436681222707},{"x":2057,"y":13.129102844638949},{"x":2058,"y":13.157894736842106},{"x":2059,"y":13.157894736842106},{"x":2060,"y":13.186813186813188},{"x":2061,"y":13.186813186813188},{"x":2062,"y":13.215859030837004},{"x":2063,"y":13.215859030837004},{"x":2064,"y":13.245033112582782},{"x":2065,"y":13.274336283185843},{"x":2066,"y":13.303769401330378},{"x":2067,"y":13.303769401330378},{"x":2068,"y":13.333333333333334},{"x":2069,"y":13.363028953229398},{"x":2070,"y":13.363028953229398},{"x":2071,"y":13.363028953229398},{"x":2072,"y":13.392857142857142},{"x":2073,"y":13.392857142857142},{"x":2074,"y":13.422818791946309},{"x":2075,"y":13.422818791946309},{"x":2076,"y":13.422818791946309},{"x":2077,"y":13.422818791946309},{"x":2078,"y":13.422818791946309},{"x":2079,"y":13.422818791946309},{"x":2080,"y":13.422818791946309},{"x":2081,"y":13.422818791946309},{"x":2082,"y":13.422818791946309},{"x":2083,"y":13.422818791946309},{"x":2084,"y":13.422818791946309},{"x":2085,"y":13.422818791946309},{"x":2086,"y":13.452914798206278},{"x":2087,"y":13.452914798206278},{"x":2088,"y":13.452914798206278},{"x":2089,"y":13.452914798206278},{"x":2090,"y":13.48314606741573},{"x":2091,"y":13.48314606741573},{"x":2092,"y":13.48314606741573},{"x":2093,"y":13.48314606741573},{"x":2094,"y":13.48314606741573},{"x":2095,"y":13.452914798206278},{"x":2096,"y":13.452914798206278},{"x":2097,"y":13.452914798206278},{"x":2098,"y":13.452914798206278},{"x":2099,"y":13.452914798206278},{"x":2100,"y":13.452914798206278},{"x":2101,"y":13.452914798206278},{"x":2102,"y":13.452914798206278},{"x":2103,"y":13.452914798206278},{"x":2104,"y":13.48314606741573},{"x":2105,"y":13.48314606741573},{"x":2106,"y":13.48314606741573},{"x":2107,"y":13.452914798206278},{"x":2108,"y":13.452914798206278},{"x":2109,"y":13.452914798206278},{"x":2110,"y":13.452914798206278},{"x":2111,"y":13.422818791946309},{"x":2112,"y":13.422818791946309},{"x":2113,"y":13.392857142857142},{"x":2114,"y":13.392857142857142},{"x":2115,"y":13.392857142857142},{"x":2116,"y":13.392857142857142},{"x":2117,"y":13.392857142857142},{"x":2118,"y":13.392857142857142},{"x":2119,"y":13.392857142857142},{"x":2120,"y":13.392857142857142},{"x":2121,"y":13.392857142857142},{"x":2122,"y":13.392857142857142},{"x":2123,"y":13.392857142857142},{"x":2124,"y":13.422818791946309},{"x":2125,"y":13.422818791946309},{"x":2126,"y":13.422818791946309},{"x":2127,"y":13.422818791946309},{"x":2128,"y":13.422818791946309},{"x":2129,"y":13.422818791946309},{"x":2130,"y":13.422818791946309},{"x":2131,"y":13.422818791946309},{"x":2132,"y":13.422818791946309},{"x":2133,"y":13.422818791946309},{"x":2134,"y":13.422818791946309},{"x":2135,"y":13.392857142857142},{"x":2136,"y":13.392857142857142},{"x":2137,"y":13.392857142857142},{"x":2138,"y":13.392857142857142},{"x":2139,"y":13.392857142857142},{"x":2140,"y":13.392857142857142},{"x":2141,"y":13.392857142857142},{"x":2142,"y":13.392857142857142},{"x":2143,"y":13.392857142857142},{"x":2144,"y":13.392857142857142},{"x":2145,"y":13.363028953229398},{"x":2146,"y":13.363028953229398},{"x":2147,"y":13.363028953229398},{"x":2148,"y":13.363028953229398},{"x":2149,"y":13.363028953229398},{"x":2150,"y":13.363028953229398},{"x":2151,"y":13.333333333333334},{"x":2152,"y":13.333333333333334},{"x":2153,"y":13.333333333333334},{"x":2154,"y":13.333333333333334},{"x":2155,"y":13.333333333333334},{"x":2156,"y":13.333333333333334},{"x":2157,"y":13.303769401330378},{"x":2158,"y":13.303769401330378},{"x":2159,"y":13.303769401330378},{"x":2160,"y":13.303769401330378},{"x":2161,"y":13.274336283185843},{"x":2162,"y":13.274336283185843},{"x":2163,"y":13.274336283185843},{"x":2164,"y":13.274336283185843},{"x":2165,"y":13.245033112582782},{"x":2166,"y":13.245033112582782},{"x":2167,"y":13.215859030837004},{"x":2168,"y":13.215859030837004},{"x":2169,"y":13.215859030837004},{"x":2170,"y":13.215859030837004},{"x":2171,"y":13.186813186813188},{"x":2172,"y":13.186813186813188},{"x":2173,"y":13.186813186813188},{"x":2174,"y":13.129102844638949},{"x":2175,"y":13.071895424836601},{"x":2176,"y":12.847965738758031},{"x":2177,"y":12.605042016806724},{"x":2178,"y":12.448132780082986},{"x":2179,"y":12.295081967213115},{"x":2180,"y":12.244897959183673},{"x":2181,"y":12.195121951219512},{"x":2182,"y":12.244897959183673},{"x":2183,"y":12.269938650306749},{"x":2184,"y":12.371134020618557},{"x":2185,"y":12.448132780082986},{"x":2186,"y":12.605042016806724},{"x":2187,"y":12.738853503184714},{"x":2188,"y":12.903225806451612},{"x":2189,"y":13.071895424836601},{"x":2190,"y":13.274336283185843},{"x":2191,"y":13.452914798206278},{"x":2192,"y":13.574660633484163},{"x":2193,"y":13.66742596810934},{"x":2194,"y":13.698630136986301},{"x":2195,"y":13.729977116704806},{"x":2196,"y":13.729977116704806},{"x":2197,"y":13.698630136986301},{"x":2198,"y":13.698630136986301},{"x":2199,"y":13.66742596810934},{"x":2200,"y":13.66742596810934},{"x":2201,"y":13.636363636363635},{"x":2202,"y":13.636363636363635},{"x":2203,"y":13.636363636363635},{"x":2204,"y":13.698630136986301},{"x":2205,"y":13.729977116704806},{"x":2206,"y":13.824884792626728},{"x":2207,"y":13.888888888888888},{"x":2208,"y":14.018691588785046},{"x":2209,"y":14.117647058823529},{"x":2210,"y":14.285714285714285},{"x":2211,"y":14.423076923076923},{"x":2212,"y":14.527845036319613},{"x":2213,"y":14.5985401459854},{"x":2214,"y":14.634146341463415},{"x":2215,"y":14.66992665036675},{"x":2216,"y":14.814814814814815},{"x":2217,"y":14.92537313432836},{"x":2415,"y":14.251781472684085},{"x":2416,"y":13.129102844638949},{"x":2417,"y":12.14574898785425},{"x":2418,"y":11.25703564727955},{"x":2419,"y":10.471204188481675},{"x":2420,"y":10.1010101010101},{"x":2421,"y":9.75609756097561},{"x":2422,"y":10.084033613445378},{"x":2423,"y":10.434782608695652},{"x":2424,"y":10.695187165775401},{"x":2425,"y":10.94890510948905},{"x":2426,"y":11.029411764705882},{"x":2427,"y":11.090573012939002},{"x":2428,"y":11.11111111111111},{"x":2429,"y":11.11111111111111},{"x":2430,"y":10.398613518197575},{"x":2431,"y":9.77198697068404},{"x":2432,"y":9.273570324574962},{"x":2433,"y":8.81057268722467},{"x":2434,"y":8.836524300441827},{"x":2435,"y":8.849557522123893},{"x":2436,"y":9.146341463414634},{"x":2437,"y":9.448818897637796},{"x":2438,"y":9.75609756097561},{"x":2439,"y":10.06711409395973},{"x":2440,"y":10.362694300518134},{"x":2441,"y":10.657193605683837},{"x":2442,"y":10.869565217391305},{"x":2443,"y":11.07011070110701},{"x":2444,"y":11.131725417439704},{"x":2445,"y":11.194029850746269},{"x":2446,"y":11.214953271028039},{"x":2447,"y":11.235955056179776},{"x":2448,"y":11.235955056179776},{"x":2449,"y":11.235955056179776},{"x":2450,"y":11.235955056179776},{"x":2451,"y":11.235955056179776},{"x":2452,"y":11.25703564727955},{"x":2453,"y":11.25703564727955},{"x":2454,"y":11.299435028248588},{"x":2455,"y":11.320754716981133},{"x":2456,"y":11.342155009451796},{"x":2457,"y":11.363636363636363},{"x":2458,"y":11.406844106463879},{"x":2459,"y":11.428571428571429},{"x":2460,"y":11.560693641618496},{"x":2461,"y":11.673151750972764},{"x":2462,"y":11.904761904761905},{"x":2463,"y":12.121212121212121},{"x":2464,"y":12.320328542094456},{"x":2465,"y":12.5},{"x":2466,"y":12.578616352201259},{"x":2467,"y":12.631578947368421},{"x":2468,"y":12.658227848101266},{"x":2469,"y":12.684989429175474},{"x":2470,"y":12.738853503184714},{"x":2471,"y":12.76595744680851},{"x":2472,"y":12.931034482758621},{"x":2473,"y":13.071895424836601},{"x":2474,"y":13.303769401330378},{"x":2475,"y":13.513513513513512},{"x":2476,"y":13.636363636363635},{"x":2477,"y":13.761467889908255},{"x":2478,"y":13.793103448275863},{"x":2479,"y":13.824884792626728},{"x":2480,"y":13.824884792626728},{"x":2481,"y":13.793103448275863},{"x":2482,"y":13.761467889908255},{"x":2483,"y":13.729977116704806},{"x":2484,"y":13.729977116704806},{"x":2485,"y":13.729977116704806},{"x":2486,"y":13.729977116704806},{"x":2487,"y":13.698630136986301},{"x":2488,"y":13.729977116704806},{"x":2489,"y":13.729977116704806},{"x":2490,"y":13.824884792626728},{"x":2491,"y":13.888888888888888},{"x":2492,"y":14.018691588785046},{"x":2493,"y":14.117647058823529},{"x":2494,"y":14.218009478672986},{"x":2495,"y":14.31980906921241},{"x":2496,"y":14.354066985645934},{"x":2497,"y":14.354066985645934},{"x":2498,"y":14.354066985645934},{"x":2499,"y":14.31980906921241},{"x":2500,"y":14.285714285714285},{"x":2501,"y":14.251781472684085},{"x":2502,"y":14.218009478672986},{"x":2503,"y":14.184397163120567},{"x":2504,"y":14.184397163120567},{"x":2505,"y":14.150943396226415},{"x":2506,"y":14.150943396226415},{"x":2507,"y":14.117647058823529},{"x":2508,"y":14.117647058823529},{"x":2509,"y":14.084507042253522},{"x":2510,"y":14.084507042253522},{"x":2511,"y":14.051522248243561},{"x":2512,"y":14.018691588785046},{"x":2513,"y":13.986013986013987},{"x":2514,"y":13.953488372093023},{"x":2515,"y":13.888888888888888},{"x":2516,"y":13.856812933025404},{"x":2517,"y":13.824884792626728},{"x":2518,"y":13.824884792626728},{"x":2519,"y":13.824884792626728},{"x":2520,"y":13.856812933025404},{"x":2521,"y":13.856812933025404},{"x":2522,"y":13.888888888888888},{"x":2523,"y":13.92111368909513},{"x":2524,"y":13.953488372093023},{"x":2525,"y":13.986013986013987},{"x":2526,"y":14.018691588785046},{"x":2527,"y":14.051522248243561},{"x":2528,"y":14.117647058823529},{"x":2529,"y":14.150943396226415},{"x":2530,"y":14.184397163120567},{"x":2531,"y":14.218009478672986},{"x":2532,"y":14.851485148514852},{"x":4260,"y":14.851485148514852},{"x":4261,"y":14.563106796116504},{"x":4262,"y":14.66992665036675},{"x":4263,"y":14.74201474201474},{"x":4264,"y":14.962593516209477},{"x":5007,"y":13.605442176870747},{"x":5008,"y":13.100436681222707},{"x":5009,"y":12.631578947368421},{"x":5010,"y":12.658227848101266},{"x":5011,"y":12.658227848101266},{"x":5012,"y":12.958963282937365},{"x":5013,"y":13.274336283185843},{"x":5014,"y":13.422818791946309},{"x":5015,"y":13.574660633484163},{"x":5016,"y":13.605442176870747},{"x":5017,"y":13.636363636363635},{"x":5018,"y":13.66742596810934},{"x":5019,"y":13.66742596810934},{"x":5020,"y":13.698630136986301},{"x":5021,"y":13.698630136986301},{"x":5022,"y":13.761467889908255},{"x":5023,"y":13.824884792626728},{"x":5024,"y":13.953488372093023},{"x":5025,"y":14.051522248243561},{"x":5026,"y":14.184397163120567},{"x":5027,"y":14.285714285714285},{"x":5028,"y":14.388489208633093},{"x":5029,"y":14.492753623188406},{"x":5030,"y":14.66992665036675},{"x":5031,"y":14.851485148514852},{"x":5343,"y":14.74201474201474},{"x":5344,"y":14.705882352941176},{"x":5345,"y":14.634146341463415},{"x":5346,"y":14.634146341463415},{"x":5347,"y":14.5985401459854},{"x":5348,"y":14.5985401459854},{"x":5349,"y":14.5985401459854},{"x":5350,"y":14.5985401459854},{"x":5351,"y":14.5985401459854},{"x":5352,"y":14.5985401459854},{"x":5353,"y":14.5985401459854},{"x":5354,"y":14.563106796116504},{"x":5355,"y":14.527845036319613},{"x":5356,"y":14.527845036319613},{"x":5357,"y":14.527845036319613},{"x":5358,"y":14.492753623188406},{"x":5359,"y":14.423076923076923},{"x":5360,"y":14.354066985645934},{"x":5361,"y":14.285714285714285},{"x":5362,"y":14.150943396226415},{"x":5363,"y":13.986013986013987},{"x":5364,"y":13.729977116704806},{"x":5365,"y":13.48314606741573},{"x":5366,"y":13.215859030837004},{"x":5367,"y":12.958963282937365},{"x":5368,"y":12.658227848101266},{"x":5369,"y":12.345679012345679},{"x":5370,"y":12.072434607645876},{"x":5371,"y":11.787819253438114},{"x":5372,"y":11.627906976744185},{"x":5373,"y":11.47227533460803},{"x":5374,"y":11.428571428571429},{"x":5375,"y":11.363636363636363},{"x":5376,"y":11.363636363636363},{"x":5377,"y":11.342155009451796},{"x":5589,"y":14.563106796116504},{"x":5590,"y":14.354066985645934},{"x":5591,"y":14.150943396226415},{"x":5592,"y":14.218009478672986},{"x":5593,"y":14.251781472684085},{"x":5594,"y":14.423076923076923},{"x":5595,"y":14.563106796116504},{"x":6015,"y":10.96892138939671},{"x":6016,"y":7.712082262210797},{"x":6017,"y":5.9405940594059405},{"x":6018,"y":5.4945054945054945},{"x":6019,"y":5.110732538330494},{"x":6020,"y":4.739336492890995},{"x":6021,"y":4.418262150220913},{"x":6022,"y":4.344677769732078},{"x":6023,"y":4.270462633451957},{"x":6024,"y":4.237288135593221},{"x":6025,"y":4.201680672268908},{"x":6026,"y":4.198740377886634},{"x":6027,"y":4.1928721174004195},{"x":6028,"y":4.2105263157894735},{"x":6029,"y":4.225352112676057},{"x":6030,"y":4.258339247693399},{"x":6031,"y":4.288777698355968}],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: true, tension: 0, pointRadius: 0,
+      yAxisID: 'y',
+    }, {
+      label: '心率',
+      data: [{"x":0,"y":93},{"x":1,"y":93},{"x":2,"y":93},{"x":35,"y":93},{"x":36,"y":94},{"x":37,"y":94},{"x":38,"y":94},{"x":39,"y":94},{"x":40,"y":94},{"x":41,"y":94},{"x":42,"y":94},{"x":43,"y":94},{"x":44,"y":94},{"x":45,"y":94},{"x":46,"y":93},{"x":47,"y":93},{"x":48,"y":93},{"x":49,"y":92},{"x":50,"y":92},{"x":51,"y":92},{"x":52,"y":91},{"x":53,"y":91},{"x":54,"y":91},{"x":55,"y":91},{"x":56,"y":91},{"x":57,"y":91},{"x":58,"y":92},{"x":59,"y":92},{"x":60,"y":92},{"x":61,"y":93},{"x":62,"y":93},{"x":63,"y":94},{"x":64,"y":94},{"x":65,"y":95},{"x":66,"y":95},{"x":67,"y":96},{"x":68,"y":97},{"x":69,"y":97},{"x":70,"y":97},{"x":71,"y":97},{"x":72,"y":97},{"x":73,"y":98},{"x":74,"y":98},{"x":75,"y":99},{"x":76,"y":99},{"x":77,"y":100},{"x":78,"y":101},{"x":79,"y":101},{"x":80,"y":102},{"x":81,"y":102},{"x":82,"y":102},{"x":83,"y":103},{"x":84,"y":103},{"x":85,"y":102},{"x":86,"y":101},{"x":87,"y":101},{"x":88,"y":101},{"x":89,"y":101},{"x":90,"y":101},{"x":91,"y":100},{"x":92,"y":100},{"x":93,"y":100},{"x":94,"y":100},{"x":95,"y":100},{"x":96,"y":100},{"x":97,"y":100},{"x":98,"y":100},{"x":99,"y":100},{"x":100,"y":100},{"x":101,"y":101},{"x":102,"y":101},{"x":103,"y":101},{"x":104,"y":102},{"x":105,"y":102},{"x":106,"y":101},{"x":107,"y":101},{"x":108,"y":100},{"x":109,"y":99},{"x":110,"y":98},{"x":111,"y":98},{"x":112,"y":97},{"x":113,"y":97},{"x":114,"y":97},{"x":115,"y":97},{"x":116,"y":97},{"x":117,"y":97},{"x":118,"y":97},{"x":119,"y":97},{"x":120,"y":97},{"x":121,"y":97},{"x":122,"y":97},{"x":123,"y":97},{"x":124,"y":97},{"x":125,"y":96},{"x":126,"y":96},{"x":127,"y":96},{"x":128,"y":96},{"x":129,"y":96},{"x":130,"y":96},{"x":131,"y":97},{"x":132,"y":97},{"x":133,"y":97},{"x":134,"y":98},{"x":135,"y":98},{"x":136,"y":98},{"x":137,"y":98},{"x":138,"y":98},{"x":139,"y":99},{"x":140,"y":99},{"x":141,"y":100},{"x":142,"y":100},{"x":143,"y":100},{"x":144,"y":100},{"x":145,"y":100},{"x":146,"y":100},{"x":147,"y":99},{"x":148,"y":99},{"x":149,"y":99},{"x":150,"y":99},{"x":151,"y":100},{"x":152,"y":101},{"x":153,"y":101},{"x":154,"y":102},{"x":155,"y":103},{"x":156,"y":104},{"x":157,"y":105},{"x":158,"y":106},{"x":159,"y":106},{"x":160,"y":107},{"x":161,"y":107},{"x":162,"y":107},{"x":163,"y":107},{"x":164,"y":107},{"x":165,"y":107},{"x":166,"y":108},{"x":167,"y":108},{"x":168,"y":108},{"x":169,"y":108},{"x":170,"y":108},{"x":171,"y":109},{"x":172,"y":109},{"x":173,"y":109},{"x":174,"y":109},{"x":175,"y":109},{"x":176,"y":109},{"x":177,"y":109},{"x":178,"y":108},{"x":179,"y":108},{"x":180,"y":108},{"x":181,"y":107},{"x":182,"y":107},{"x":183,"y":106},{"x":184,"y":106},{"x":185,"y":106},{"x":186,"y":106},{"x":187,"y":106},{"x":188,"y":106},{"x":189,"y":106},{"x":190,"y":106},{"x":191,"y":106},{"x":192,"y":106},{"x":193,"y":106},{"x":194,"y":99},{"x":317,"y":93},{"x":505,"y":87},{"x":506,"y":88},{"x":507,"y":89},{"x":508,"y":89},{"x":509,"y":89},{"x":510,"y":90},{"x":511,"y":91},{"x":512,"y":91},{"x":513,"y":91},{"x":514,"y":91},{"x":515,"y":92},{"x":516,"y":93},{"x":517,"y":93},{"x":518,"y":94},{"x":519,"y":94},{"x":520,"y":94},{"x":521,"y":94},{"x":522,"y":95},{"x":523,"y":95},{"x":524,"y":95},{"x":525,"y":95},{"x":526,"y":95},{"x":527,"y":95},{"x":528,"y":95},{"x":529,"y":96},{"x":530,"y":96},{"x":531,"y":96},{"x":532,"y":96},{"x":533,"y":96},{"x":534,"y":96},{"x":535,"y":97},{"x":536,"y":97},{"x":537,"y":98},{"x":538,"y":99},{"x":539,"y":99},{"x":540,"y":99},{"x":541,"y":100},{"x":542,"y":100},{"x":543,"y":99},{"x":544,"y":99},{"x":545,"y":99},{"x":546,"y":98},{"x":547,"y":98},{"x":548,"y":97},{"x":549,"y":97},{"x":550,"y":97},{"x":551,"y":96},{"x":552,"y":96},{"x":553,"y":96},{"x":554,"y":96},{"x":555,"y":94},{"x":570,"y":93},{"x":571,"y":92},{"x":572,"y":92},{"x":573,"y":92},{"x":574,"y":92},{"x":575,"y":92},{"x":576,"y":92},{"x":577,"y":92},{"x":578,"y":92},{"x":579,"y":91},{"x":580,"y":91},{"x":605,"y":91},{"x":606,"y":91},{"x":607,"y":91},{"x":608,"y":91},{"x":609,"y":91},{"x":610,"y":92},{"x":611,"y":92},{"x":612,"y":92},{"x":613,"y":93},{"x":614,"y":93},{"x":615,"y":94},{"x":616,"y":94},{"x":617,"y":94},{"x":618,"y":95},{"x":619,"y":95},{"x":620,"y":96},{"x":621,"y":96},{"x":622,"y":97},{"x":623,"y":97},{"x":624,"y":98},{"x":625,"y":98},{"x":626,"y":98},{"x":627,"y":98},{"x":628,"y":98},{"x":629,"y":99},{"x":630,"y":99},{"x":631,"y":99},{"x":632,"y":99},{"x":633,"y":99},{"x":634,"y":99},{"x":635,"y":99},{"x":636,"y":99},{"x":637,"y":99},{"x":641,"y":100},{"x":642,"y":100},{"x":643,"y":100},{"x":644,"y":100},{"x":645,"y":100},{"x":646,"y":100},{"x":647,"y":100},{"x":648,"y":100},{"x":649,"y":100},{"x":650,"y":100},{"x":651,"y":100},{"x":652,"y":100},{"x":653,"y":100},{"x":654,"y":100},{"x":655,"y":100},{"x":656,"y":101},{"x":657,"y":101},{"x":658,"y":101},{"x":659,"y":102},{"x":660,"y":102},{"x":661,"y":102},{"x":662,"y":102},{"x":663,"y":102},{"x":664,"y":102},{"x":665,"y":97},{"x":854,"y":92},{"x":855,"y":87},{"x":856,"y":87},{"x":857,"y":87},{"x":858,"y":86},{"x":859,"y":86},{"x":860,"y":86},{"x":861,"y":86},{"x":862,"y":87},{"x":863,"y":87},{"x":864,"y":87},{"x":865,"y":87},{"x":866,"y":87},{"x":867,"y":87},{"x":868,"y":86},{"x":869,"y":86},{"x":870,"y":86},{"x":871,"y":86},{"x":872,"y":86},{"x":873,"y":85},{"x":874,"y":85},{"x":875,"y":85},{"x":876,"y":85},{"x":877,"y":85},{"x":878,"y":85},{"x":879,"y":85},{"x":880,"y":85},{"x":881,"y":85},{"x":882,"y":85},{"x":883,"y":85},{"x":884,"y":85},{"x":885,"y":85},{"x":886,"y":85},{"x":887,"y":86},{"x":888,"y":86},{"x":889,"y":86},{"x":890,"y":86},{"x":891,"y":86},{"x":892,"y":86},{"x":893,"y":85},{"x":894,"y":85},{"x":895,"y":85},{"x":896,"y":84},{"x":897,"y":84},{"x":898,"y":84},{"x":899,"y":85},{"x":900,"y":85},{"x":901,"y":85},{"x":902,"y":86},{"x":903,"y":86},{"x":904,"y":86},{"x":905,"y":87},{"x":906,"y":87},{"x":907,"y":88},{"x":908,"y":88},{"x":909,"y":89},{"x":910,"y":89},{"x":911,"y":89},{"x":912,"y":90},{"x":913,"y":90},{"x":914,"y":90},{"x":915,"y":90},{"x":916,"y":90},{"x":917,"y":90},{"x":918,"y":90},{"x":919,"y":90},{"x":920,"y":90},{"x":921,"y":90},{"x":922,"y":90},{"x":923,"y":90},{"x":924,"y":90},{"x":925,"y":90},{"x":926,"y":89},{"x":927,"y":89},{"x":928,"y":89},{"x":929,"y":89},{"x":930,"y":88},{"x":931,"y":88},{"x":932,"y":88},{"x":933,"y":88},{"x":934,"y":88},{"x":935,"y":89},{"x":936,"y":89},{"x":937,"y":89},{"x":938,"y":89},{"x":939,"y":89},{"x":940,"y":89},{"x":941,"y":89},{"x":942,"y":89},{"x":943,"y":90},{"x":944,"y":90},{"x":945,"y":90},{"x":946,"y":90},{"x":947,"y":90},{"x":948,"y":90},{"x":949,"y":90},{"x":950,"y":90},{"x":951,"y":89},{"x":952,"y":89},{"x":953,"y":89},{"x":970,"y":89},{"x":971,"y":89},{"x":972,"y":89},{"x":973,"y":89},{"x":974,"y":90},{"x":975,"y":90},{"x":976,"y":90},{"x":977,"y":90},{"x":978,"y":90},{"x":979,"y":91},{"x":1050,"y":92},{"x":1051,"y":94},{"x":1052,"y":94},{"x":1053,"y":94},{"x":1054,"y":94},{"x":1055,"y":94},{"x":1056,"y":94},{"x":1057,"y":95},{"x":1058,"y":95},{"x":1059,"y":96},{"x":1060,"y":97},{"x":1061,"y":97},{"x":1062,"y":98},{"x":1063,"y":99},{"x":1064,"y":99},{"x":1065,"y":99},{"x":1066,"y":99},{"x":1067,"y":100},{"x":1068,"y":100},{"x":1069,"y":100},{"x":1070,"y":100},{"x":1071,"y":100},{"x":1072,"y":101},{"x":1073,"y":101},{"x":1074,"y":101},{"x":1075,"y":101},{"x":1076,"y":101},{"x":1077,"y":101},{"x":1078,"y":101},{"x":1079,"y":101},{"x":1080,"y":102},{"x":1081,"y":103},{"x":1082,"y":103},{"x":1083,"y":104},{"x":1084,"y":105},{"x":1084,"y":105},{"x":1085,"y":106},{"x":1086,"y":107},{"x":1087,"y":108},{"x":1088,"y":108},{"x":1089,"y":108},{"x":1090,"y":108},{"x":1091,"y":107},{"x":1092,"y":106},{"x":1093,"y":106},{"x":1094,"y":105},{"x":1095,"y":105},{"x":1096,"y":104},{"x":1097,"y":104},{"x":1098,"y":104},{"x":1099,"y":104},{"x":1100,"y":103},{"x":1101,"y":103},{"x":1102,"y":102},{"x":1103,"y":102},{"x":1104,"y":101},{"x":1105,"y":101},{"x":1106,"y":101},{"x":1107,"y":101},{"x":1108,"y":100},{"x":1109,"y":100},{"x":1110,"y":100},{"x":1111,"y":100},{"x":1112,"y":100},{"x":1113,"y":100},{"x":1114,"y":100},{"x":1115,"y":100},{"x":1116,"y":100},{"x":1117,"y":100},{"x":1118,"y":100},{"x":1119,"y":99},{"x":1120,"y":99},{"x":1121,"y":99},{"x":1122,"y":99},{"x":1123,"y":98},{"x":1124,"y":98},{"x":1125,"y":98},{"x":1126,"y":98},{"x":1127,"y":98},{"x":1128,"y":98},{"x":1129,"y":98},{"x":1130,"y":99},{"x":1131,"y":99},{"x":1132,"y":99},{"x":1133,"y":99},{"x":1134,"y":99},{"x":1135,"y":99},{"x":1136,"y":99},{"x":1137,"y":99},{"x":1138,"y":99},{"x":1139,"y":98},{"x":1140,"y":98},{"x":1141,"y":98},{"x":1142,"y":98},{"x":1143,"y":97},{"x":1144,"y":96},{"x":1145,"y":96},{"x":1146,"y":96},{"x":1147,"y":95},{"x":1148,"y":95},{"x":1149,"y":94},{"x":1150,"y":93},{"x":1151,"y":92},{"x":1152,"y":91},{"x":1153,"y":91},{"x":1154,"y":90},{"x":1155,"y":90},{"x":1156,"y":90},{"x":1157,"y":89},{"x":1158,"y":88},{"x":1159,"y":87},{"x":1160,"y":86},{"x":1161,"y":85},{"x":1162,"y":84},{"x":1163,"y":83},{"x":1164,"y":83},{"x":1165,"y":83},{"x":1166,"y":83},{"x":1167,"y":82},{"x":1168,"y":82},{"x":1169,"y":82},{"x":1170,"y":82},{"x":1171,"y":82},{"x":1172,"y":82},{"x":1173,"y":82},{"x":1174,"y":83},{"x":1175,"y":83},{"x":1176,"y":83},{"x":1177,"y":83},{"x":1178,"y":84},{"x":1179,"y":84},{"x":1180,"y":84},{"x":1181,"y":84},{"x":1182,"y":85},{"x":1183,"y":85},{"x":1184,"y":86},{"x":1185,"y":87},{"x":1186,"y":88},{"x":1187,"y":88},{"x":1188,"y":88},{"x":1189,"y":89},{"x":1190,"y":89},{"x":1191,"y":89},{"x":1192,"y":90},{"x":1193,"y":90},{"x":1194,"y":90},{"x":1195,"y":90},{"x":1196,"y":90},{"x":1197,"y":90},{"x":1198,"y":91},{"x":1199,"y":91},{"x":1200,"y":92},{"x":1201,"y":92},{"x":1202,"y":92},{"x":1203,"y":92},{"x":1204,"y":92},{"x":1205,"y":92},{"x":1206,"y":92},{"x":1207,"y":92},{"x":1208,"y":92},{"x":1209,"y":92},{"x":1210,"y":92},{"x":1211,"y":92},{"x":1212,"y":92},{"x":1213,"y":92},{"x":1214,"y":93},{"x":1215,"y":93},{"x":1216,"y":93},{"x":1217,"y":93},{"x":1218,"y":93},{"x":1219,"y":93},{"x":1220,"y":93},{"x":1221,"y":93},{"x":1222,"y":93},{"x":1223,"y":93},{"x":1224,"y":93},{"x":1225,"y":93},{"x":1226,"y":93},{"x":1227,"y":93},{"x":1228,"y":93},{"x":1229,"y":92},{"x":1230,"y":92},{"x":1231,"y":93},{"x":1232,"y":93},{"x":1233,"y":93},{"x":1234,"y":93},{"x":1235,"y":92},{"x":1236,"y":92},{"x":1237,"y":92},{"x":1238,"y":92},{"x":1239,"y":92},{"x":1240,"y":92},{"x":1241,"y":92},{"x":1242,"y":92},{"x":1243,"y":92},{"x":1244,"y":91},{"x":1245,"y":90},{"x":1246,"y":89},{"x":1247,"y":89},{"x":1248,"y":89},{"x":1249,"y":89},{"x":1250,"y":90},{"x":1251,"y":90},{"x":1252,"y":90},{"x":1253,"y":90},{"x":1254,"y":90},{"x":1255,"y":90},{"x":1256,"y":91},{"x":1257,"y":91},{"x":1258,"y":91},{"x":1259,"y":91},{"x":1260,"y":91},{"x":1261,"y":91},{"x":1262,"y":91},{"x":1263,"y":90},{"x":1264,"y":89},{"x":1265,"y":88},{"x":1266,"y":87},{"x":1267,"y":86},{"x":1268,"y":86},{"x":1269,"y":86},{"x":1270,"y":86},{"x":1271,"y":86},{"x":1272,"y":86},{"x":1273,"y":86},{"x":1274,"y":87},{"x":1275,"y":88},{"x":1276,"y":88},{"x":1277,"y":88},{"x":1278,"y":88},{"x":1279,"y":88},{"x":1280,"y":88},{"x":1281,"y":88},{"x":1282,"y":88},{"x":1283,"y":88},{"x":1284,"y":88},{"x":1285,"y":87},{"x":1286,"y":87},{"x":1287,"y":86},{"x":1288,"y":85},{"x":1289,"y":85},{"x":1290,"y":85},{"x":1291,"y":85},{"x":1292,"y":85},{"x":1293,"y":85},{"x":1294,"y":85},{"x":1295,"y":85},{"x":1296,"y":85},{"x":1297,"y":85},{"x":1298,"y":85},{"x":1299,"y":85},{"x":1300,"y":85},{"x":1301,"y":85},{"x":1302,"y":85},{"x":1303,"y":86},{"x":1304,"y":86},{"x":1305,"y":86},{"x":1306,"y":86},{"x":1307,"y":86},{"x":1308,"y":86},{"x":1309,"y":86},{"x":1310,"y":86},{"x":1311,"y":86},{"x":1312,"y":86},{"x":1313,"y":86},{"x":1314,"y":86},{"x":1315,"y":87},{"x":1316,"y":87},{"x":1317,"y":87},{"x":1318,"y":88},{"x":1319,"y":88},{"x":1320,"y":88},{"x":1321,"y":88},{"x":1322,"y":88},{"x":1323,"y":88},{"x":1324,"y":88},{"x":1325,"y":88},{"x":1326,"y":88},{"x":1327,"y":87},{"x":1328,"y":87},{"x":1329,"y":87},{"x":1330,"y":86},{"x":1331,"y":86},{"x":1332,"y":86},{"x":1333,"y":85},{"x":1334,"y":85},{"x":1335,"y":85},{"x":1336,"y":84},{"x":1337,"y":84},{"x":1338,"y":84},{"x":1339,"y":84},{"x":1340,"y":83},{"x":1341,"y":83},{"x":1342,"y":83},{"x":1343,"y":83},{"x":1344,"y":83},{"x":1345,"y":83},{"x":1346,"y":83},{"x":1347,"y":83},{"x":1348,"y":84},{"x":1349,"y":84},{"x":1350,"y":85},{"x":1351,"y":85},{"x":1352,"y":85},{"x":1353,"y":85},{"x":1354,"y":85},{"x":1355,"y":86},{"x":1363,"y":88},{"x":1364,"y":89},{"x":1365,"y":89},{"x":1366,"y":89},{"x":1367,"y":90},{"x":1368,"y":90},{"x":1369,"y":90},{"x":1370,"y":91},{"x":1371,"y":91},{"x":1372,"y":91},{"x":1373,"y":91},{"x":1374,"y":91},{"x":1375,"y":91},{"x":1376,"y":92},{"x":1377,"y":93},{"x":1378,"y":94},{"x":1379,"y":95},{"x":1380,"y":96},{"x":1381,"y":96},{"x":1382,"y":96},{"x":1383,"y":96},{"x":1384,"y":96},{"x":1385,"y":96},{"x":1386,"y":96},{"x":1387,"y":95},{"x":1388,"y":95},{"x":1389,"y":95},{"x":1390,"y":94},{"x":1391,"y":94},{"x":1392,"y":94},{"x":1393,"y":94},{"x":1394,"y":94},{"x":1395,"y":95},{"x":1396,"y":95},{"x":1397,"y":95},{"x":1398,"y":95},{"x":1399,"y":94},{"x":1400,"y":94},{"x":1401,"y":93},{"x":1402,"y":93},{"x":1403,"y":92},{"x":1404,"y":92},{"x":1405,"y":92},{"x":1406,"y":92},{"x":1407,"y":92},{"x":1408,"y":93},{"x":1409,"y":93},{"x":1410,"y":94},{"x":1411,"y":94},{"x":1412,"y":94},{"x":1413,"y":93},{"x":1414,"y":93},{"x":1415,"y":93},{"x":1416,"y":93},{"x":1417,"y":93},{"x":1418,"y":92},{"x":1419,"y":92},{"x":1420,"y":92},{"x":1421,"y":92},{"x":1422,"y":92},{"x":1423,"y":92},{"x":1424,"y":92},{"x":1425,"y":92},{"x":1426,"y":92},{"x":1427,"y":92},{"x":1428,"y":92},{"x":1429,"y":92},{"x":1430,"y":92},{"x":1431,"y":92},{"x":1432,"y":92},{"x":1433,"y":93},{"x":1434,"y":93},{"x":1435,"y":94},{"x":1436,"y":95},{"x":1437,"y":95},{"x":1438,"y":96},{"x":1439,"y":96},{"x":1440,"y":96},{"x":1441,"y":96},{"x":1442,"y":96},{"x":1443,"y":96},{"x":1444,"y":96},{"x":1445,"y":96},{"x":1446,"y":97},{"x":1447,"y":98},{"x":1448,"y":98},{"x":1449,"y":99},{"x":1450,"y":99},{"x":1451,"y":98},{"x":1452,"y":98},{"x":1453,"y":98},{"x":1454,"y":97},{"x":1455,"y":95},{"x":1456,"y":94},{"x":1457,"y":93},{"x":1458,"y":92},{"x":1459,"y":91},{"x":1460,"y":91},{"x":1461,"y":91},{"x":1462,"y":91},{"x":1463,"y":92},{"x":1464,"y":92},{"x":1465,"y":92},{"x":1466,"y":92},{"x":1467,"y":92},{"x":1468,"y":93},{"x":1469,"y":93},{"x":1470,"y":93},{"x":1471,"y":94},{"x":1480,"y":94},{"x":1481,"y":95},{"x":1482,"y":96},{"x":1483,"y":96},{"x":1484,"y":97},{"x":1485,"y":98},{"x":1486,"y":98},{"x":1487,"y":98},{"x":1488,"y":98},{"x":1489,"y":98},{"x":1490,"y":98},{"x":1491,"y":98},{"x":1492,"y":98},{"x":1493,"y":98},{"x":1494,"y":98},{"x":1495,"y":98},{"x":1496,"y":98},{"x":1497,"y":98},{"x":1498,"y":98},{"x":1499,"y":98},{"x":1500,"y":98},{"x":1501,"y":98},{"x":1502,"y":98},{"x":1503,"y":98},{"x":1504,"y":98},{"x":1505,"y":98},{"x":1506,"y":98},{"x":1507,"y":99},{"x":1508,"y":99},{"x":1509,"y":99},{"x":1510,"y":99},{"x":1511,"y":98},{"x":1512,"y":97},{"x":1513,"y":96},{"x":1514,"y":96},{"x":1515,"y":96},{"x":1516,"y":96},{"x":1517,"y":97},{"x":1518,"y":97},{"x":1519,"y":97},{"x":1520,"y":98},{"x":1521,"y":98},{"x":1522,"y":98},{"x":1523,"y":99},{"x":1524,"y":100},{"x":1525,"y":100},{"x":1526,"y":101},{"x":1527,"y":102},{"x":1528,"y":102},{"x":1529,"y":103},{"x":1530,"y":104},{"x":1531,"y":104},{"x":1532,"y":105},{"x":1533,"y":105},{"x":1534,"y":105},{"x":1535,"y":105},{"x":1536,"y":105},{"x":1537,"y":105},{"x":1538,"y":104},{"x":1539,"y":104},{"x":1540,"y":103},{"x":1541,"y":102},{"x":1542,"y":102},{"x":1543,"y":102},{"x":1544,"y":101},{"x":1545,"y":101},{"x":1546,"y":101},{"x":1547,"y":100},{"x":1548,"y":100},{"x":1549,"y":100},{"x":1550,"y":100},{"x":1551,"y":99},{"x":1552,"y":99},{"x":1553,"y":100},{"x":1554,"y":100},{"x":1555,"y":101},{"x":1556,"y":101},{"x":1557,"y":102},{"x":1558,"y":102},{"x":1559,"y":102},{"x":1560,"y":102},{"x":1561,"y":102},{"x":1562,"y":102},{"x":1563,"y":102},{"x":1564,"y":103},{"x":1565,"y":103},{"x":1566,"y":103},{"x":1567,"y":103},{"x":1568,"y":103},{"x":1569,"y":103},{"x":1570,"y":103},{"x":1571,"y":102},{"x":1572,"y":102},{"x":1573,"y":102},{"x":1574,"y":102},{"x":1575,"y":101},{"x":1576,"y":100},{"x":1577,"y":100},{"x":1578,"y":100},{"x":1579,"y":100},{"x":1580,"y":99},{"x":1581,"y":99},{"x":1582,"y":98},{"x":1583,"y":98},{"x":1584,"y":97},{"x":1585,"y":97},{"x":1586,"y":97},{"x":1587,"y":96},{"x":1588,"y":96},{"x":1589,"y":96},{"x":1590,"y":96},{"x":1591,"y":95},{"x":1592,"y":95},{"x":1593,"y":95},{"x":1594,"y":95},{"x":1595,"y":95},{"x":1596,"y":95},{"x":1597,"y":94},{"x":1598,"y":93},{"x":1599,"y":93},{"x":1600,"y":93},{"x":1601,"y":93},{"x":1602,"y":93},{"x":1603,"y":93},{"x":1604,"y":93},{"x":1605,"y":93},{"x":1606,"y":93},{"x":1607,"y":93},{"x":1608,"y":92},{"x":1609,"y":91},{"x":1610,"y":91},{"x":1611,"y":91},{"x":1612,"y":91},{"x":1613,"y":91},{"x":1614,"y":91},{"x":1615,"y":91},{"x":1616,"y":92},{"x":1617,"y":93},{"x":1618,"y":93},{"x":1619,"y":94},{"x":1620,"y":94},{"x":1621,"y":94},{"x":1622,"y":94},{"x":1623,"y":94},{"x":1624,"y":94},{"x":1625,"y":94},{"x":1626,"y":94},{"x":1627,"y":94},{"x":1628,"y":95},{"x":1629,"y":95},{"x":1630,"y":95},{"x":1631,"y":95},{"x":1632,"y":95},{"x":1633,"y":95},{"x":1634,"y":95},{"x":1635,"y":95},{"x":1636,"y":95},{"x":1637,"y":95},{"x":1638,"y":95},{"x":1639,"y":96},{"x":1640,"y":96},{"x":1641,"y":96},{"x":1642,"y":96},{"x":1643,"y":96},{"x":1644,"y":96},{"x":1645,"y":95},{"x":1646,"y":95},{"x":1647,"y":95},{"x":1648,"y":95},{"x":1649,"y":95},{"x":1650,"y":95},{"x":1651,"y":95},{"x":1652,"y":95},{"x":1653,"y":95},{"x":1654,"y":95},{"x":1655,"y":95},{"x":1656,"y":95},{"x":1657,"y":95},{"x":1658,"y":95},{"x":1659,"y":95},{"x":1660,"y":95},{"x":1661,"y":95},{"x":1662,"y":94},{"x":1663,"y":94},{"x":1664,"y":94},{"x":1665,"y":94},{"x":1666,"y":94},{"x":1667,"y":95},{"x":1668,"y":95},{"x":1669,"y":95},{"x":1670,"y":95},{"x":1671,"y":95},{"x":1672,"y":95},{"x":1673,"y":95},{"x":1674,"y":95},{"x":1675,"y":95},{"x":1676,"y":94},{"x":1677,"y":94},{"x":1678,"y":94},{"x":1679,"y":94},{"x":1680,"y":93},{"x":1681,"y":93},{"x":1682,"y":92},{"x":1683,"y":92},{"x":1684,"y":92},{"x":1685,"y":91},{"x":1686,"y":91},{"x":1687,"y":90},{"x":1688,"y":90},{"x":1689,"y":90},{"x":1690,"y":89},{"x":1691,"y":89},{"x":1692,"y":89},{"x":1693,"y":89},{"x":1694,"y":88},{"x":1695,"y":88},{"x":1696,"y":88},{"x":1697,"y":89},{"x":1698,"y":89},{"x":1699,"y":89},{"x":1700,"y":89},{"x":1701,"y":90},{"x":1702,"y":91},{"x":1703,"y":91},{"x":1704,"y":92},{"x":1705,"y":92},{"x":1706,"y":91},{"x":1707,"y":91},{"x":1708,"y":91},{"x":1709,"y":91},{"x":1710,"y":91},{"x":1711,"y":91},{"x":1712,"y":91},{"x":1713,"y":92},{"x":1714,"y":92},{"x":1715,"y":92},{"x":1716,"y":92},{"x":1717,"y":92},{"x":1718,"y":92},{"x":1719,"y":92},{"x":1720,"y":93},{"x":1721,"y":93},{"x":1722,"y":93},{"x":1723,"y":94},{"x":1724,"y":95},{"x":1725,"y":95},{"x":1726,"y":96},{"x":1727,"y":96},{"x":1728,"y":96},{"x":1729,"y":96},{"x":1730,"y":96},{"x":1731,"y":96},{"x":1732,"y":97},{"x":1733,"y":97},{"x":1734,"y":97},{"x":1735,"y":97},{"x":1736,"y":97},{"x":1737,"y":96},{"x":1738,"y":96},{"x":1739,"y":96},{"x":1740,"y":96},{"x":1741,"y":96},{"x":1742,"y":96},{"x":1743,"y":95},{"x":1744,"y":95},{"x":1745,"y":95},{"x":1746,"y":95},{"x":1747,"y":95},{"x":1748,"y":95},{"x":1749,"y":95},{"x":1750,"y":95},{"x":1751,"y":96},{"x":1752,"y":96},{"x":1753,"y":96},{"x":1754,"y":96},{"x":1755,"y":96},{"x":1756,"y":96},{"x":1757,"y":96},{"x":1758,"y":95},{"x":1759,"y":95},{"x":1760,"y":94},{"x":1761,"y":93},{"x":1762,"y":93},{"x":1763,"y":93},{"x":1764,"y":92},{"x":1765,"y":92},{"x":1766,"y":92},{"x":1767,"y":92},{"x":1768,"y":92},{"x":1769,"y":92},{"x":1770,"y":92},{"x":1771,"y":93},{"x":1772,"y":93},{"x":1773,"y":93},{"x":1774,"y":93},{"x":1775,"y":93},{"x":1776,"y":93},{"x":1777,"y":93},{"x":1778,"y":93},{"x":1779,"y":92},{"x":1780,"y":91},{"x":1781,"y":90},{"x":1782,"y":90},{"x":1783,"y":90},{"x":1784,"y":90},{"x":1785,"y":90},{"x":1786,"y":90},{"x":1787,"y":91},{"x":1788,"y":91},{"x":1789,"y":91},{"x":1790,"y":92},{"x":1791,"y":93},{"x":1792,"y":94},{"x":1793,"y":94},{"x":1794,"y":94},{"x":1795,"y":94},{"x":1796,"y":94},{"x":1797,"y":93},{"x":1798,"y":93},{"x":1799,"y":93},{"x":1800,"y":93},{"x":1801,"y":93},{"x":1802,"y":93},{"x":1803,"y":93},{"x":1804,"y":93},{"x":1805,"y":93},{"x":1806,"y":93},{"x":1807,"y":93},{"x":1808,"y":93},{"x":1809,"y":93},{"x":1810,"y":94},{"x":1811,"y":94},{"x":1812,"y":95},{"x":1813,"y":95},{"x":1814,"y":95},{"x":1815,"y":95},{"x":1816,"y":95},{"x":1817,"y":95},{"x":1818,"y":95},{"x":1819,"y":95},{"x":1820,"y":95},{"x":1821,"y":95},{"x":1822,"y":96},{"x":1823,"y":96},{"x":1824,"y":95},{"x":1825,"y":95},{"x":1826,"y":95},{"x":1827,"y":95},{"x":1828,"y":95},{"x":1829,"y":95},{"x":1830,"y":95},{"x":1831,"y":95},{"x":1832,"y":95},{"x":1833,"y":95},{"x":1834,"y":96},{"x":1835,"y":96},{"x":1836,"y":96},{"x":1837,"y":96},{"x":1838,"y":95},{"x":1839,"y":95},{"x":1840,"y":95},{"x":1841,"y":95},{"x":1842,"y":95},{"x":1843,"y":95},{"x":1844,"y":95},{"x":1845,"y":95},{"x":1846,"y":95},{"x":1847,"y":95},{"x":1848,"y":95},{"x":1849,"y":95},{"x":1850,"y":95},{"x":1851,"y":95},{"x":1852,"y":95},{"x":1853,"y":95},{"x":1854,"y":95},{"x":1855,"y":94},{"x":1856,"y":94},{"x":1857,"y":94},{"x":1858,"y":94},{"x":1859,"y":95},{"x":1860,"y":95},{"x":1861,"y":95},{"x":1862,"y":95},{"x":1863,"y":95},{"x":1864,"y":95},{"x":1865,"y":96},{"x":1866,"y":97},{"x":1867,"y":97},{"x":1868,"y":98},{"x":1869,"y":99},{"x":1870,"y":99},{"x":1871,"y":99},{"x":1872,"y":99},{"x":1873,"y":98},{"x":1874,"y":97},{"x":1875,"y":97},{"x":1876,"y":97},{"x":1877,"y":97},{"x":1878,"y":98},{"x":1879,"y":98},{"x":1880,"y":97},{"x":1881,"y":97},{"x":1882,"y":97},{"x":1883,"y":96},{"x":1884,"y":96},{"x":1885,"y":95},{"x":1886,"y":94},{"x":1887,"y":94},{"x":1888,"y":94},{"x":1889,"y":94},{"x":1890,"y":94},{"x":1891,"y":95},{"x":1892,"y":95},{"x":1893,"y":95},{"x":1894,"y":95},{"x":1895,"y":95},{"x":1896,"y":95},{"x":1897,"y":95},{"x":1898,"y":95},{"x":1898,"y":95},{"x":1899,"y":95},{"x":1900,"y":95},{"x":1901,"y":96},{"x":1902,"y":96},{"x":1903,"y":96},{"x":1904,"y":97},{"x":1905,"y":97},{"x":1906,"y":98},{"x":1907,"y":98},{"x":1908,"y":98},{"x":1909,"y":98},{"x":1910,"y":98},{"x":1911,"y":98},{"x":1912,"y":98},{"x":1913,"y":99},{"x":1914,"y":99},{"x":1915,"y":99},{"x":1916,"y":99},{"x":1917,"y":99},{"x":1918,"y":99},{"x":1919,"y":99},{"x":1920,"y":99},{"x":1921,"y":99},{"x":1922,"y":99},{"x":1923,"y":99},{"x":1924,"y":99},{"x":1925,"y":98},{"x":1926,"y":98},{"x":1927,"y":98},{"x":1928,"y":97},{"x":1929,"y":97},{"x":1930,"y":97},{"x":1931,"y":97},{"x":1932,"y":97},{"x":1933,"y":97},{"x":1934,"y":97},{"x":1935,"y":97},{"x":1936,"y":97},{"x":1937,"y":97},{"x":1938,"y":97},{"x":1939,"y":96},{"x":1940,"y":96},{"x":1941,"y":96},{"x":1942,"y":96},{"x":1943,"y":96},{"x":1944,"y":96},{"x":1945,"y":96},{"x":1946,"y":96},{"x":1947,"y":96},{"x":1948,"y":96},{"x":1949,"y":96},{"x":1950,"y":97},{"x":1951,"y":97},{"x":1952,"y":97},{"x":1953,"y":97},{"x":1954,"y":97},{"x":1955,"y":97},{"x":1956,"y":97},{"x":1957,"y":97},{"x":1958,"y":97},{"x":1959,"y":96},{"x":1960,"y":96},{"x":1961,"y":96},{"x":1962,"y":95},{"x":1963,"y":95},{"x":1964,"y":95},{"x":1965,"y":95},{"x":1966,"y":96},{"x":1967,"y":96},{"x":1968,"y":95},{"x":1969,"y":95},{"x":1970,"y":95},{"x":1971,"y":94},{"x":1972,"y":94},{"x":1973,"y":93},{"x":1974,"y":93},{"x":1975,"y":93},{"x":1976,"y":94},{"x":1977,"y":94},{"x":1978,"y":94},{"x":1979,"y":94},{"x":1980,"y":94},{"x":1981,"y":94},{"x":1982,"y":94},{"x":1983,"y":94},{"x":1984,"y":94},{"x":1985,"y":93},{"x":1986,"y":93},{"x":1987,"y":93},{"x":1988,"y":92},{"x":1989,"y":92},{"x":1990,"y":92},{"x":1991,"y":92},{"x":1992,"y":91},{"x":1993,"y":91},{"x":1994,"y":91},{"x":1995,"y":90},{"x":1996,"y":90},{"x":1997,"y":91},{"x":1998,"y":91},{"x":1999,"y":92},{"x":2000,"y":92},{"x":2001,"y":93},{"x":2002,"y":93},{"x":2003,"y":93},{"x":2004,"y":94},{"x":2005,"y":94},{"x":2006,"y":94},{"x":2007,"y":94},{"x":2008,"y":94},{"x":2009,"y":94},{"x":2010,"y":94},{"x":2011,"y":94},{"x":2012,"y":94},{"x":2013,"y":94},{"x":2014,"y":95},{"x":2015,"y":95},{"x":2016,"y":96},{"x":2017,"y":96},{"x":2018,"y":97},{"x":2019,"y":97},{"x":2020,"y":97},{"x":2021,"y":96},{"x":2022,"y":96},{"x":2023,"y":96},{"x":2024,"y":95},{"x":2025,"y":95},{"x":2026,"y":95},{"x":2027,"y":94},{"x":2028,"y":94},{"x":2029,"y":94},{"x":2030,"y":94},{"x":2031,"y":94},{"x":2032,"y":94},{"x":2033,"y":94},{"x":2034,"y":94},{"x":2035,"y":95},{"x":2036,"y":96},{"x":2037,"y":97},{"x":2038,"y":98},{"x":2039,"y":99},{"x":2040,"y":100},{"x":2041,"y":100},{"x":2042,"y":100},{"x":2043,"y":100},{"x":2044,"y":100},{"x":2045,"y":100},{"x":2046,"y":100},{"x":2047,"y":100},{"x":2048,"y":99},{"x":2049,"y":99},{"x":2050,"y":99},{"x":2051,"y":99},{"x":2052,"y":100},{"x":2053,"y":100},{"x":2054,"y":101},{"x":2055,"y":101},{"x":2056,"y":101},{"x":2057,"y":101},{"x":2058,"y":101},{"x":2059,"y":101},{"x":2060,"y":100},{"x":2061,"y":100},{"x":2062,"y":100},{"x":2063,"y":99},{"x":2064,"y":97},{"x":2065,"y":96},{"x":2066,"y":95},{"x":2067,"y":94},{"x":2068,"y":93},{"x":2069,"y":92},{"x":2070,"y":91},{"x":2071,"y":91},{"x":2072,"y":90},{"x":2073,"y":90},{"x":2074,"y":90},{"x":2075,"y":90},{"x":2076,"y":90},{"x":2077,"y":90},{"x":2078,"y":90},{"x":2079,"y":90},{"x":2080,"y":90},{"x":2081,"y":90},{"x":2082,"y":90},{"x":2083,"y":90},{"x":2084,"y":91},{"x":2085,"y":91},{"x":2086,"y":91},{"x":2087,"y":91},{"x":2088,"y":91},{"x":2089,"y":90},{"x":2090,"y":90},{"x":2091,"y":90},{"x":2092,"y":90},{"x":2093,"y":90},{"x":2094,"y":90},{"x":2095,"y":89},{"x":2096,"y":89},{"x":2097,"y":89},{"x":2098,"y":89},{"x":2099,"y":88},{"x":2100,"y":88},{"x":2101,"y":88},{"x":2102,"y":87},{"x":2103,"y":87},{"x":2104,"y":86},{"x":2105,"y":86},{"x":2106,"y":85},{"x":2107,"y":85},{"x":2108,"y":85},{"x":2109,"y":85},{"x":2110,"y":85},{"x":2111,"y":85},{"x":2112,"y":85},{"x":2113,"y":86},{"x":2114,"y":86},{"x":2115,"y":86},{"x":2116,"y":87},{"x":2117,"y":87},{"x":2118,"y":87},{"x":2119,"y":88},{"x":2120,"y":88},{"x":2121,"y":89},{"x":2122,"y":89},{"x":2123,"y":90},{"x":2124,"y":91},{"x":2125,"y":91},{"x":2126,"y":91},{"x":2127,"y":92},{"x":2128,"y":93},{"x":2129,"y":93},{"x":2130,"y":94},{"x":2131,"y":95},{"x":2132,"y":95},{"x":2133,"y":96},{"x":2134,"y":96},{"x":2135,"y":96},{"x":2136,"y":95},{"x":2137,"y":95},{"x":2138,"y":95},{"x":2139,"y":94},{"x":2140,"y":94},{"x":2141,"y":93},{"x":2142,"y":93},{"x":2143,"y":93},{"x":2144,"y":94},{"x":2145,"y":94},{"x":2146,"y":94},{"x":2147,"y":94},{"x":2148,"y":94},{"x":2149,"y":94},{"x":2150,"y":94},{"x":2151,"y":94},{"x":2152,"y":95},{"x":2153,"y":95},{"x":2154,"y":96},{"x":2155,"y":96},{"x":2156,"y":96},{"x":2157,"y":96},{"x":2158,"y":97},{"x":2159,"y":97},{"x":2160,"y":98},{"x":2161,"y":98},{"x":2162,"y":99},{"x":2163,"y":99},{"x":2164,"y":99},{"x":2165,"y":99},{"x":2166,"y":99},{"x":2167,"y":99},{"x":2168,"y":99},{"x":2169,"y":98},{"x":2170,"y":98},{"x":2171,"y":97},{"x":2172,"y":97},{"x":2173,"y":96},{"x":2174,"y":96},{"x":2175,"y":95},{"x":2176,"y":95},{"x":2177,"y":95},{"x":2178,"y":95},{"x":2179,"y":95},{"x":2180,"y":95},{"x":2181,"y":94},{"x":2182,"y":94},{"x":2183,"y":94},{"x":2184,"y":95},{"x":2185,"y":96},{"x":2186,"y":97},{"x":2187,"y":98},{"x":2188,"y":99},{"x":2189,"y":99},{"x":2190,"y":100},{"x":2191,"y":100},{"x":2192,"y":100},{"x":2193,"y":101},{"x":2194,"y":101},{"x":2195,"y":101},{"x":2196,"y":102},{"x":2197,"y":102},{"x":2198,"y":102},{"x":2199,"y":102},{"x":2200,"y":102},{"x":2201,"y":102},{"x":2202,"y":102},{"x":2203,"y":101},{"x":2204,"y":101},{"x":2205,"y":101},{"x":2206,"y":101},{"x":2207,"y":100},{"x":2208,"y":100},{"x":2209,"y":100},{"x":2210,"y":100},{"x":2211,"y":100},{"x":2212,"y":100},{"x":2213,"y":99},{"x":2214,"y":99},{"x":2215,"y":99},{"x":2216,"y":99},{"x":2217,"y":101},{"x":2415,"y":102},{"x":2416,"y":104},{"x":2417,"y":104},{"x":2418,"y":104},{"x":2419,"y":104},{"x":2420,"y":104},{"x":2421,"y":104},{"x":2422,"y":104},{"x":2423,"y":105},{"x":2424,"y":106},{"x":2425,"y":107},{"x":2426,"y":108},{"x":2427,"y":110},{"x":2428,"y":111},{"x":2429,"y":111},{"x":2430,"y":111},{"x":2431,"y":112},{"x":2432,"y":112},{"x":2433,"y":112},{"x":2434,"y":112},{"x":2435,"y":113},{"x":2436,"y":113},{"x":2437,"y":114},{"x":2438,"y":114},{"x":2439,"y":115},{"x":2440,"y":115},{"x":2441,"y":115},{"x":2442,"y":116},{"x":2443,"y":116},{"x":2444,"y":116},{"x":2445,"y":116},{"x":2446,"y":116},{"x":2447,"y":115},{"x":2448,"y":115},{"x":2449,"y":116},{"x":2450,"y":116},{"x":2451,"y":116},{"x":2452,"y":116},{"x":2453,"y":116},{"x":2454,"y":115},{"x":2455,"y":115},{"x":2456,"y":116},{"x":2457,"y":116},{"x":2458,"y":116},{"x":2459,"y":116},{"x":2460,"y":116},{"x":2461,"y":115},{"x":2462,"y":114},{"x":2463,"y":114},{"x":2464,"y":114},{"x":2465,"y":113},{"x":2466,"y":113},{"x":2467,"y":113},{"x":2468,"y":113},{"x":2469,"y":113},{"x":2470,"y":113},{"x":2471,"y":114},{"x":2472,"y":116},{"x":2473,"y":117},{"x":2474,"y":118},{"x":2475,"y":118},{"x":2476,"y":119},{"x":2477,"y":120},{"x":2478,"y":121},{"x":2479,"y":122},{"x":2480,"y":123},{"x":2481,"y":124},{"x":2482,"y":124},{"x":2483,"y":125},{"x":2484,"y":126},{"x":2485,"y":127},{"x":2486,"y":129},{"x":2487,"y":131},{"x":2488,"y":133},{"x":2489,"y":134},{"x":2490,"y":136},{"x":2491,"y":138},{"x":2492,"y":139},{"x":2493,"y":141},{"x":2494,"y":142},{"x":2495,"y":144},{"x":2496,"y":146},{"x":2497,"y":147},{"x":2498,"y":148},{"x":2499,"y":148},{"x":2500,"y":148},{"x":2501,"y":148},{"x":2502,"y":148},{"x":2503,"y":148},{"x":2504,"y":148},{"x":2505,"y":147},{"x":2506,"y":147},{"x":2507,"y":146},{"x":2508,"y":145},{"x":2509,"y":144},{"x":2510,"y":144},{"x":2511,"y":144},{"x":2512,"y":144},{"x":2513,"y":144},{"x":2514,"y":144},{"x":2515,"y":144},{"x":2516,"y":144},{"x":2517,"y":143},{"x":2518,"y":143},{"x":2519,"y":143},{"x":2520,"y":143},{"x":2521,"y":143},{"x":2522,"y":143},{"x":2523,"y":144},{"x":2524,"y":144},{"x":2525,"y":145},{"x":2526,"y":146},{"x":2527,"y":147},{"x":2528,"y":147},{"x":2529,"y":148},{"x":2530,"y":148},{"x":2531,"y":148},{"x":2532,"y":147},{"x":4260,"y":146},{"x":4261,"y":145},{"x":4262,"y":145},{"x":4263,"y":145},{"x":4264,"y":127},{"x":5007,"y":109},{"x":5008,"y":92},{"x":5009,"y":92},{"x":5010,"y":92},{"x":5011,"y":92},{"x":5012,"y":92},{"x":5013,"y":92},{"x":5014,"y":92},{"x":5015,"y":92},{"x":5016,"y":92},{"x":5017,"y":92},{"x":5018,"y":93},{"x":5019,"y":93},{"x":5020,"y":93},{"x":5021,"y":93},{"x":5022,"y":93},{"x":5023,"y":93},{"x":5024,"y":93},{"x":5025,"y":93},{"x":5026,"y":94},{"x":5027,"y":94},{"x":5028,"y":94},{"x":5029,"y":94},{"x":5030,"y":94},{"x":5031,"y":97},{"x":5343,"y":99},{"x":5344,"y":102},{"x":5345,"y":102},{"x":5346,"y":102},{"x":5347,"y":102},{"x":5348,"y":102},{"x":5349,"y":102},{"x":5350,"y":102},{"x":5351,"y":103},{"x":5352,"y":103},{"x":5353,"y":103},{"x":5354,"y":103},{"x":5355,"y":103},{"x":5356,"y":103},{"x":5357,"y":104},{"x":5358,"y":104},{"x":5359,"y":104},{"x":5360,"y":105},{"x":5361,"y":105},{"x":5362,"y":106},{"x":5363,"y":107},{"x":5364,"y":109},{"x":5365,"y":111},{"x":5366,"y":112},{"x":5367,"y":113},{"x":5368,"y":114},{"x":5369,"y":115},{"x":5370,"y":115},{"x":5371,"y":115},{"x":5372,"y":116},{"x":5373,"y":117},{"x":5374,"y":117},{"x":5375,"y":117},{"x":5376,"y":117},{"x":5377,"y":109},{"x":5589,"y":100},{"x":5590,"y":92},{"x":5591,"y":92},{"x":5592,"y":92},{"x":5593,"y":93},{"x":5594,"y":93},{"x":5595,"y":90},{"x":6015,"y":86},{"x":6016,"y":83},{"x":6017,"y":83},{"x":6018,"y":83},{"x":6019,"y":83},{"x":6020,"y":83},{"x":6021,"y":82},{"x":6022,"y":82},{"x":6023,"y":81},{"x":6024,"y":81},{"x":6025,"y":80},{"x":6026,"y":80},{"x":6027,"y":79},{"x":6028,"y":79},{"x":6029,"y":78},{"x":6030,"y":78},{"x":6031,"y":78}],
+      borderColor: '#e89898',
+      backgroundColor: 'rgba(232,152,152,.1)',
+      fill: false, tension: 0.3, pointRadius: 0,
+      yAxisID: 'y1',
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    interaction: { mode: 'index', intersect: false },
+    plugins: {
+      legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: {
+        title: function(ctx) {
+          const sec = ctx[0].parsed.x;
+          const m = Math.floor(sec / 60);
+          const s = sec % 60;
+          return m + ':' + String(s).padStart(2, '0');
+        },
+        label: function(ctx) {
+          if (ctx.datasetIndex === 0) return fmtPace(ctx.parsed.y) + '/km';
+          return ctx.parsed.y + ' bpm';
+        }
+      } }
+    },
+    scales: {
+      x: { type: 'linear', title: { display: true, text: '运动时间' },
+        min: 0, max: 6120,
+        ticks: { callback: function(v) {
+          const m = Math.floor(v / 60);
+          const s = Math.round(v % 60);
+          return m + ':' + String(s).padStart(2, '0');
+        } } },
+      y: { reverse: true, position: 'left', title: { display: true, text: '配速 (越低越快)' },
+        ticks: { callback: function(v) { return fmtPace(v); } } },
+      y1: { position: 'right', title: { display: true, text: '心率 (bpm)' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Sleep Chart — stacked bars (deep + light + REM) + sleep score line overlay
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: ["07/14","07/15","07/16","07/17","07/18","07/19","07/20"],
+    datasets: [{
+      label: '深睡',
+      data: [1.1,1.6,1.6,1.8,1.7,0.8,0.7],
+      backgroundColor: 'rgba(92,124,200,.8)',
+      yAxisID: 'y',
+    }, {
+      label: '浅睡',
+      data: [3.9,3.8,4,3.8,5.4,2.2,2.5],
+      backgroundColor: 'rgba(140,170,220,.7)',
+      yAxisID: 'y',
+    }, {
+      label: 'REM',
+      data: [1.9,2,1.5,1.7,1.1,1.5,0],
+      backgroundColor: 'rgba(200,215,240,.6)',
+      yAxisID: 'y',
+    }, {
+      label: '睡眠评分',
+      type: 'line',
+      data: [75,85,84,98,77,55,52],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: false, tension: .3, pointRadius: 5,
+      pointBackgroundColor: '#7ec882',
+      yAxisID: 'y1',
+      order: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.datasetIndex < 3) {
+          const h = Math.floor(ctx.parsed.y);
+          const m = Math.round((ctx.parsed.y - h) * 60);
+          return ctx.dataset.label + ': ' + h + 'h' + String(m).padStart(2, '0') + 'min';
+        }
+        return ctx.dataset.label + ': ' + ctx.parsed.y;
+      } } } },
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, position: 'left', min: 0, max: 12,
+        title: { display: true, text: '睡眠时长 (h)' },
+        ticks: { stepSize: 2 } },
+      y1: { position: 'right', min: 0, max: 100,
+        title: { display: true, text: '睡眠评分' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
+
+
+// Theme toggle
+(function(){
+  const btn = document.getElementById('themeToggle');
+  const root = document.documentElement;
+  const saved = localStorage.getItem('coros-theme') || 'dark';
+  root.setAttribute('data-theme', saved); btn.textContent = saved === 'dark' ? '☀️' : '🌙';
+  btn.addEventListener('click', function(){
+    const isDark = root.getAttribute('data-theme') === 'dark';
+    const next = isDark ? 'light' : 'dark';
+    root.setAttribute('data-theme', next);
+    btn.textContent = next === 'dark' ? '☀️' : '🌙';
+    localStorage.setItem('coros-theme', next);
+    updateChartColors();
+  });
+  function getThemeColor(varName) {
+    return getComputedStyle(root).getPropertyValue(varName).trim();
+  }
+  function updateChartColors() {
+    const gridColor = getThemeColor('--border');
+    const tickColor = getThemeColor('--muted');
+    Chart.defaults.color = tickColor;
+    Chart.defaults.borderColor = gridColor;
+    // Chart.js v4 兼容：使用 Object.entries 遍历实例，避免直接修改 scale 配置
+    var charts = Chart.instances;
+    if (charts) {
+      Object.keys(charts).forEach(function(id) {
+        var chart = charts[id];
+        if (!chart || !chart.options) return;
+        // 仅更新图例标签颜色（scale 颜色由 Chart.defaults 自动处理）
+        if (chart.options.plugins && chart.options.plugins.legend && chart.options.plugins.legend.labels) {
+          chart.options.plugins.legend.labels.color = tickColor;
+        }
+        chart.update('none');
+      });
+    }
+  }
+  updateChartColors();
+})();
+</script>
+
+</body>
+</html>

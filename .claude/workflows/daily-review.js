@@ -1,6 +1,6 @@
 export const meta = {
   name: "daily-review",
-  description: "每日训练复盘：从 COROS 采集数据 → LLM 分析 → 数据验证 → 计划推送 → HTML 报告",
+  description: "每日训练复盘：从 COROS 采集数据 → LLM 分析 → 数据验证 → 计划推送 → HTML 报告 → Git 推送",
   phases: [
     { title: "选择 LLM", detail: "选择本次分析使用的 LLM 提供商" },
     { title: "数据采集", detail: "从 COROS MCP 获取最新训练数据" },
@@ -8,6 +8,7 @@ export const meta = {
     { title: "数据验证", detail: "验证分析结果的配速趋势、周跑量统计等数据一致性" },
     { title: "计划推送", detail: "将 AI 生成的周计划推送到 COROS 手表日历" },
     { title: "报告生成", detail: "生成 HTML 可视化报告并打开" },
+    { title: "Git 推送", detail: "将本次分析结果提交并推送到代码仓库" },
   ],
 };
 
@@ -149,6 +150,20 @@ await agent(
 
   确认所有命令都成功执行。`,
   { label: "report" },
+);
+
+phase("Git 推送");
+log("正在提交本次分析结果到 Git 仓库...");
+await agent(
+  `将本次训练复盘的分析结果提交并推送到 Git 仓库。
+
+  依次执行：
+  1. git add -A
+  2. git commit -m "daily-review ${dateStr} 训练复盘"
+  3. git push
+
+  查看 git status 确保工作区干净，commit 和 push 均成功。`,
+  { label: "git-push" },
 );
 
 log(`✅ 训练复盘流程完成！报告：reports/${dateStr}-report.html`);
