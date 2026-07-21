@@ -811,7 +811,7 @@ coachAdvice
 - detailedAnalysis: 100-200字技术分析
 - weeklyPlan[].type: 轻松跑/节奏跑/间歇/LSD/休息
 - weeklyPlan[].totalDistance: 数字（km 单位，无"km"后缀）；休息日=0
-- weeklyPlan[].workoutSteps: 结构化步骤数组，用于COROS手表推送。每步格式：
+- weeklyPlan[].workoutSteps: 必填字段，结构化步骤数组，用于COROS手表推送。每个非休息日都必须有 workoutSteps。每步格式：
   - 热身/主训/冷身: {"kind":"warmup/training/cooldown", "targetDistanceKm":数字, "pace":"X:XX-X:XX/km"}
   - 间歇组: {"repeat":组数, "steps":[{"kind":"interval","targetDistanceKm":0.4,"pace":"X:XX-X:XX/km"},{"kind":"rest","targetDurationSeconds":120}]}
   - 纯休息: {"kind":"rest","targetDurationSeconds":数字}
