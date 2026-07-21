@@ -3,7 +3,7 @@ import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createLLM } from "../lib/llm.js";
-import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
+import { MARATHON_DATE, MARATHON_TARGET_PACE, MARATHON_TARGET_TIME, PHASES, LACTATE_THRESHOLD_HR, RUNNING_SPORT_TYPES } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 import { calcPaceZones, calcHRZones } from "../lib/zones.js";
 import { calcWkg, estimateFTP, classifyPowerZone, calcPowerZones, POWER_ZONE_DEFS } from "../lib/power-utils.js";
@@ -126,10 +126,12 @@ function parseSleepPct(deepStr, totalStr) {
   return total > 0 ? Math.round((deep / total) * 100) : null;
 }
 
+const isRunning = r => RUNNING_SPORT_TYPES.includes(r.sportType);
+
 function weeklyReview(data) {
   const { start, end } = getCurrentWeekBounds();
-  const records = (data.sportRecords || []).filter(r => r.date >= start && r.date <= end);
-  const details = (data.activityDetails || []).filter(d => d.date >= start && d.date <= end);
+  const records = (data.sportRecords || []).filter(r => r.date >= start && r.date <= end && isRunning(r));
+  const details = (data.activityDetails || []).filter(d => d.date >= start && d.date <= end && isRunning(d));
   const loadEntries = data.trainingLoad || [];
 
   const totalKm = records.reduce((sum, r) => sum + (r.distance || 0), 0);
@@ -253,8 +255,8 @@ function generateMarkdownReport(data) {
   const maxHR = 220 - getAge(user.birthday || "1990-01-01");
   const tp = fitness.thresholdPace || "4:37";
 
-  // Individual workout reviews
-  const workoutReviews = (data.activityDetails || []).map(d => reviewWorkout(d, tp, maxHR)).filter(Boolean).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
+  // Individual workout reviews（仅跑步）
+  const workoutReviews = (data.activityDetails || []).filter(isRunning).map(d => reviewWorkout(d, tp, maxHR)).filter(Boolean).sort((a, b) => (b.date || "").localeCompare(a.date || ""));
 
   // Recovery assessment
   const recovery = assessRecovery(data);
@@ -530,15 +532,15 @@ function buildLLMContext(data) {
   const weekDays = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"];
   const { start: wS, end: wE } = getCurrentWeekBounds();
 
-  // Weekly summary inline (filtered by current week 周一→周日)
-  const wRecs = records.filter(r => r.date >= wS && r.date <= wE);
-  const wDetails = (data.activityDetails || []).filter(d => d.date >= wS && d.date <= wE);
+  // Weekly summary inline (filtered by current week 周一→周日，仅跑步)
+  const wRecs = records.filter(r => r.date >= wS && r.date <= wE && isRunning(r));
+  const wDetails = (data.activityDetails || []).filter(d => d.date >= wS && d.date <= wE && isRunning(d));
   const totalKm = wRecs.reduce((s, r) => s + (r.distance || 0), 0);
   const totalTL = wDetails.reduce((s, d) => s + (d.trainingLoad || 0), 0);
   const runCount = wRecs.filter((r) => r.sportType === 100 || r.sportType === 101).length;
 
-  // Build workouts with TCX summaries
-  const workouts = (data.activityDetails || []).map((d) => ({
+  // Build workouts with TCX summaries（仅跑步）
+  const workouts = (data.activityDetails || []).filter(isRunning).map((d) => ({
     date: d.date,
     distance: d.distance,
     duration: d.workoutTime,

@@ -2,7 +2,7 @@
 import { readFileSync, existsSync, mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { MARATHON_DATE, PHASES, LACTATE_THRESHOLD_HR } from "../lib/training-constants.js";
+import { MARATHON_DATE, PHASES, LACTATE_THRESHOLD_HR, RUNNING_SPORT_TYPES } from "../lib/training-constants.js";
 import { paceToSeconds, secondsToPace, getAge, weeksUntilMarathon, getCurrentPhase, getCurrentWeekBounds } from "../lib/training-utils.js";
 import { calcPaceZones, calcHRZones, classifyPace, classifyHR, ZONE_LABELS } from "../lib/zones.js";
 import { calcWkg, estimateFTP, classifyPowerZone, calcPowerZones, POWER_ZONE_DEFS } from "../lib/power-utils.js";
@@ -78,11 +78,13 @@ function reviewLatestWorkout(activity, thresholdPace, maxHR) {
   return { activity, intensityZone, zoneColor, paceRatio, hrPct, cadenceGap, findings, positives, improvements };
 }
 
+const isRunning = r => RUNNING_SPORT_TYPES.includes(r.sportType);
+
 function generateRuleBasedPlan(data, recovery) {
   const weeksLeft = weeksUntilMarathon();
   const phase = getCurrentPhase(weeksLeft);
   const { start, end } = getCurrentWeekBounds();
-  const records = (data.sportRecords || []).filter(r => r.date >= start && r.date <= end);
+  const records = (data.sportRecords || []).filter(r => r.date >= start && r.date <= end && isRunning(r));
   const recoveryMultiplier = recovery.level === "red" ? 0.6 : recovery.level === "yellow" ? 0.8 : 1.0;
   const completedKm = records.reduce((s, r) => s + (r.distance || 0), 0);
   const now = new Date();
@@ -193,8 +195,8 @@ function derivePaceZone(detail, thresholdPace) {
 function generateHTML(data, aiAnalysis) {
   const user = data.userInfo || {};
   const fitness = data.fitness || {};
-  const records = data.sportRecords || [];
-  const details = (data.activityDetails || []).sort((a, b) => b.date.localeCompare(a.date));
+  const records = (data.sportRecords || []).filter(isRunning);
+  const details = (data.activityDetails || []).filter(isRunning).sort((a, b) => b.date.localeCompare(a.date));
   const hrvDays = data.hrv?.days || [];
   const loadEntries = data.trainingLoad || [];
   const maxHR = 220 - getAge(user.birthday || "1990-01-01");
