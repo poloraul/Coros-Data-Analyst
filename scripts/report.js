@@ -135,15 +135,19 @@ function generateRuleBasedPlan(data, recovery) {
 // --- Plan Consistency Post-Processing ---
 
 /**
- * Extract pace range (slow/fast in seconds) from text containing "配速X:XX-X:XX"
+ * Extract pace range (slow/fast in seconds) from text containing pace info like "配速X:XX-X:XX" or "X:XX — X:XX/km"
  * Filters out stride/sprint paces (跨步跑) that don't represent main training zone.
+ * Supports both plain text and objects with a .pace property (from structured 详细计划).
  */
 function extractPaceRange(text) {
   if (!text) return null;
-  // Remove stride-related pace info before parsing (short bursts, not main zone)
-  const clean = text.replace(/跨步跑\s*\([^)]*配速[^)]*\)/g, '')
+  // Handle structured objects (LLM now returns {distance, pace, heartRate})
+  const raw = typeof text === 'object' ? (text.pace || text.distance || '') : text;
+  if (!raw) return null;
+  const clean = raw.replace(/跨步跑\s*\([^)]*配速[^)]*\)/g, '')
                     .replace(/跨步[^，。，]*配速[^，。，]*[，。]/g, '');
-  const rangeRe = /配速(\d+:\d+)\s*[-–—~〜]\s*(\d+:\d+)/g;
+  // Match both "配速X:XX-X:XX" and bare "X:XX — X:XX/km" (optional /km suffix)
+  const rangeRe = /(?:配速)?(\d+:\d+)\s*[-–—~〜]\s*(\d+:\d+)/g;
   const matches = [];
   let m;
   while ((m = rangeRe.exec(clean)) !== null) {
@@ -152,8 +156,8 @@ function extractPaceRange(text) {
     if (p1 && p2) matches.push({ slow: Math.max(p1, p2), fast: Math.min(p1, p2) });
   }
   if (matches.length === 0) {
-    // Fallback: try single pace "配速X:XX"
-    const singleRe = /配速(\d+:\d+)/g;
+    // Fallback: try single pace "配速X:XX" or bare "X:XX"
+    const singleRe = /(?:配速)?(\d+:\d+)/g;
     while ((m = singleRe.exec(clean)) !== null) {
       const p = paceToSeconds(m[1]);
       if (p) matches.push({ slow: p, fast: p });

@@ -1,0 +1,27 @@
+{
+  "fetchDate": "20260727",
+  "fetchedAt": "2026-07-27T01:31:03.896Z",
+  "userInfo": null,
+  "sportRecords": [],
+  "activityDetails": [],
+  "dailyHealth": [],
+  "sleep": [],
+  "hrv": {
+    "baseline": null,
+    "normalRange": null,
+    "days": []
+  },
+  "trainingLoad": [],
+  "recovery": null,
+  "fitness": {
+    "vo2max": 55,
+    "runningLevel": 87,
+    "thresholdPace": "4:19",
+    "pred5k": "20:41",
+    "pred10k": "42:50",
+    "predHalfMarathon": "1:35:16",
+    "predMarathon": "3:19:15",
+    "_sourceDate": "20260724"
+  },
+  "trainingSchedule": []
+}

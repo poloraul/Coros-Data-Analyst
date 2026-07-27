@@ -1,0 +1,456 @@
+{
+  "fetchDate": "20260727",
+  "generatedAt": "2026-07-27T01:32:51.954Z",
+  "context": {
+    "profile": {
+      "age": null,
+      "vo2max": 55,
+      "thresholdPace": "4:19",
+      "maxHR": 184,
+      "ftpW": null,
+      "ftpWkg": null,
+      "ftpSampleSize": 0,
+      "ftpConfidence": "none"
+    },
+    "goal": {
+      "targetTime": "3:30:00",
+      "targetPace": "4:58/km",
+      "marathonDate": "2026-12-06",
+      "weeksLeft": 19,
+      "currentPhase": "基础期 I",
+      "currentWeek": 6,
+      "phaseFocus": "有氧耐力、建立跑量",
+      "targetWeeklyKm": [
+        50,
+        65
+      ]
+    },
+    "bodyStatus": {
+      "recovery": {},
+      "hrv": {
+        "baseline": null,
+        "normalRange": null,
+        "consecutiveBelow": 0
+      },
+      "sleep": {},
+      "trainingLoad": {}
+    },
+    "paceZones": [
+      {
+        "key": "Z1",
+        "name": "积极恢复区",
+        "range": "> 6:05/km"
+      },
+      {
+        "key": "Z2",
+        "name": "有氧耐力区",
+        "range": "6:05/km — 5:05/km"
+      },
+      {
+        "key": "Z3",
+        "name": "有氧动力区",
+        "range": "5:05/km — 4:38/km"
+      },
+      {
+        "key": "Z4",
+        "name": "乳酸阈区",
+        "range": "4:38/km — 4:14/km"
+      },
+      {
+        "key": "Z5",
+        "name": "速度耐力区",
+        "range": "4:14/km — 3:51/km"
+      },
+      {
+        "key": "Z6",
+        "name": "无氧动力区",
+        "range": "< 3:51/km"
+      }
+    ],
+    "hrZones": [
+      {
+        "key": "Z1",
+        "name": "积极恢复区",
+        "range": "< 136 bpm"
+      },
+      {
+        "key": "Z2",
+        "name": "有氧耐力区",
+        "range": "136 — 153 bpm"
+      },
+      {
+        "key": "Z3",
+        "name": "有氧动力区",
+        "range": "153 — 163 bpm"
+      },
+      {
+        "key": "Z4",
+        "name": "乳酸阈区",
+        "range": "163 — 173 bpm"
+      },
+      {
+        "key": "Z5",
+        "name": "速度耐力区",
+        "range": "173 — 180 bpm"
+      },
+      {
+        "key": "Z6",
+        "name": "无氧动力区",
+        "range": "> 180 bpm"
+      }
+    ],
+    "powerZones": null,
+    "workouts": [],
+    "today": {
+      "date": "2026-07-27",
+      "dayOfWeek": "周一"
+    },
+    "weeklySummary": {
+      "totalKm": 0,
+      "runCount": 0,
+      "totalTL": 0
+    },
+    "holidays": {
+      "thisWeek": "",
+      "upcomingNext4Weeks": []
+    }
+  },
+  "analysis": {
+    "workoutReviews": [],
+    "bodyAssessment": {
+      "overallLevel": "yellow",
+      "summary": "缺乏近一周的训练数据，无法进行详细的身体状态评估。基于您提供的基础信息：VO2max 55（优秀水平，位于同年龄段前10%），乳酸阈配速4:19/km（快于目标马配4:58/km），表明您具备完成3:30全马的天赋潜力。然而，当前处于基础期第6周，上周跑量为0，说明训练连续性被打断，身体可能处于完全恢复状态，但也存在训练动力不足的风险。",
+      "details": [
+        {
+          "label": "最大摄氧量 (VO2max)",
+          "value": "55 mL/kg/min",
+          "level": "green",
+          "comment": "优秀的有氧基础，为冲击3:30全马提供了坚实的心肺耐力天花板。"
+        },
+        {
+          "label": "乳酸阈值配速",
+          "value": "4:19/km",
+          "level": "green",
+          "comment": "阈值速度非常出色，远快于目标马配，说明速度能力不是瓶颈，主要任务在于提升有氧耐力以维持此经济速度。"
+        },
+        {
+          "label": "跑量连续性",
+          "value": "上周 0 km",
+          "level": "red",
+          "comment": "基础期需要稳定的跑量积累来提升有氧酶活性、线粒体密度和毛细血管网络。零跑量会削弱之前的训练效果，需谨慎恢复以防受伤。"
+        },
+        {
+          "label": "负荷管理",
+          "value": "数据缺失",
+          "level": "yellow",
+          "comment": "缺乏HRV和睡眠数据，无法评估恢复状态和疲劳积累。首马训练需密切关注身体信号，避免过度训练。"
+        }
+      ],
+      "recommendations": [
+        "重新建立训练连续性：本周目标不是强度，而是无伤完成3-4次短距离轻松跑，让身体重新适应跑步节奏和冲击。",
+        "优先采集数据：建议在未来两周佩戴手表睡觉，获取静息心率、HRV基线数据。这些是监测恢复状态、预防过度训练的关键指标。",
+        "力量训练补充：在无跑日加入核心和下肢力量训练，特别是臀中肌、髂腰肌和足踝稳定性，为即将到来的跑量爬坡期做好准备。"
+      ]
+    },
+    "trainingPatternAnalysis": {
+      "summary": "当前处于训练重启阶段。由于上周无训练数据，无法分析近期训练模式，但回顾整个基础期I（前5周），核心目标应为建立有氧基础和稳定的跑步习惯。您拥有出色的速度天赋（阈配速4:19/km），需警惕陷入Z3灰色区（马拉松配速-10s）训练的陷阱，这会导致疲劳积累快、恢复慢，且对有氧基础提升效果有限。",
+      "strengths": [
+        "强大的速度储备：4:19/km的阈值配速表明无氧能力和跑步经济性有先天优势，只要解决好有氧引擎，3:30目标非常现实。"
+      ],
+      "risks": [
+        "跑量中断风险：突然归零后重新开跑，肌腱和韧带强度会有所下降，第一周容易因恢复心切而跑得过快或过远，导致足底筋膜炎、胫骨应力综合征等常见伤病。",
+        "灰色区倾向：天赋较好的跑者常倾向于以“体感舒服”的配速（通常落入Z3-Z4）完成所有训练，这会大大影响基础有氧能力的建立，并增加恢复压力。"
+      ],
+      "suggestions": [
+        "严格执行两极化：重启第一周，所有训练严格控制在Z2心率区间（136-153 bpm），配速参考6:05-5:05/km，不要快于5:05/km。",
+        "跑一休一适应：本周建议采用跑一天休一天的计划，给结缔组织足够的适应时间。",
+        "按表跑非体感：在低心率区间刚开始时，速度可能会慢得让你感到不适应（如6:30-7:00/km），这是正常的。请相信心率带的数值，不要用呼吸或体感去强行加速。"
+      ]
+    },
+    "weeklyPlan": [
+      {
+        "dayIndex": 1,
+        "dayName": "周一",
+        "date": "2026-07-27",
+        "type": "轻松跑",
+        "totalDistance": 5,
+        "paceZone": "Z2 (6:05 — 5:05/km)",
+        "hrZone": "Z1-Z2 (< 153 bpm)",
+        "description": "重启训练的第一天，以激活和重建节奏为主。里程较短，配速非常轻松，核心任务是让心率牢牢稳定在Z1-Z2（< 153 bpm），体感极度舒适。严格控制配速上限，即使感觉自己可以飞也不要加速。",
+        "详细计划": {
+          "warmup": {
+            "distance": "1 km",
+            "pace": "7:00 — 6:20/km",
+            "heartRate": "< 130 bpm"
+          },
+          "main": {
+            "distance": "3 km",
+            "pace": "6:05 — 5:40/km",
+            "heartRate": "136 — 153 bpm"
+          },
+          "cooldown": {
+            "distance": "1 km",
+            "pace": "7:00 — 6:20/km",
+            "heartRate": "< 136 bpm"
+          },
+          "notes": "专注意识跑：感受脚掌滚动和髋部发力，体会低心率下的呼吸节奏。如果心率超过153bpm，立即降低配速甚至改为快走，直到心率回落。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "warmup",
+            "targetDistanceKm": 1,
+            "pace": "7:00-6:20/km"
+          },
+          {
+            "kind": "training",
+            "targetDistanceKm": 3,
+            "pace": "6:05-5:40/km"
+          },
+          {
+            "kind": "cooldown",
+            "targetDistanceKm": 1,
+            "pace": "7:00-6:20/km"
+          }
+        ]
+      },
+      {
+        "dayIndex": 2,
+        "dayName": "周二",
+        "date": "2026-07-28",
+        "type": "休息",
+        "totalDistance": 0,
+        "paceZone": "-",
+        "hrZone": "-",
+        "description": "恢复日。零跑步，让肌肉和关节有充分时间适应昨天施加的负荷。建议进行20分钟泡沫轴放松和15分钟下肢静态拉伸。",
+        "详细计划": {
+          "warmup": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "main": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "cooldown": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "notes": "主动恢复：可进行30分钟左右日常散步。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "rest",
+            "targetDurationSeconds": 0
+          }
+        ]
+      },
+      {
+        "dayIndex": 3,
+        "dayName": "周三",
+        "date": "2026-07-29",
+        "type": "轻松跑",
+        "totalDistance": 6,
+        "paceZone": "Z2 (6:05 — 5:05/km)",
+        "hrZone": "Z1-Z2 (< 153 bpm)",
+        "description": "第二次轻松跑，比周一小幅增加1km。同样控制心率上限，不要因为体感变好而提速。这一步是为了稳步提升跑量，观察身体对连续冲击的反馈。",
+        "详细计划": {
+          "warmup": {
+            "distance": "1 km",
+            "pace": "7:00 — 6:20/km",
+            "heartRate": "< 130 bpm"
+          },
+          "main": {
+            "distance": "4 km",
+            "pace": "6:05 — 5:40/km",
+            "heartRate": "136 — 153 bpm"
+          },
+          "cooldown": {
+            "distance": "1 km",
+            "pace": "7:00 — 6:20/km",
+            "heartRate": "< 136 bpm"
+          },
+          "notes": "监测延迟性肌肉酸痛(DOMS)，如果有轻微酸痛是正常的。如果出现关节刺痛或特定点锐痛，第二天立即转为全天休息。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "warmup",
+            "targetDistanceKm": 1,
+            "pace": "7:00-6:20/km"
+          },
+          {
+            "kind": "training",
+            "targetDistanceKm": 4,
+            "pace": "6:05-5:40/km"
+          },
+          {
+            "kind": "cooldown",
+            "targetDistanceKm": 1,
+            "pace": "7:00-6:20/km"
+          }
+        ]
+      },
+      {
+        "dayIndex": 4,
+        "dayName": "周四",
+        "date": "2026-07-30",
+        "type": "休息",
+        "totalDistance": 0,
+        "paceZone": "-",
+        "hrZone": "-",
+        "description": "恢复与力量日。无跑步安排，重点在家完成基础力量训练，为后期的速度训练和LSD打好肌肉基础。",
+        "详细计划": {
+          "warmup": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "main": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "cooldown": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "notes": "建议居家力量（3组，间歇60s）：15次臀桥、12次箭步蹲（每条腿）、20次蚌式开合、30-60秒平板支撑。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "rest",
+            "targetDurationSeconds": 0
+          }
+        ]
+      },
+      {
+        "dayIndex": 5,
+        "dayName": "周五",
+        "date": "2026-07-31",
+        "type": "轻松跑",
+        "totalDistance": 6,
+        "paceZone": "Z2 (6:05 — 5:05/km)",
+        "hrZone": "Z1-Z2 (< 153 bpm)",
+        "description": "本周第三次轻松跑，继续保持在极度舒适的有氧区间。本次可在后半段尝试将配速稳定在5:40/km左右，检验心率漂移控制能力。",
+        "详细计划": {
+          "warmup": {
+            "distance": "1 km",
+            "pace": "7:00 — 6:20/km",
+            "heartRate": "< 130 bpm"
+          },
+          "main": {
+            "distance": "4 km",
+            "pace": "6:05 — 5:35/km",
+            "heartRate": "136 — 153 bpm"
+          },
+          "cooldown": {
+            "distance": "1 km",
+            "pace": "7:00 — 6:20/km",
+            "heartRate": "< 136 bpm"
+          },
+          "notes": "关注心率漂移：如果5:35/km配速下心率从140bpm逐渐升至150bpm并稳定住，是正常现象。如果一直上升至超过153bpm，说明有氧基础还很薄弱，需降回更慢的配速。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "warmup",
+            "targetDistanceKm": 1,
+            "pace": "7:00-6:20/km"
+          },
+          {
+            "kind": "training",
+            "targetDistanceKm": 4,
+            "pace": "6:05-5:35/km"
+          },
+          {
+            "kind": "cooldown",
+            "targetDistanceKm": 1,
+            "pace": "7:00-6:20/km"
+          }
+        ]
+      },
+      {
+        "dayIndex": 6,
+        "dayName": "周六",
+        "date": "2026-08-01",
+        "type": "LSD",
+        "totalDistance": 10,
+        "paceZone": "Z2 (6:05 — 5:20/km)",
+        "hrZone": "Z1-Z2 (< 153 bpm)",
+        "description": "作为本周期最长的训练，并不追求距离，而是关注长时间低强度运动中对跑姿的保持能力。作为伤后/停训后的首个长距离，10km是绝对安全边界。请务必压低心率。",
+        "详细计划": {
+          "warmup": {
+            "distance": "1.5 km",
+            "pace": "7:00 — 6:30/km",
+            "heartRate": "< 135 bpm"
+          },
+          "main": {
+            "distance": "7 km",
+            "pace": "6:05 — 5:40/km",
+            "heartRate": "136 — 153 bpm"
+          },
+          "cooldown": {
+            "distance": "1.5 km",
+            "pace": "7:00 — 6:30/km",
+            "heartRate": "< 136 bpm"
+          },
+          "notes": "补给策略预演：虽然10km通常不需补给，但可从现在开始建立习惯。跑前1小时吃半根香蕉或一片面包，跑中每3-4km抿一小口水。关注后半程步频是否还能维持在170spm以上。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "warmup",
+            "targetDistanceKm": 1.5,
+            "pace": "7:00-6:30/km"
+          },
+          {
+            "kind": "training",
+            "targetDistanceKm": 7,
+            "pace": "6:05-5:40/km"
+          },
+          {
+            "kind": "cooldown",
+            "targetDistanceKm": 1.5,
+            "pace": "7:00-6:30/km"
+          }
+        ]
+      },
+      {
+        "dayIndex": 7,
+        "dayName": "周日",
+        "date": "2026-08-02",
+        "type": "休息",
+        "totalDistance": 0,
+        "paceZone": "-",
+        "hrZone": "-",
+        "description": "完全休息。总结本周身体感受，检查是否有持续疼痛点。为下周加量做好准备。本周总跑量控制在27km，成功完成后下周可冲击35km。",
+        "详细计划": {
+          "warmup": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "main": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "cooldown": {
+            "distance": "0",
+            "pace": "",
+            "heartRate": ""
+          },
+          "notes": "心理放松：保持积极心态，相信科学训练的长期主义。"
+        },
+        "workoutSteps": [
+          {
+            "kind": "rest",
+            "targetDurationSeconds": 0
+          }
+        ]
+      }
+    ],
+    "coachAdvice": "你正站在一个非常关键的节点上：潜力巨大，但连续性是短板。我们还有19周的时间，完全足够从零重建一个强大的有氧引擎去征服3:30。但请记住，首马训练不是百米冲刺，而是系统性的工程搭建。\n\n这一周，请你务必收起那颗看到4:19/km配速就热血沸腾的心。在所有跑步时段里，你的唯一目标是把心率死死压在153bpm以下。你会觉得5:50/km甚至6:20/km的配速慢得离谱，感觉不像在训练——这正是关键所在。这就是“有价值”的训练。这种低强度会在不消耗你身体修复资源的情况下，刺激线粒体生长和心肌肥大，为后面15周的高强度训练铺路。\n\n下周开始，我们将在每周三加入少量的“跨步跑”来唤醒速度神经；周末的LSD也将逐步推进到15km。做好身体重启的第一步，期待你的第一次训练数据反馈！"
+  }
+}
