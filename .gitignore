@@ -2,3 +2,4 @@ coros.config.json
 data/tcx/
 data/.crs-token/
 data/push-logs/
+node_modules

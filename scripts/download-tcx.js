@@ -1,15 +1,21 @@
 #!/usr/bin/env node
+/**
+ * download-fit.js — 通过 MCP 获取 FIT 文件下载地址并下载
+ *
+ * 读取 daily JSON 中的 sportRecords，对每条跑步记录调用
+ * coros-mcp 的 queryActivityFitFileDownloadUrls 工具获取下载 URL，
+ * 保存到 data/fit/{labelId}.fit。
+ */
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { CorosApi, downloadFile, isDirectory, isFile } from "@nyt87/crs-connect";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data", "daily");
-const TCX_DIR = path.join(PROJECT_ROOT, "data", "tcx");
-const TOKEN_DIR = path.join(PROJECT_ROOT, "data", ".crs-token");
-const ASIA_API_URL = "https://teamcnapi.coros.com";
+const FIT_DIR = path.join(PROJECT_ROOT, "data", "fit");
+const TOKEN_FILE = path.join(process.env.HOME, ".coros-mcp-skill-gateway-ts", "cn", "token.json");
+const ISSUER = "https://mcpcn.coros.com";
 
 function parseArgs() {
   const args = process.argv.slice(2);
@@ -96,103 +102,109 @@ function updateDailyJson(sourceFile, labelId, tcxRelPath) {
   }
 }
 
-function loadCredentials() {
-  const envEmail = process.env.COROS_EMAIL;
-  const envPass = process.env.COROS_PASSWORD;
-  if (envEmail && envPass) return { email: envEmail, password: envPass };
-
-  const configPath = path.join(PROJECT_ROOT, "coros.config.json");
-  if (isFile(configPath)) {
-    return JSON.parse(readFileSync(configPath, "utf-8"));
+// ============================================================
+// MCP 直连调用（与 fetch.js 的 directMcpCall 一致）
+// ============================================================
+async function mcpCall(toolName, args) {
+  if (!existsSync(TOKEN_FILE)) {
+    return { status: "error", labelId: "", error: `MCP token not found at ${TOKEN_FILE}` };
   }
+  const tokenData = JSON.parse(readFileSync(TOKEN_FILE, "utf-8"));
+  const mcpUrl = `${ISSUER}/mcp`;
+  const headers = {
+    "Content-Type": "application/json",
+    "Accept": "application/json, text/event-stream",
+    Authorization: "Bearer " + tokenData.access_token,
+  };
 
-  console.error("  [FATAL] No credentials found. Set COROS_EMAIL/COROS_PASSWORD or create coros.config.json");
-  process.exit(1);
-}
-
-async function initClient() {
-  const credentials = loadCredentials();
-  const coros = new CorosApi(credentials);
-  coros.config({ apiUrl: ASIA_API_URL });
-
-  const tokenOk = isDirectory(TOKEN_DIR);
-  if (tokenOk) {
+  for (let attempt = 1; attempt <= 3; attempt++) {
     try {
-      coros.loadTokenByFile(TOKEN_DIR);
-      console.log("  Token loaded from cache");
-    } catch {
-      console.log("  No cached token, will login...");
-    }
-  }
+      // Initialize
+      const initRes = await fetch(mcpUrl, {
+        method: "POST", headers,
+        body: JSON.stringify({ jsonrpc: "2.0", id: 1, method: "initialize",
+          params: { protocolVersion: "2025-06-18", capabilities: {}, clientInfo: { name: "download-fit", version: "1.0" } },
+        }),
+      });
+      if (!initRes.ok) { console.error(`  [WARN] MCP init failed: ${initRes.status}`); continue; }
+      await initRes.text();
 
-  if (!coros._accessToken) {
-    console.log("  Logging in...");
-    try {
-      await coros.login();
-      mkdirSync(TOKEN_DIR, { recursive: true });
-      coros.exportTokenToFile(TOKEN_DIR);
-      console.log("  Login OK, token cached");
+      // Notify
+      await fetch(mcpUrl, { method: "POST", headers,
+        body: JSON.stringify({ jsonrpc: "2.0", method: "notifications/initialized" }),
+      });
+
+      // Call tool
+      const callRes = await fetch(mcpUrl, {
+        method: "POST", headers,
+        body: JSON.stringify({ jsonrpc: "2.0", id: 2, method: "tools/call",
+          params: { name: toolName, arguments: args },
+        }),
+      });
+      const text = await callRes.text();
+      let json;
+      try { json = JSON.parse(text); } catch { continue; }
+      if (json.error) { console.error(`  [WARN] MCP error: ${json.error.message}`); continue; }
+      return json.result;
     } catch (e) {
-      console.error(`  [FATAL] Login failed: ${e.message}`);
-      process.exit(1);
+      if (attempt < 3) console.error(`  [WARN] MCP call failed, retrying (${attempt}/3): ${e.message}`);
+      else return { error: e.message };
     }
   }
-
-  return coros;
+  return { error: "MCP call failed after 3 attempts" };
 }
 
-async function fetchUrl(coros, activity, retried) {
-  try {
-    return await coros.getActivityDownloadFile({
-      activityId: activity.labelId,
-      fileType: "tcx",
-      sportType: activity.sportType,
-    });
-  } catch (e) {
-    if (!retried && e.message.includes("1019")) {
-      console.log(`  Token expired, re-logging in...`);
-      await coros.login();
-      mkdirSync(TOKEN_DIR, { recursive: true });
-      coros.exportTokenToFile(TOKEN_DIR);
-      return fetchUrl(coros, activity, true);
-    }
-    throw e;
-  }
-}
+async function downloadFIT(activity, force) {
+  const fitPath = path.join(FIT_DIR, `${activity.labelId}.fit`);
 
-async function downloadTcx(coros, activity, force) {
-  const tcxPath = path.join(TCX_DIR, `${activity.labelId}.tcx`);
-
-  if (!force && existsSync(tcxPath)) {
+  if (!force && existsSync(fitPath)) {
     return { status: "skipped", labelId: activity.labelId };
   }
 
   const logPrefix = `  [${activity.labelId.slice(0, 6)}..]`;
-  console.log(`${logPrefix} Fetching download URL...`);
+  console.log(`${logPrefix} Getting FIT download URL via MCP...`);
 
-  let url;
+  let result;
   try {
-    url = await fetchUrl(coros, activity, false);
+    result = await mcpCall("queryActivityFitFileDownloadUrls", {
+      labelId: activity.labelId,
+      sportType: parseInt(activity.sportType),
+    });
   } catch (e) {
-    return { status: "error", labelId: activity.labelId, error: `get URL failed: ${e.message}` };
+    return { status: "error", labelId: activity.labelId, error: `MCP call failed: ${e.message}` };
   }
 
-  if (!url) {
-    return { status: "error", labelId: activity.labelId, error: "empty URL" };
+  if (result.error) {
+    return { status: "error", labelId: activity.labelId, error: result.error };
   }
 
-  console.log(`${logPrefix} Downloading...`);
+  // Extract URL from MCP result (may be direct text or content array)
+  let url = null;
+  if (typeof result === "string") {
+    url = result.trim();
+  } else if (result.content?.[0]?.text) {
+    url = result.content[0].text.trim();
+  } else if (Array.isArray(result)) {
+    url = result[0]?.url || result[0];
+  }
+
+  if (!url || url === "[]") {
+    return { status: "error", labelId: activity.labelId, error: "no download URL returned" };
+  }
+
+  console.log(`${logPrefix} Downloading FIT...`);
   try {
-    mkdirSync(TCX_DIR, { recursive: true });
-    await downloadFile({ filePath: tcxPath, fileUrl: url });
+    mkdirSync(FIT_DIR, { recursive: true });
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+    const buf = Buffer.from(await resp.arrayBuffer());
+    writeFileSync(fitPath, buf);
   } catch (e) {
     return { status: "error", labelId: activity.labelId, error: `download failed: ${e.message}` };
   }
 
-  const relPath = path.relative(PROJECT_ROOT, tcxPath);
-  updateDailyJson(activity.sourceFile, activity.labelId, relPath);
-
-  const size = existsSync(tcxPath) ? ` (${(readFileSync(tcxPath).length / 1024).toFixed(0)} KB)` : "";
+  const relPath = path.relative(PROJECT_ROOT, fitPath);
+  const size = existsSync(fitPath) ? ` (${(readFileSync(fitPath).length / 1024).toFixed(0)} KB)` : "";
   console.log(`${logPrefix} Downloaded to ${relPath}${size}`);
   return { status: "downloaded", labelId: activity.labelId, path: relPath };
 }
@@ -207,7 +219,7 @@ async function main() {
     process.exit(1);
   }
 
-  mkdirSync(TCX_DIR, { recursive: true });
+  mkdirSync(FIT_DIR, { recursive: true });
 
   console.log("Collecting activities...");
   let activities;
@@ -236,24 +248,24 @@ async function main() {
   if (args.check) {
     console.log("\nActivities to process:");
     for (const a of unique) {
-      const exists = existsSync(path.join(TCX_DIR, `${a.labelId}.tcx`));
+      const exists = existsSync(path.join(FIT_DIR, `${a.labelId}.fit`));
       console.log(`  ${a.labelId} (type: ${a.sportType}) ${exists ? "[already exists]" : ""}`);
     }
     console.log(`\nTotal: ${unique.length} activities`);
     return;
   }
 
-  console.log("\nInitializing Coros client...");
-  const coros = await initClient();
-
+  console.log(`\nDownloading FIT files via MCP...`);
   let downloaded = 0, skipped = 0, errors = 0;
   for (const activity of unique) {
-    const result = await downloadTcx(coros, activity, args.force);
+    const result = await downloadFIT(activity, args.force);
     if (result.status === "downloaded") downloaded++;
     else if (result.status === "skipped") skipped++;
     else {
       errors++;
-      console.error(`  [ERROR] ${result.labelId}: ${result.error}`);
+      if (result.error && !result.error.startsWith("no download URL")) {
+        console.error(`  [ERROR] ${result.labelId}: ${result.error}`);
+      }
     }
   }
 

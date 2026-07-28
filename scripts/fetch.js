@@ -3,13 +3,13 @@ import { execSync } from "node:child_process";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { analyzeTCX } from "./tcx-analyzer.js";
+import { analyzeFIT } from "./fit-analyzer.js";
 import { fetchWeather } from "../lib/weather.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
 const DATA_DIR = path.join(PROJECT_ROOT, "data", "daily");
-const TCX_DIR = path.join(PROJECT_ROOT, "data", "tcx");
+const FIT_DIR = path.join(PROJECT_ROOT, "data", "fit");
 const ISSUER = "https://mcpcn.coros.com";
 const TIMEZONE = "Asia/Shanghai";
 
@@ -361,17 +361,17 @@ function saveDailyData(today, data) {
   return outPath;
 }
 
-function downloadTCXFiles(dateStr) {
+function downloadFITFiles(dateStr) {
   try {
     const cmd = `node "${path.join(__dirname, "download-tcx.js")}" --date ${dateStr}`;
     execSync(cmd, { encoding: "utf-8", timeout: 120000, stdio: "pipe" });
-    console.log("  TCX download complete.");
+    console.log("  FIT download complete.");
   } catch (e) {
-    console.error(`  [WARN] TCX download failed: ${e.message.split("\n")[0]}`);
+    console.error(`  [WARN] FIT download failed: ${e.message.split("\n")[0]}`);
   }
 }
 
-function enrichWithTCX(data) {
+function enrichWithFIT(data) {
   const details = data.activityDetails || [];
   if (details.length === 0) return;
 
@@ -381,25 +381,25 @@ function enrichWithTCX(data) {
 
   for (const detail of details) {
     if (!detail.labelId || detail.tcxMetrics) continue;
-    const tcxPath = path.join(TCX_DIR, `${detail.labelId}.tcx`);
-    if (existsSync(tcxPath)) {
-      const metrics = analyzeTCX(tcxPath, maxHR);
+    const fitPath = path.join(FIT_DIR, `${detail.labelId}.fit`);
+    if (existsSync(fitPath)) {
+      const metrics = analyzeFIT(fitPath, maxHR);
       if (metrics) {
         detail.tcxMetrics = metrics;
         enriched++;
       }
     }
   }
-  console.log(`  TCX enriched: ${enriched}/${details.length} activities`);
+  console.log(`  FIT enriched: ${enriched}/${details.length} activities`);
 }
 
 /**
- * Reconcile activityDetails from TCX files.
- * For sportRecords that have a TCX file but no activityDetail entry,
- * parse the TCX to create one. This fixes cases where getActivityDetail
- * failed (e.g., old activities that synced late) while TCX was downloaded.
+ * Reconcile activityDetails from FIT files.
+ * For sportRecords that have a FIT file but no activityDetail entry,
+ * parse the FIT to create one. This fixes cases where getActivityDetail
+ * failed (e.g., old activities that synced late) while FIT was downloaded.
  */
-function reconcileFromTCX(data) {
+function reconcileFromFIT(data) {
   const records = data.sportRecords || [];
   const details = data.activityDetails || [];
   const existingLabelIds = new Set(details.map(d => d.labelId));
@@ -409,10 +409,10 @@ function reconcileFromTCX(data) {
 
   for (const record of records) {
     if (!record.labelId || existingLabelIds.has(record.labelId)) continue;
-    const tcxPath = path.join(TCX_DIR, `${record.labelId}.tcx`);
-    if (!existsSync(tcxPath)) continue;
+    const fitPath = path.join(FIT_DIR, `${record.labelId}.fit`);
+    if (!existsSync(fitPath)) continue;
 
-    const metrics = analyzeTCX(tcxPath, maxHR);
+    const metrics = analyzeFIT(fitPath, maxHR);
     if (!metrics) continue;
 
     // Parse duration (HH:MM:SS or MM:SS) into workoutTime
@@ -451,7 +451,7 @@ function reconcileFromTCX(data) {
     created++;
   }
 
-  if (created > 0) console.log(`  TCX reconciled: ${created} activities (sportRecord → activityDetail via TCX)`);
+  if (created > 0) console.log(`  FIT reconciled: ${created} activities (sportRecord → activityDetail via FIT)`);
 }
 
 async function enrichWithWeather(data) {
@@ -524,7 +524,7 @@ function mergeWithExisting(today, fresh) {
     }
   }
 
-  // Preserve any TCX/weather enrichment that was done previously
+  // Preserve any FIT/weather enrichment that was done previously
   for (const existingDetail of existing.activityDetails || []) {
     const match = merged_.activityDetails.find(d => d.labelId === existingDetail.labelId);
     if (match && existingDetail.tcxMetrics && !match.tcxMetrics) {
@@ -612,11 +612,11 @@ async function fetchAll(dateStr) {
   console.log(`  Training load days: ${merged.trainingLoad.length}`);
   console.log(`  Schedule entries: ${merged.trainingSchedule.length}`);
 
-  // Download TCX files & enrich (using merged data)
-  console.log("\nDownloading TCX files...");
-  downloadTCXFiles(today);
-  enrichWithTCX(merged);
-  reconcileFromTCX(merged);
+  // Download FIT files & enrich (using merged data)
+  console.log("\nDownloading FIT files...");
+  downloadFITFiles(today);
+  enrichWithFIT(merged);
+  reconcileFromFIT(merged);
   await enrichWithWeather(merged);
   saveDailyData(today, merged);
 
@@ -703,13 +703,13 @@ async function fetchIncremental(dateStr) {
 
   existing.fetchedAt = new Date().toISOString();
 
-  // Download new TCX files & enrich
+  // Download new FIT files & enrich
   if (newDetailCount > 0) {
-    console.log("\nDownloading new TCX files...");
-    downloadTCXFiles(today);
+    console.log("\nDownloading new FIT files...");
+    downloadFITFiles(today);
   }
-  enrichWithTCX(existing);
-  reconcileFromTCX(existing);
+  enrichWithFIT(existing);
+  reconcileFromFIT(existing);
   await enrichWithWeather(existing);
   saveDailyData(today, existing);
 

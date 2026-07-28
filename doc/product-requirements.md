@@ -52,33 +52,33 @@
 
 **增量策略**：同一天内首次运行全量拉取，后续仅刷新 sportRecords + activityDetails，其余数据复用。支持 `--full` 强制全量刷新。
 
-**数据完整性修复**：`reconcileFromTCX()` 自动比对 sportRecords 与 activityDetails，对有 TCX 文件但缺失 activityDetail 的记录，通过 TCX 解析补全数据。
+**数据完整性修复**：`reconcileFromFIT()` 自动比对 sportRecords 与 activityDetails，对有 FIT 文件但缺失 activityDetail 的记录，通过 FIT 解析补全数据。
 
 **验收标准**：
 - 单次运行采集全部 10 项数据，输出 JSON 可被下游脚本正确解析
 - 支持 `--date` 参数指定日期
 - 单项采集失败时输出 WARN 但不中断整体流程
-- 缺失的 activityDetails 自动通过 TCX 补全
+- 缺失的 activityDetails 自动通过 FIT 补全
 
-### F2. TCX 文件下载（download-tcx.js）
+### F2. FIT 文件下载（download-tcx.js）
 
-**描述**：通过 crs-connect SDK 从高驰 API 下载 TCX 格式运动文件，供高级分析使用。
+**描述**：通过 npm `coros-mcp` 的 MCP 工具 `queryActivityFitFileDownloadUrls` 获取 FIT 下载地址并下载，供高级分析使用。
 
 **输入**：日期 / 全部 / 指定 labelId
 
-**输出**：`data/tcx/{labelId}.tcx`
+**输出**：`data/fit/{labelId}.fit`
 
 **验收标准**：
-- 支持增量下载（已存在的 TCX 跳过）
+- 支持增量下载（已存在的 FIT 跳过）
 - 支持 `--force` 强制重新下载
-- Token 过期自动重登
-- 下载后回写 `tcxPath` 到 daily JSON
+- MCP token 过期自动重试
+- 解析后写入 `tcxMetrics`（与旧 TCX 保持相同字段名）
 
-### F3. TCX 高级分析 + LLM 深度复盘（analyze.js）
+### F3. FIT 高级分析 + LLM 深度复盘（analyze.js）
 
-**描述**：解析 TCX 逐点数据，计算高级指标，调用 LLM 生成深度复盘与训练计划。
+**描述**：通过 `fit-analyzer.js` 解析 FIT 逐点数据，计算高级指标（与之前 `tcx-analyzer.js` 完全对齐），调用 LLM 生成深度复盘与训练计划。
 
-**TCX 高级指标**：（保留在 daily JSON 中供报告图表使用，LLM 上下文中已压缩为 `tcxSummary` 文本摘要以降低 token 消耗）
+**FIT 高级指标**：（保留在 daily JSON 中供报告图表使用，LLM 上下文中已压缩为 `tcxSummary` 文本摘要以降低 token 消耗）
 
 | 指标 | 说明 |
 |------|------|

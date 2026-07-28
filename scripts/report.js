@@ -8,7 +8,7 @@ import { calcPaceZones, calcHRZones, classifyPace, classifyHR, ZONE_LABELS } fro
 import { calcWkg, estimateFTP, classifyPowerZone, calcPowerZones, POWER_ZONE_DEFS } from "../lib/power-utils.js";
 import { assessRecovery } from "../lib/recovery.js";
 import { PHASE_TEMPLATES } from "../lib/training-templates.js";
-import { parseTCX } from "./tcx-analyzer.js";
+import { parseFIT } from "./fit-analyzer.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PROJECT_ROOT = path.resolve(__dirname, "..");
@@ -349,10 +349,10 @@ function generateHTML(data, aiAnalysis) {
   let secData = [];
   const latestActivity = details[0];
   if (latestActivity?.labelId) {
-    const tcxPath = path.join(PROJECT_ROOT, "data", "tcx", `${latestActivity.labelId}.tcx`);
-    if (existsSync(tcxPath)) {
+    const fitPath = path.join(PROJECT_ROOT, "data", "fit", `${latestActivity.labelId}.fit`);
+    if (existsSync(fitPath)) {
       try {
-        const tps = parseTCX(tcxPath);
+        const { trackpoints: tps } = parseFIT(fitPath);
         // Filter valid trackpoints, then sort by time (TCX may have out-of-order data)
         const validTps = tps
           .filter(tp => tp.speed > 0 && tp.hr > 0)

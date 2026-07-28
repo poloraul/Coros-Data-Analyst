@@ -70,17 +70,17 @@ Coros MCP Server ──callTool()──> 文本输出 ──parse*()──> 结�
 
 **数据完整性修复**：`reconcileFromTCX()` 遍历 sportRecords，对有 TCX 文件但无 activityDetail 的记录，通过 TCX 解析自动补全 activityDetails（含 tcxMetrics）。这解决了部分活动因事后同步到 COROS API 导致 getActivityDetail 调用失败的问题。
 
-**增量策略**：同一天内首次运行执行全量拉取（10 个 MCP 调用 + TCX 下载解析），后续运行仅刷新 sportRecords + activityDetails（2 个 MCP 调用），其余数据（userInfo、fitness、hrv、sleep、recovery、trainingLoad、schedule）从已有文件复用。按 labelId 去重合并。新增活动自动下载 TCX 并解析。`--full` 参数强制全量刷新。
+**增量策略**：同一天内首次运行执行全量拉取（10 个 MCP 调用 + FIT 下载解析），后续运行仅刷新 sportRecords + activityDetails（2 个 MCP 调用），其余数据（userInfo、fitness、hrv、sleep、recovery、trainingLoad、schedule）从已有文件复用。按 labelId 去重合并。新增活动自动下载 FIT 并解析。`--full` 参数强制全量刷新。
 
-### 2.2 下载阶段（download-tcx.js）
+### 2.2 下载阶段（download-tcx.js → download-fit.js）
 
 ```
-daily JSON ──> 提取 labelId+sportType ──> crs-connect API ──> TCX 文件
+daily JSON ──> 提取 labelId+sportType ──> MCP queryActivityFitFileDownloadUrls ──> FIT 文件
 ```
 
-从 daily JSON 的 sportRecords 中提取活动标识，通过 `@nyt87/crs-connect` SDK 的 `getActivityDownloadFile` + `downloadFile` 下载 TCX。下载成功后回写 `tcxPath` 到 daily JSON。
+从 daily JSON 的 sportRecords 中提取活动标识，通过 npm `coros-mcp` 的 MCP 工具 `queryActivityFitFileDownloadUrls` 获取下载 URL，下载 FIT 格式文件到 `data/fit/{labelId}.fit`。然后通过 `fit-analyzer.js` 解析为结构化指标（kmSplits/hrDrift/hrZones/paceCV/cadence/elevation），存入 `tcxMetrics` 字段。
 
-**注意**：download-tcx.js 同时被 fetch.js 作为子进程调用，也可独立运行（手动下载/`--force` 重下载）。
+**注意**：download-tcx.js 同时被 fetch.js 作为子进程调用，也可独立运行（`--check` 预览/`--force` 重下载）。
 
 ### 2.3 分析阶段（analyze.js）
 
@@ -321,7 +321,9 @@ Trackpoint: { hr, distanceMeters, time, cadence, altitudeMeters, speed, lat, lon
 | @anthropic-ai/sdk | Anthropic Claude API 调用 | ^0.97.1 |
 | openai | OpenAI / DeepSeek / Qianfan API 调用（兼容接口） | ^6.38.0 |
 | chart.js | HTML 报告图表渲染（本地加载） | 4.4.7 |
-| @nyt87/crs-connect | 高驰 API 登录与文件下载 | - |
+| coros-mcp（npm） | COROS MCP 协议：数据采集 + FIT 下载 | `/opt/homebrew/bin/coros-mcp` |
+| coros-training-mcp（Python） | COROS Training Hub API：训练计划创建与排程 | `~/.local/bin/coros-mcp`（uv tool install） |
+| fit-file-parser | FIT 文件解析（Garmin 格式） | `npm install fit-file-parser` |
 | coros-mcp | 高驰 MCP Server CLI（数据采集） | - |
 
 ## 7. 配置管理

@@ -22,8 +22,8 @@
 |------|------|------|
 | 数据采集 | ✅ | 10 项 Coros MCP 数据采集 + 文本解析 |
 | 数据增量获取 | ✅ | 同天二次运行仅刷新运动记录，其余数据复用 |
-| TCX 下载 | ✅ | crs-connect SDK 登录下载，Token 缓存，增量更新 |
-| TCX 基础分析 | ✅ | 分段/漂移/心率分区/步频/海拔 |
+| FIT 下载（MCP） | ✅ | npm coros-mcp 的 queryActivityFitFileDownloadUrls，增量更新 |
+| FIT 基础分析 | ✅ | fit-analyzer.js 解析，分段/漂移/心率分区/步频/海拔（与旧 TCX 对齐） |
 | LLM 深度复盘 | ✅ | 多 provider 支持（deepseek/anthropic/openai/qianfan） |
 | LLM 分析去重 | ✅ | 数据未变时跳过 LLM 调用，--force 强制重新分析 |
 | LLM 备用切换 | ✅ | 主 LLM 限流自动切换 fallback |
@@ -263,7 +263,7 @@
 | fetch.js MCP 调用方式 | 通过 `execSync` 调用 `coros-mcp` CLI，效率低且阻塞 | 评估 MCP SDK 直连可能性 |
 | report.js 内嵌大段 HTML | 模板与逻辑混在一起，维护困难 | 考虑模板引擎或组件化 |
 | 无测试覆盖 | 核心计算逻辑（配速换算、HR 分区等）没有单元测试 | 为 lib/ 添加测试 |
-| TCX 解析使用正则 | 大 XML 用正则解析不够健壮 | 考虑 XML parser |
+| ~~TCX 解析使用正则~~ | ✅ 已解决（改用 fit-file-parser 解析二进制 FIT，替换正则解析 TCX XML） |
 | ~~PHASES 常量重复定义~~ | ✅ 已解决（统一在 lib/training-constants.js） |
 | ~~Chart.js CDN 依赖~~ | ✅ 已解决（本地化到 reports/chart.min.js） |
 

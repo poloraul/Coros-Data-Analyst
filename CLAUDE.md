@@ -61,11 +61,10 @@ Coros Data Analyst — 基于高驰 MCP 数据的训练自动复盘与计划系�
 
 ## 数据存储
 
-- `data/daily/YYYYMMDD.json` — 每日概览（活动摘要 + 健康数据 + TCX 高级指标）
+- `data/daily/YYYYMMDD.json` — 每日概览（活动摘要 + 健康数据 + FIT 高级指标）
 - `data/daily/YYYYMMDD-analysis.json` — LLM 分析结果（复盘 + 训练计划）
-- `data/tcx/{labelId}.tcx` — TCX 运动文件（GPS 轨迹 + 逐点心率）
-- `data/.crs-token/` — crs-connect 认证令牌（自动管理）
-- `coros.config.json` — crs-connect 凭据 + LLM 配置（不提交到 git）
+- `data/fit/{labelId}.fit` — FIT 运动文件（GPS 轨迹 + 逐点心率）
+- `coros.config.json` — LLM 配置（不提交到 git）
 
 ## 设计文档同步
 
