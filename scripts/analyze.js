@@ -448,6 +448,22 @@ function summarizeTcxMetrics(metrics, avgStrideLength, totalDistance) {
     parts.push(`CV${metrics.paceCV.cvPct}%(${metrics.paceCV.evaluation})`);
   }
 
+  // Pace drift (midpoint-based)
+  if (metrics.paceDrift) {
+    parts.push(`配速漂移${metrics.paceDrift.firstHalfPace}→${metrics.paceDrift.secondHalfPace}(${metrics.paceDrift.driftPct}%)`);
+  }
+
+  // Max HR from FIT session
+  if (metrics.maxHR) {
+    parts.push(`HRmax${metrics.maxHR}`);
+  }
+
+  // Lap summary
+  if (metrics.lapSummaries && metrics.lapSummaries.length > 1) {
+    const maxHRLaps = metrics.lapSummaries.filter(l => l.maxHR).length;
+    parts.push(`${metrics.lapSummaries.length}圈${maxHRLaps > 0 ? `(HR峰值${maxHRLaps}圈)` : ""}`);
+  }
+
   // HR drift
   if (metrics.hrDrift) {
     parts.push(`HR${metrics.hrDrift.avgHRFirst}→${metrics.hrDrift.avgHRLast}漂移${metrics.hrDrift.driftPct}%`);
@@ -461,14 +477,28 @@ function summarizeTcxMetrics(metrics, avgStrideLength, totalDistance) {
     }
   }
 
-  // Cadence
+  // Cadence (now includes mid-range 170-180%)
   if (metrics.cadence) {
-    parts.push(`步频${metrics.cadence.avgCadence}(>180:${metrics.cadence.pctAbove180}%)`);
+    const cadStr = `步频${metrics.cadence.avgCadence}`;
+    const midStr = metrics.cadence.pct170to180 != null ? `(170-180:${metrics.cadence.pct170to180}% >180:${metrics.cadence.pctAbove180}%)` : `(>180:${metrics.cadence.pctAbove180}%)`;
+    parts.push(cadStr + midStr);
   }
 
-  // Elevation (only when significant)
+  // Elevation (enhanced with net and avg)
   if (metrics.elevation && metrics.elevation.totalGain > 20) {
-    parts.push(`爬升+${metrics.elevation.totalGain}m`);
+    let elevStr = `爬升+${metrics.elevation.totalGain}m`;
+    if (metrics.elevation.net != null) {
+      elevStr += `净${metrics.elevation.net > 0 ? "+" : ""}${metrics.elevation.net}m`;
+    }
+    if (metrics.elevation.avgAlt) {
+      elevStr += `均${metrics.elevation.avgAlt}m`;
+    }
+    parts.push(elevStr);
+  }
+
+  // Average temperature (if available from FIT wrist sensor)
+  if (metrics.avgTemp != null) {
+    parts.push(`腕温${metrics.avgTemp}°C`);
   }
 
   // Running economy: stride length × cadence (from MCP data)

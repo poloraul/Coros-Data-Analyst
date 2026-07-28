@@ -78,7 +78,20 @@ Coros MCP Server ──callTool()──> 文本输出 ──parse*()──> 结�
 daily JSON ──> 提取 labelId+sportType ──> MCP queryActivityFitFileDownloadUrls ──> FIT 文件
 ```
 
-从 daily JSON 的 sportRecords 中提取活动标识，通过 npm `coros-mcp` 的 MCP 工具 `queryActivityFitFileDownloadUrls` 获取下载 URL，下载 FIT 格式文件到 `data/fit/{labelId}.fit`。然后通过 `fit-analyzer.js` 解析为结构化指标（kmSplits/hrDrift/hrZones/paceCV/cadence/elevation），存入 `tcxMetrics` 字段。
+从 daily JSON 的 sportRecords 中提取活动标识，通过 npm `coros-mcp` 的 MCP 工具 `queryActivityFitFileDownloadUrls` 获取下载 URL，下载 FIT 格式文件到 `data/fit/{labelId}.fit`。然后通过 `fit-analyzer.js` 解析为结构化指标，存入 `activityDetails[].tcxMetrics` 字段。
+
+**FIT 提取的完整指标集**（2026-07-28 新增补充字段）：
+- `kmSplits[]` — 每公里分段（配速、心率、步频）
+- `hrDrift` — 心率漂移（前1/3 vs 后1/3 平均心率对比）
+- `hrZones` — 心率区间 Z1-Z5 时间分布（基于 maxHR）
+- `paceCV` — 配速变异系数（含 CV% + 评估等级）
+- **`paceDrift`** — 中点配速漂移（前半程 vs 后半程平均配速对比）
+- `cadence` — 步频分析（均值、标准差、<170、**170-180**、>180 三段百分比）
+- `elevation` — 海拔分析（累计上升/下降、**净海拔、平均海拔**、最高/最低）
+- **`lapSummaries[]`** — 每圈摘要（距离/时间/配速/平均HR/最大HR/步频/功率/触发方式）
+- **`maxHR`** — FIT Session 记录的最大心率
+- **`gpsTrackpoints[]`** — 逐点 GPS 坐标（纬度/经度/距离/海拔）
+- **`avgTemp`** — 腕表平均温度（若手表支持）
 
 **注意**：download-tcx.js 同时被 fetch.js 作为子进程调用，也可独立运行（`--check` 预览/`--force` 重下载）。
 
@@ -175,9 +188,9 @@ analysis JSON ──> AI 分析数据 ──> 配速区间自动推导 ──> �
 
 | 文件 | 职责 | 输入 | 输出 |
 |------|------|------|------|
-| fetch.js | 数据采集 + TCX 下载/解析 + 数据修复（增量/全量） | --date, --full | data/daily/YYYYMMDD.json（含 tcxMetrics） |
-| download-tcx.js | TCX 文件下载（独立运行或被 fetch.js 调用） | --date, --all, --force, --labelId | data/tcx/*.tcx |
-| tcx-analyzer.js | TCX 解析与指标计算 | TCX 文件路径, maxHR | kmSplits/hrDrift/hrZones/paceCV/cadence/elevation |
+| fetch.js | 数据采集 + FIT 下载/解析 + 数据修复（增量/全量） | --date, --full | data/daily/YYYYMMDD.json（含 tcxMetrics） |
+| download-tcx.js | FIT 文件下载（独立运行或被 fetch.js 调用） | --date, --all, --force, --labelId | data/fit/*.fit |
+| fit-analyzer.js | FIT 二进制解析与高级指标计算 | FIT 文件路径, maxHR | kmSplits/hrDrift/hrZones/paceCV/paceDrift/cadence/elevation/lapSummaries/maxHR/gpsTrackpoints/avgTemp |
 | analyze.js | LLM 深度复盘 + 训练计划（去重，Token 优化） | --date, --force, --provider | data/daily/YYYYMMDD-analysis.json |
 | validate.js | 数据一致性检查（无 LLM） | --date | JSON: { issues[], hasIssues, summary } |
 | **push-plan.py** | **AI 训练计划推送到 COROS 手表日历（直接调用 coros_api）** | **--date, --confirm** | **data/push-logs/*.json** |
@@ -258,7 +271,7 @@ analysis JSON ──> AI 分析数据 ──> 配速区间自动推导 ──> �
 - `paceZones` 和 `hrZones` 已压缩（移除 color/short/pctOfThreshold/hrRangeShort），仅保留 key/name/range
 - `holidays.upcomingNext4Weeks` 仅包含未来 4 周的节假日（而非全量至年底）
 - 已移除 `upcomingRace`（过期硬编码字段）
-- `workouts[].tcxSummary` 为压缩文本摘要（格式：`P=309s→302s 负分段加速 CV8.9%(fair); HR134→162漂移20.8%; Z:Z1-2 9% Z3-4 77% Z5 14% (主Z4); 步频176(>180:17%)`）
+- `workouts[].tcxSummary` 为压缩文本摘要（格式：`配速漂移4:55→5:00(+1.7%); HRmax169; 3圈(HR峰值3圈); HR120→129漂移7.5%; Z:Z1-2 53% Z3-4 47% Z5 0% (主Z2); 步频170(170-180:47% >180:7%); 爬升+4m净+1m均8m; 腕温32.5°C`）
 - `workouts[].kmSplitSummary`（2026-06-18 新增）为逐公里配速+心率压缩文本，用于 LLM 训练阶段识别（热身/主训练/冷身）和训练模式分类（轻松跑/阈值跑/间歇跑/LSD 等）
 - `workoutReviews[].trainingType` 和 `workoutReviews[].phaseBreakdown`（2026-06-18 新增）为 LLM 分析新增的输出字段，`report.js` 可选渲染
 

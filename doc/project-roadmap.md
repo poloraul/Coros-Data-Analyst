@@ -157,6 +157,31 @@
 | `doc/product-requirements.md` | F8.1-F8.4 更新：F8.2 workoutSteps 结构化输出，F8.3 规则引擎回退 |
 | `doc/system-design.md` | §2.5 数据流图改为双路径，新增 workoutSteps 优先说明 |
 
+### 2026-07-28 FIT 文件数据增强：GPS、每圈摘要、配速漂移、步频中段、最大心率、腕表温度
+
+**背景**：FIT 文件解析仅提取 6 个基础指标（kmSplits/hrDrift/hrZones/paceCV/cadence/elevation），FIT 二进制中丰富的额外字段未被利用。同时旧 TCX 解析器中的中点配速漂移、完整步频分布（含 170-180 中段）等功能未移植到 FIT 管道。
+
+**改动**：
+
+| 文件 | 改动 |
+|------|------|
+| `scripts/fit-analyzer.js` | 提取 GPS 坐标（position_lat/long → 十进制度数）；新增 `computeLapSummaries()`（每圈距离/时间/配速/平均HR/最大HR/步频/功率）；新增 `computePaceDrift()`（中点配速漂移，从 TCX 移植）；`computeCadenceAnalysis()` 新增 pct170to180 中间段；`computeElevation()` 新增 net/avgAlt；`analyzeFIT()` 新增 sessionMaxHR、avgTemp、gpsTrackpoints 输出 |
+| `scripts/analyze.js` | `summarizeTcxMetrics()` 新增配速漂移、最大心率、每圈数、步频中段分布、净海拔、腕温到 tcxSummary |
+| `scripts/report.js` | 心率卡片新增最大心率显示；新增可折叠分段详情表（每圈摘要 + 配速漂移标签）；新增 GPS 路线地图（Leaflet.js CDN）；两步（AI 和规则引擎）均添加新数据展示 |
+| `doc/system-design.md` | §2.2 更新 FIT 完整指标列表；§4.2 更新 tcxSummary 格式增加新字段 |
+
+**新增属性**（tcxMetrics 扩展）：
+- `paceDrift` — 中点配速漂移（前半/后半配速 + 漂移百分比）
+- `lapSummaries[]` — 每圈摘要（lapNum/distanceKm/timeSec/paceStr/avgHR/maxHR/avgCadence/avgPower/trigger）
+- `cadence.pct170to180` — 步频 170-180 目标区间占比
+- `elevation.net` — 净海拔（累计爬升-下降）
+- `elevation.avgAlt` — 平均海拔
+- `maxHR` — FIT session 最大心率
+- `avgTemp` — 腕表平均温度
+- `gpsTrackpoints[].{lat,lon,dist,alt}` — 逐点 GPS 坐标
+
+**验证**：FIT 文件存在时自动分析，与 COROS App 显示值保持一致（最大心率、配速漂移方向）。
+
 ### 2026-07-06 功率数据采集与功能上线（v1.2）
 
 **背景**：COROS `get_activity_detail` 一直返回 `Average Power` 字段（如 7/5 跑步 204W、7/1 长距离 221W），但 `parseActivityDetail` 未提取该字段，导致功率数据从未进入分析链路。

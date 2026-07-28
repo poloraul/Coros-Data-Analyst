@@ -398,6 +398,18 @@ function generateHTML(data, aiAnalysis) {
   </div>
 ` : "";
 
+  // GPS route map from FIT trackpoints
+  const latestTcx = latestActivity?.tcxMetrics;
+  const gpsPoints = latestTcx?.gpsTrackpoints || [];
+  // Need at least 5 GPS points spaced >50m apart for a meaningful map
+  const filterGps = gpsPoints.length >= 5;
+  const gpsMapHTML = filterGps ? `
+  <div class="chart-box full-width" style="margin-bottom:16px;height:350px;display:flex;flex-direction:column">
+    <h3>运动路线</h3>
+    <div id="routeMap" style="flex:1;min-height:0;border-radius:8px"></div>
+  </div>
+` : "";
+
   // Source badge helper
   const sourceBadge = hasAI
     ? `<span class="source-badge badge-ai">AI 大语言模型分析</span>`
@@ -410,6 +422,8 @@ function generateHTML(data, aiAnalysis) {
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>${user.nickname || "COROS"} 训练复盘 ${data.fetchDate}</title>
 <script src="chart.min.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{--bg:#faf6ef;--card:#fff;--border:#e8dfd3;--text:#5a5247;--text-strong:#4a4238;--muted:#9e9484;--accent:#7ec882;--accent2:#f4c542;--accent3:#e89898;--accent4:#7cb9e8;--shadow:rgba(90,82,71,.05);--row-hover:rgba(126,200,130,.04);--finding-border:rgba(232,223,211,.3)}
@@ -628,12 +642,13 @@ ${(() => {
   <div class="cards" style="margin-bottom:16px">
     <div class="card"><div class="label">距离/时间</div><div class="value">${a.distance}<span style="font-size:.9rem">km</span></div><div class="sub">${a.workoutTime}</div></div>
     <div class="card"><div class="label">配速</div><div class="value">${a.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${a.bestKm || "-"} | ${intensityZone}</div></div>
-    <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${hrPct}% HRmax</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${hrPct}% HRmax${a.tcxMetrics?.maxHR ? ` | 峰值 ${a.tcxMetrics.maxHR}bpm` : ""}</div></div>
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${cadenceGap ? `低于180目标${cadenceGap}spm` : "达标"}</div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
     <div class="card"><div class="label">天气</div><div class="value" style="font-size:1.2rem">${a.weather?.weatherDesc || "-"}</div><div class="sub">${a.weather?.tempMax ? a.weather.tempMax + "°C" : ""} ${a.weather?.feelsLikeMax ? "体感" + a.weather.feelsLikeMax + "°C" : ""} ${a.weather?.humidity ? "湿度" + a.weather.humidity + "%" : ""}</div></div>
   </div>
   ${segChartHTML}
+  ${gpsMapHTML}
   <div class="review-grid">
     <div class="ai-insight">
       <h4>训练概要</h4>
@@ -679,7 +694,34 @@ ${(() => {
       <h4 style="margin-top:12px">改进方向</h4>
       ${(r.improvements || []).length ? r.improvements.map(i => `<div class="finding-item" style="color:#c9a030">${i}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
     </div>
-  </div>`;
+  </div>
+  <!-- Lap summaries & pace drift from FIT -->
+  ${a.tcxMetrics?.lapSummaries?.length > 1 && (() => {
+    const laps = a.tcxMetrics.lapSummaries;
+    const paceDrift = a.tcxMetrics.paceDrift;
+    return `
+  <div style="margin-top:12px">
+    ${paceDrift ? `
+    <div class="finding-item" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(126,200,130,.04);border-radius:8px;margin-bottom:8px">
+      <span style="font-size:.78rem"><strong>配速漂移：</strong>前半 ${paceDrift.firstHalfPace} → 后半 ${paceDrift.secondHalfPace}（${paceDrift.driftPct > 0 ? "+" : ""}${paceDrift.driftPct}%）</span>
+      <span class="badge ${paceDrift.driftPct < 3 ? 'badge-green' : paceDrift.driftPct < 6 ? 'badge-yellow' : 'badge-red'}">${paceDrift.driftPct < 3 ? "均匀" : paceDrift.driftPct < 6 ? "小幅波动" : "明显掉速"}</span>
+    </div>` : ""}
+    <div class="section-title" style="font-size:.82rem;margin-bottom:6px">分段详情（${laps.length}圈）</div>
+    <table style="font-size:.75rem">
+      <tr><th>#</th><th>距离</th><th>时间</th><th>配速</th><th>平均HR</th><th>最大HR</th><th>步频</th>${laps[0]?.avgPower ? "<th>功率</th>" : ""}</tr>
+      ${laps.map(l => `<tr>
+        <td>${l.lapNum}</td>
+        <td>${l.distanceKm}km</td>
+        <td>${l.timeSec != null ? Math.floor(l.timeSec / 60) + ":" + String(l.timeSec % 60).padStart(2, "0") : "-"}</td>
+        <td>${l.paceStr || "-"}</td>
+        <td>${l.avgHR || "-"}</td>
+        <td><strong>${l.maxHR || "-"}</strong></td>
+        <td>${l.avgCadence || "-"}</td>
+        ${l.avgPower ? `<td>${l.avgPower}W</td>` : ""}
+      </tr>`).join("")}
+    </table>
+  </div>`; })()}
+  `;
   }
 
   // Rule-engine fallback
@@ -689,11 +731,12 @@ ${(() => {
   <div class="cards" style="margin-bottom:16px">
     <div class="card"><div class="label">距离/时间</div><div class="value">${a.distance}<span style="font-size:.9rem">km</span></div><div class="sub">${a.workoutTime}</div></div>
     <div class="card"><div class="label">配速</div><div class="value">${a.avgPace}<span style="font-size:.9rem">/km</span></div><div class="sub">最快 ${a.bestKm || "-"} | ${ruleReview.intensityZone}</div></div>
-    <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${Math.round(ruleReview.hrPct)}% HRmax</div></div>
+    <div class="card"><div class="label">心率</div><div class="value">${a.avgHR}<span style="font-size:.9rem">bpm</span></div><div class="sub">${Math.round(ruleReview.hrPct)}% HRmax${a.tcxMetrics?.maxHR ? ` | 峰值 ${a.tcxMetrics.maxHR}bpm` : ""}</div></div>
     <div class="card"><div class="label">步频</div><div class="value">${a.avgCadence || "-"}<span style="font-size:.9rem">spm</span></div><div class="sub">${ruleReview.cadenceGap ? `低于180目标${ruleReview.cadenceGap}spm` : "达标"}</div></div>
     <div class="card"><div class="label">训练负荷</div><div class="value">${a.trainingLoad || "-"}<span style="font-size:.9rem">TL</span></div><div class="sub">${a.performance || "-"}</div></div>
   </div>
   ${segChartHTML}
+  ${gpsMapHTML}
   <div class="review-grid">
     <div class="review-box">
       <h4>训练分析</h4>
@@ -705,7 +748,34 @@ ${(() => {
       <h4 style="margin-top:12px">改进方向</h4>
       ${ruleReview.improvements.length ? ruleReview.improvements.map(i => `<div class="finding-item" style="color:#c9a030">${i}</div>`).join("") : '<div class="finding-item" style="color:var(--muted)">暂无</div>'}
     </div>
-  </div>`;
+  </div>
+  <!-- Lap summaries & pace drift from FIT (rule-engine fallback) -->
+  ${a.tcxMetrics?.lapSummaries?.length > 1 && (() => {
+    const laps = a.tcxMetrics.lapSummaries;
+    const paceDrift = a.tcxMetrics.paceDrift;
+    return `
+  <div style="margin-top:12px">
+    ${paceDrift ? `
+    <div class="finding-item" style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px;background:rgba(126,200,130,.04);border-radius:8px;margin-bottom:8px">
+      <span style="font-size:.78rem"><strong>配速漂移：</strong>前半 ${paceDrift.firstHalfPace} → 后半 ${paceDrift.secondHalfPace}（${paceDrift.driftPct > 0 ? "+" : ""}${paceDrift.driftPct}%）</span>
+      <span class="badge ${paceDrift.driftPct < 3 ? 'badge-green' : paceDrift.driftPct < 6 ? 'badge-yellow' : 'badge-red'}">${paceDrift.driftPct < 3 ? "均匀" : paceDrift.driftPct < 6 ? "小幅波动" : "明显掉速"}</span>
+    </div>` : ""}
+    <div class="section-title" style="font-size:.82rem;margin-bottom:6px">分段详情（${laps.length}圈）</div>
+    <table style="font-size:.75rem">
+      <tr><th>#</th><th>距离</th><th>时间</th><th>配速</th><th>平均HR</th><th>最大HR</th><th>步频</th>${laps[0]?.avgPower ? "<th>功率</th>" : ""}</tr>
+      ${laps.map(l => `<tr>
+        <td>${l.lapNum}</td>
+        <td>${l.distanceKm}km</td>
+        <td>${l.timeSec != null ? Math.floor(l.timeSec / 60) + ":" + String(l.timeSec % 60).padStart(2, "0") : "-"}</td>
+        <td>${l.paceStr || "-"}</td>
+        <td>${l.avgHR || "-"}</td>
+        <td><strong>${l.maxHR || "-"}</strong></td>
+        <td>${l.avgCadence || "-"}</td>
+        ${l.avgPower ? `<td>${l.avgPower}W</td>` : ""}
+      </tr>`).join("")}
+    </table>
+  </div>`; })()}
+  `;
   }
 
   return '<p style="color:var(--muted)">暂无训练数据</p>';
@@ -1237,6 +1307,25 @@ new Chart(document.getElementById('sleepChart'), {
     }
   }
 });
+` : ""}
+
+${gpsMapHTML ? `
+// GPS route map
+const gpsPoints = ${JSON.stringify(gpsPoints.map(p => [p.lat, p.lon]))};
+const mapEl = document.getElementById('routeMap');
+if (mapEl && gpsPoints.length >= 3) {
+  const map = L.map('routeMap', { zoomControl: true, attributionControl: false });
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 18,
+  }).addTo(map);
+  const polyline = L.polyline(gpsPoints, { color: '#7ec882', weight: 3, opacity: 0.8 }).addTo(map);
+  map.fitBounds(polyline.getBounds().pad(0.05));
+  // Start/end markers
+  const startIcon = L.divIcon({ html: '<div style="background:#7ec882;width:12px;height:12px;border-radius:50%;border:2px solid white"></div>', iconSize: [12, 12], className: '' });
+  const endIcon = L.divIcon({ html: '<div style="background:#e89898;width:12px;height:12px;border-radius:50%;border:2px solid white"></div>', iconSize: [12, 12], className: '' });
+  L.marker(gpsPoints[0], { icon: startIcon }).addTo(map).bindTooltip('起点');
+  L.marker(gpsPoints[gpsPoints.length - 1], { icon: endIcon }).addTo(map).bindTooltip('终点');
+}
 ` : ""}
 
 // Theme toggle
