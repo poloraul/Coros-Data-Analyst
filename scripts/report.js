@@ -302,9 +302,12 @@ function generateHTML(data, aiAnalysis) {
   };
   const buildSleepData = () => {
     const dh = data.dailyHealth || [];
-    if (dh.length > 0) return dh;
+    // dailyHealth 有 sleepScore 时优先用它；否则用 sleep 字段（含 sleepScore + 比例）
+    const hasSleepScores = dh.some(d => d.sleepScore != null);
+    if (dh.length > 0 && hasSleepScores) return dh;
     // Fallback: convert 'sleep' field entries to dailyHealth-compatible format
-    const sl = data.sleep || [];
+    // sleep 数组是日期升序（最老在前），反转后保证最近7天被显示
+    const sl = [...(data.sleep || [])].reverse();
     return sl.map(s => {
       const totalMin = parseSleepTime(s.mainSleep);
       return {

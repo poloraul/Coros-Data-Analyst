@@ -361,6 +361,11 @@ tr:hover td{background:var(--row-hover)}
       <canvas id="paceChart"></canvas>
     </div>
     
+    <div class="chart-box">
+      <h3>睡眠质量趋势（近7天）</h3>
+      <canvas id="sleepChart"></canvas>
+    </div>
+    
   </div>
 
   <!-- Workouts Table -->
@@ -738,6 +743,61 @@ new Chart(document.getElementById('paceChart'), {
 
 
 
+
+// Sleep Chart — stacked bars (deep + light + REM) + sleep score line overlay
+new Chart(document.getElementById('sleepChart'), {
+  type: 'bar',
+  data: {
+    labels: ["07/29","07/28","07/27","07/26","07/25","07/24","07/23"],
+    datasets: [{
+      label: '深睡',
+      data: [2.2,1,1.6,1.2,1.1,0.4,1.7],
+      backgroundColor: 'rgba(92,124,200,.8)',
+      yAxisID: 'y',
+    }, {
+      label: '浅睡',
+      data: [3.9,2.4,3.6,3.8,6.3,2.2,3],
+      backgroundColor: 'rgba(140,170,220,.7)',
+      yAxisID: 'y',
+    }, {
+      label: 'REM',
+      data: [2.1,0.6,2.6,1.8,1.8,0.4,2.1],
+      backgroundColor: 'rgba(200,215,240,.6)',
+      yAxisID: 'y',
+    }, {
+      label: '睡眠评分',
+      type: 'line',
+      data: [96,37,91,90,70,33,95],
+      borderColor: '#7ec882',
+      backgroundColor: 'rgba(126,200,130,.1)',
+      fill: false, tension: .3, pointRadius: 5,
+      pointBackgroundColor: '#7ec882',
+      yAxisID: 'y1',
+      order: 0,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: { legend: { display: true, position: 'bottom', labels: { font: { size: 10 }, usePointStyle: true } },
+      tooltip: { callbacks: { label: function(ctx) {
+        if (ctx.datasetIndex < 3) {
+          const h = Math.floor(ctx.parsed.y);
+          const m = Math.round((ctx.parsed.y - h) * 60);
+          return ctx.dataset.label + ': ' + h + 'h' + String(m).padStart(2, '0') + 'min';
+        }
+        return ctx.dataset.label + ': ' + ctx.parsed.y;
+      } } } },
+    scales: {
+      x: { stacked: true },
+      y: { stacked: true, position: 'left', min: 0, max: 12,
+        title: { display: true, text: '睡眠时长 (h)' },
+        ticks: { stepSize: 2 } },
+      y1: { position: 'right', min: 0, max: 100,
+        title: { display: true, text: '睡眠评分' },
+        grid: { drawOnChartArea: false } }
+    }
+  }
+});
 
 
 
