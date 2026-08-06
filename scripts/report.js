@@ -319,7 +319,9 @@ function generateHTML(data, aiAnalysis) {
       };
     });
   };
-  const healthDays7 = buildSleepData().filter(s => s.sleepScore != null).slice(0, 7);
+  // 取最近7天，横轴按日期从小到大（升序）排列
+  const healthDays7 = buildSleepData().filter(s => s.sleepScore != null).slice(0, 7)
+    .sort((a, b) => a.date.localeCompare(b.date));
   const sleepLabels = healthDays7.map(s => {
     const d = s.date || "";
     return d.length === 8 ? d.slice(4, 6) + "/" + d.slice(6, 8) : d.slice(5);

@@ -734,26 +734,26 @@ new Chart(document.getElementById('paceChart'), {
 new Chart(document.getElementById('sleepChart'), {
   type: 'bar',
   data: {
-    labels: ["08/06","08/05","08/04","08/03","08/02","08/01","07/31"],
+    labels: ["07/31","08/01","08/02","08/03","08/04","08/05","08/06"],
     datasets: [{
       label: '深睡',
-      data: [1.4,2,1,2,1.7,1.5,2.3],
+      data: [2.3,1.5,1.7,2,1,2,1.4],
       backgroundColor: 'rgba(92,124,200,.8)',
       yAxisID: 'y',
     }, {
       label: '浅睡',
-      data: [4.8,5.3,3.6,3.5,3.9,4,3.8],
+      data: [3.8,4,3.9,3.5,3.6,5.3,4.8],
       backgroundColor: 'rgba(140,170,220,.7)',
       yAxisID: 'y',
     }, {
       label: 'REM',
-      data: [0.7,1.5,1.2,0.7,1.8,1.9,0.9],
+      data: [0.9,1.9,1.8,0.7,1.2,1.5,0.7],
       backgroundColor: 'rgba(200,215,240,.6)',
       yAxisID: 'y',
     }, {
       label: '睡眠评分',
       type: 'line',
-      data: [78,96,44,73,84,99,78],
+      data: [78,99,84,73,44,96,78],
       borderColor: '#7ec882',
       backgroundColor: 'rgba(126,200,130,.1)',
       fill: false, tension: .3, pointRadius: 5,
