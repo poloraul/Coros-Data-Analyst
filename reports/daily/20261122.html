@@ -1,269 +1,371 @@
 <!DOCTYPE html>
-<html lang="zh-CN" data-vp="md">
+<html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>训练复盘 · 2026-11-22 · 12.40 km</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-<style>
-:root{--bg:#12171A;--paper:#171D21;--ink:#E7EDEA;--ink2:#9BA9A5;--ink3:#647470;
---line:#283034;--line2:#1E2529;--rowbg:#16302B;--accent:#2BC4AE;--alt:#F0A03C;--seg1:#3A464B;
---mono:"SF Mono","JetBrains Mono","Menlo",ui-monospace,monospace;
---sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",sans-serif}
+<style>/* 每日训练复盘 · 暖纸旅行志版式
+   取色与结构对齐 poloraul.github.io/web-pages/along-the-monsoon/
+   --blood 朱红=强调/警示  --honey 蜜黄=标记  --blue 靛蓝=对比/正常 */
+
+:root{
+  --ink:#2b2722; --ink2:#6b6355; --ink3:#9a8f7c;
+  --line:#ddd5c6; --line2:#ece6da;
+  --blood:#b03a2e; --honey:#d99a2b; --blue:#2f6f9f;
+  --card:rgba(255,255,255,.66); --card2:rgba(255,255,255,.82);
+  --sans:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Noto Sans SC",sans-serif;
+}
 *{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.65;-webkit-font-smoothing:antialiased}
-.wrap{margin:0 auto;padding:0 20px 72px}
-html[data-vp="sm"] .wrap{max-width:600px}
-html[data-vp="md"] .wrap{max-width:960px}
-html[data-vp="xl"] .wrap{max-width:1560px}
-.page{display:block}.rail{display:contents}
-.head{padding-top:26px}
-.bar{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line);
-font-family:var(--mono);font-size:11px;color:var(--ink3);letter-spacing:.3px;flex-wrap:wrap}
-.dot{width:7px;height:7px;border-radius:50%;background:var(--accent);flex:none}
-.bar .r{margin-left:auto;display:flex;gap:14px}
-h1{font-size:24px;font-weight:500;letter-spacing:-.4px;margin:18px 0 4px;line-height:1.3}
-.lede{color:var(--ink2);font-size:13.5px;margin:0;max-width:680px}
-.lede b{font-weight:500;color:var(--ink)}
-.lede em{font-style:normal;color:var(--accent);font-weight:500}
-.lede i{font-style:normal;color:var(--alt);font-weight:500}
-.kpi{display:grid;grid-template-columns:repeat(4,1fr);margin:22px 0 0;
-border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
-.kpi>div{padding:15px 0 14px 18px;border-left:1px solid var(--line)}
-.kpi>div:first-child{border-left:0;padding-left:0}
-.kpi .l{font-size:10.5px;color:var(--ink3);letter-spacing:.4px;font-family:var(--mono)}
-.kpi .v{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:26px;line-height:1.25;margin-top:2px;letter-spacing:-1px;color:var(--ink)}
-.kpi .s{font-size:11px;color:var(--ink3);font-family:var(--mono)}
-.kpi .s.g{color:var(--accent)}
-.m2,.m3{display:none}
-.load{margin:20px 0 0}
-.load .h{display:flex;justify-content:space-between;font-family:var(--mono);font-size:10.5px;color:var(--ink3);margin-bottom:6px;letter-spacing:.3px}
-.track{display:flex;height:9px;border-radius:2px;overflow:hidden;background:var(--line2)}
-.track i{display:block;height:100%}
-.legend{display:flex;gap:12px;margin-top:7px;font-family:var(--mono);font-size:10.5px;color:var(--ink2);flex-wrap:wrap}
-.legend span{display:flex;align-items:center;gap:5px}
-.legend em{width:8px;height:8px;border-radius:1px;display:block}
-.mini{display:none;margin-top:22px;border-top:1px solid var(--line);padding-top:14px}
-.mini .h{font-family:var(--mono);font-size:10.5px;color:var(--ink3);letter-spacing:.4px;margin-bottom:8px}
-.mini .it{display:flex;align-items:baseline;gap:8px;padding:5px 0;border-bottom:1px solid var(--line2);font-size:12px}
-.mini .it .k{color:var(--ink2);flex:1}
-.mini .it .v{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink)}
-.mini .it .v.ok{color:var(--accent)}.mini .it .v.wn{color:var(--alt)}
-.xcmp{display:none;margin-top:26px;border-top:1px solid var(--line);padding-top:14px}
-.xcmp .h{font-family:var(--mono);font-size:10.5px;color:var(--ink3);letter-spacing:.4px;margin-bottom:8px;display:flex;justify-content:space-between}
-.xcmp .it{display:flex;align-items:baseline;gap:8px;padding:6px 0;border-bottom:1px solid var(--line2);font-size:12px}
-.xcmp .it .k{color:var(--ink2);flex:1}
-.xcmp .it .a{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink3)}
-.xcmp .it .b{font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);min-width:44px;text-align:right}
-.xcmp .it .d{font-family:var(--mono);font-size:11px;color:var(--accent);min-width:46px;text-align:right}
-.xcmp .it .d.up{color:var(--alt)}
-h2{font-size:12.5px;font-weight:500;letter-spacing:.2px;margin:30px 0 0;padding-bottom:7px;
-border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px;color:var(--ink)}
-h2 .tag{font-family:var(--mono);font-size:10px;color:var(--ink3);font-weight:400;margin-left:auto;letter-spacing:.5px}
-table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:2px}
-th{font-family:var(--mono);font-size:10px;font-weight:400;color:var(--ink3);letter-spacing:.5px;
-text-align:right;padding:8px 10px;border-bottom:1px solid var(--line);white-space:nowrap}
-th:first-child{text-align:left;padding-left:0}
-td{text-align:right;padding:8px 10px;border-bottom:1px solid var(--line2);
-font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--ink);white-space:nowrap}
-td:first-child{text-align:left;padding-left:0;font-family:var(--sans);color:var(--ink2)}
-tr.hl td{background:var(--rowbg)}tr.hl td:first-child{color:var(--accent);font-weight:500}
-tr.anom td{color:var(--alt)}tr.anom td:first-child{color:var(--alt)}
-tr.sum td{border-top:1px solid var(--line);border-bottom:1px solid var(--line);background:var(--line2)}
-tr.sum td:first-child{color:var(--ink);font-weight:500}
-tr:last-child td{border-bottom:1px solid var(--line)}
-.md-up,.xl-up{display:none}
-.note-s{color:var(--ink3);font-size:10.5px;font-family:var(--mono);margin-top:10px;line-height:1.8}
-.figbox{height:220px;margin-top:14px}
-.notes{margin-top:26px}
-.notes>div{display:grid;grid-template-columns:26px 1fr;gap:10px;padding:11px 0;
-border-bottom:1px solid var(--line2);font-size:13.5px;color:var(--ink2);line-height:1.6}
-.notes>div:last-child{border-bottom:0}
-.notes .i{font-family:var(--mono);font-size:11px;color:var(--accent);padding-top:3px;letter-spacing:.3px}
-.notes b{font-weight:500;color:var(--ink)}
-.call{margin-top:18px;padding:12px 14px;border-left:2px solid var(--alt);
-background:rgba(240,160,60,.07);font-size:12.5px;color:var(--ink2);line-height:1.65}
-.call b{color:var(--alt);font-weight:500}
-.call.g{border-left-color:var(--accent);background:rgba(43,196,174,.07)}
-.call.g b{color:var(--accent)}
-.foot{margin-top:32px;padding-top:12px;border-top:1px solid var(--line);
-font-family:var(--mono);font-size:10.5px;color:var(--ink3);line-height:1.9;letter-spacing:.2px}
-.flag{display:inline-block;font-family:var(--mono);font-size:10px;padding:1px 7px;border-radius:3px;
-background:var(--rowbg);color:var(--accent);border:1px solid var(--line);letter-spacing:.3px}
-html[data-vp="sm"] body{font-size:13px}
-html[data-vp="sm"] h1{font-size:20px}
-html[data-vp="sm"] .kpi{grid-template-columns:1fr 1fr}
-html[data-vp="sm"] .kpi>div:nth-child(odd){border-left:0;padding-left:0}
-html[data-vp="sm"] .kpi>div:nth-child(n+3){border-top:1px solid var(--line)}
-html[data-vp="sm"] .kpi .v{font-size:22px}
-html[data-vp="sm"] th,html[data-vp="sm"] td{padding:7px 6px;font-size:11.5px}
-html[data-vp="sm"] .figbox{height:180px}
-html[data-vp="md"] .kpi{grid-template-columns:repeat(4,1fr)}
-html[data-vp="md"] .md-up{display:table-cell}
-html[data-vp="md"] .kpi .m2{display:block}
-html[data-vp="md"] .mini{display:block}
-html[data-vp="xl"] .page{display:grid;grid-template-columns:252px minmax(0,1fr) 372px;
-grid-template-areas:"head head aside" "rail tbl aside" "rail fig aside" "foot foot foot";
-column-gap:36px;align-items:start}
-html[data-vp="xl"] .head{grid-area:head;padding-top:28px}
-html[data-vp="xl"] .rail{display:block;grid-area:rail;padding-top:28px}
-html[data-vp="xl"] .tbl{grid-area:tbl;padding-top:28px}
-html[data-vp="xl"] .fig{grid-area:fig}
-html[data-vp="xl"] .aside{grid-area:aside;padding-top:28px;border-left:1px solid var(--line);padding-left:32px}
-html[data-vp="xl"] .foot{grid-area:foot}
-html[data-vp="xl"] h1{font-size:29px;letter-spacing:-.7px;margin-top:16px}
-html[data-vp="xl"] .lede{max-width:700px;font-size:14px}
-html[data-vp="xl"] .kpi{grid-template-columns:1fr;margin-top:20px;border-bottom:0;border-top:1px solid var(--line)}
-html[data-vp="xl"] .kpi>div{border-left:0;padding:13px 0;border-bottom:1px solid var(--line2);display:flex;align-items:baseline;gap:10px}
-html[data-vp="xl"] .kpi>div:first-child{padding-left:0}
-html[data-vp="xl"] .kpi .l{flex:none;width:74px;white-space:nowrap}
-html[data-vp="xl"] .kpi .v{font-size:21px;margin-top:0;flex:none}
-html[data-vp="xl"] .kpi .s{margin-left:auto;text-align:right}
-html[data-vp="xl"] .m2,html[data-vp="xl"] .m3{display:flex}
-html[data-vp="xl"] .mini{display:block}
-html[data-vp="xl"] .xcmp{display:block}
-html[data-vp="xl"] .md-up,html[data-vp="xl"] .xl-up{display:table-cell}
-html[data-vp="xl"] .figbox{height:286px}
-html[data-vp="xl"] .notes{margin-top:0}
-html[data-vp="xl"] .notes>div{grid-template-columns:22px 1fr;font-size:13px}
-html[data-vp="xl"] h2{margin-top:0}
-html[data-vp="xl"] .fig h2{margin-top:28px}
+html,body{margin:0;padding:0}
+body{
+  font-family:var(--sans);
+  color:var(--ink);
+  background:
+    radial-gradient(1200px 700px at 8% -10%, #fdece0 0%, rgba(253,236,224,0) 60%),
+    radial-gradient(1000px 700px at 100% 0%, #e6eef7 0%, rgba(230,238,247,0) 55%),
+    linear-gradient(160deg,#fbf8f2 0%,#f4f1ea 45%,#eef0f2 100%);
+  background-attachment:fixed;
+  min-height:100vh;
+  padding:34px 30px 46px;
+  -webkit-font-smoothing:antialiased;
+  line-height:1.7;
+}
+.wrap{max-width:1360px;margin:0 auto}
+
+/* ── 页头 ── */
+header{margin-bottom:22px}
+.kicker{font-size:12.5px;letter-spacing:.32em;color:var(--blood);font-weight:600}
+.kicker span{color:var(--ink3);letter-spacing:.18em;font-weight:500}
+h1{margin:8px 0 6px;font-size:34px;line-height:1.2;letter-spacing:.01em;font-weight:700}
+h1 small{display:block;font-size:15px;font-weight:400;color:var(--ink2);letter-spacing:.02em;margin-top:8px}
+.stats{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px}
+.stat{
+  background:var(--card);border:1px solid rgba(255,255,255,.7);
+  box-shadow:0 6px 18px rgba(60,45,25,.07);backdrop-filter:blur(14px);
+  border-radius:12px;padding:8px 14px;font-size:12.5px;color:var(--ink2)
+}
+.stat b{color:var(--ink);font-size:16px;margin-right:4px;font-variant-numeric:tabular-nums}
+.stat.warn b{color:var(--blood)}
+.stat.good b{color:var(--blue)}
+
+/* ── 栅格与卡片 ── */
+.grid{display:grid;grid-template-columns:minmax(0,1.62fr) minmax(330px,1fr);gap:22px;margin-top:22px;align-items:start}
+.col{display:flex;flex-direction:column;gap:22px;min-width:0}
+.card{
+  background:var(--card);border:1px solid rgba(255,255,255,.72);
+  backdrop-filter:blur(16px);border-radius:20px;
+  box-shadow:0 14px 40px rgba(60,45,25,.10);overflow:hidden
+}
+.card>.hd{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:15px 20px 9px}
+.card>.hd .t{font-size:12px;letter-spacing:.22em;color:var(--ink2);font-weight:600}
+.card>.hd .x{font-size:11px;letter-spacing:.14em;color:var(--ink3)}
+.card>.bd{padding:0 20px 18px}
+.card>.bd.tight{padding:0 8px 10px}
+
+/* ── 表格 ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{
+  font-size:10.5px;font-weight:600;color:var(--ink3);letter-spacing:.12em;
+  text-align:right;padding:7px 10px;border-bottom:1px solid var(--line);white-space:nowrap
+}
+th:first-child{text-align:left;padding-left:4px}
+td{
+  padding:8px 10px;border-bottom:1px solid var(--line2);text-align:right;
+  color:var(--ink);font-variant-numeric:tabular-nums;white-space:nowrap
+}
+td:first-child{text-align:left;padding-left:4px;color:var(--ink2)}
+tbody tr:last-child td{border-bottom:0}
+tr.hl td{background:rgba(217,154,43,.13)}
+tr.hl td:first-child{color:var(--blood);font-weight:700}
+tr.anom td{color:var(--blood)}
+tr.anom td:first-child{color:var(--blood);font-weight:600}
+tr.sum td{background:rgba(43,39,34,.045);border-top:1px solid var(--line);font-weight:700}
+tr.sum td:first-child{color:var(--ink)}
+.note-s{font-size:11.5px;line-height:1.8;color:var(--ink3);margin-top:10px}
+.note-s b{color:var(--blood)}
+
+/* ── 键值行 ── */
+.rows{display:flex;flex-direction:column}
+.row{display:flex;align-items:baseline;justify-content:space-between;gap:10px;
+  padding:7px 0;border-bottom:1px dashed var(--line2);font-size:13px}
+.row:last-child{border-bottom:0}
+.row .k{color:var(--ink2)}
+.row .v{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:700;white-space:nowrap}
+.row .v.ok{color:var(--blue)}
+.row .v.wn{color:var(--blood)}
+
+/* ── 心率分布条 ── */
+.bandbar{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--line2);margin:2px 0 10px}
+.bandbar i{display:block;height:100%}
+.bandtags{display:flex;flex-wrap:wrap;gap:8px}
+.bandtags span{display:inline-flex;align-items:center;gap:6px;font-size:11.5px;color:var(--ink2)}
+.bandtags em{width:9px;height:9px;border-radius:50%;display:block;flex:none}
+
+/* ── 判读 ── */
+.notes{display:flex;flex-direction:column;gap:0}
+.note{display:grid;grid-template-columns:26px 1fr;gap:12px;padding:13px 0;border-bottom:1px dashed var(--line2)}
+.note:last-child{border-bottom:0;padding-bottom:2px}
+.note .no{
+  width:24px;height:24px;border-radius:50%;background:#fff;border:2px solid var(--honey);
+  display:flex;align-items:center;justify-content:center;
+  font-size:11.5px;font-weight:700;color:#3a332a;line-height:1
+}
+.note.hot .no{border-color:var(--blood);color:var(--blood)}
+.note h4{margin:0 0 3px;font-size:14px;font-weight:700;color:var(--ink);letter-spacing:.01em}
+.note p{margin:0;font-size:13.4px;line-height:1.78;color:#4a4235}
+.note b{color:var(--blood);font-weight:700}
+.note .t{font-variant-numeric:tabular-nums}
+
+/* ── 结论 ── */
+.concl{
+  margin:0;padding:11px 14px;border-left:3px solid var(--blood);
+  background:rgba(176,58,46,.06);border-radius:0 12px 12px 0;
+  font-size:13.4px;line-height:1.75;color:#5a5044
+}
+.concl b{color:var(--blood)}
+.concl.good{border-left-color:var(--blue);background:rgba(47,111,159,.07)}
+.concl.good b{color:var(--blue)}
+
+/* ── 图表 ── */
+.figbox{height:300px;margin-top:4px}
+.figbox.sm{height:230px}
+
+/* ── 页脚 ── */
+footer{max-width:1360px;margin:22px auto 0;font-size:12px;line-height:1.85;color:#8a8172}
+footer b{color:#6b6355}
+footer .sig{display:inline-block;font-size:10.5px;letter-spacing:.14em;color:var(--blood);
+  border:1px solid rgba(176,58,46,.32);border-radius:999px;padding:1px 9px;margin-right:4px}
+
+/* ── 索引页 ── */
+.idx-table td a{color:var(--blood);text-decoration:none;font-weight:600;border-bottom:1px solid rgba(176,58,46,.28)}
+.idx-table td a:hover{border-bottom-color:var(--blood)}
+.idx-table td{padding:11px 10px}
+
+/* ── 响应式 ── */
+@media (max-width:1100px){
+  .grid{grid-template-columns:1fr}
+}
+@media (max-width:720px){
+  body{padding:24px 16px 34px}
+  h1{font-size:25px}
+  h1 small{font-size:13.5px}
+  .card>.bd{padding:0 14px 16px}
+  .card>.hd{padding:13px 14px 8px}
+  table{font-size:12px}
+  td,th{padding:7px 6px}
+  .figbox{height:220px}
+  .figbox.sm{height:190px}
+  .stat{padding:7px 11px;font-size:12px}
+  .stat b{font-size:14.5px}
+}
+
 @media print{
-:root{--bg:#fff;--paper:#fff;--ink:#111827;--ink2:#4B5563;--ink3:#9CA3AF;--line:#E5E7EB;
---line2:#F3F4F6;--rowbg:#EFFAF7;--accent:#0E9488;--alt:#B45309;--seg1:#CBD5E1}
-.page{display:block!important}.rail{display:contents}.figbox{height:250px}
-body{font-size:11px}.head{padding-top:0}}
+  body{background:#fff;padding:0}
+  .card{box-shadow:none;border:1px solid var(--line);backdrop-filter:none;background:#fff}
+  .grid{grid-template-columns:1fr}
+  .figbox{height:220px}
+}
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="page">
-  <div class="head">
-    <div class="bar">
-      <span class="dot"></span>
-      <span>SESSION · 周日 13:25 · 长距离 12.40 km</span>
-      <span class="r"><span>16.0 °C</span><span>RH 30%</span><span>风 70 km/h</span><span>上海</span></span>
+
+  <header>
+    <div class="kicker">TRAINING LOG <span>· 2026-11-22 周日 13:25 · 12.40 km · 上海</span></div>
+    <h1>长距离 12.40 km<small>均配 6:12 · 均心 142 · 有效段 5:50 @ 146，判定为 E 强度</small></h1>
+    <div class="stats"><span class="stat"><b>12.40 km</b>距离</span>
+      <span class="stat"><b>6:12</b>均配</span>
+      <span class="stat"><b>142 bpm</b>均心</span>
+      <span class="stat warn"><b>5:50 @ 146</b>有效段</span>
+      <span class="stat"><b>137 TL</b>负荷</span>
+      <span class="stat"><b>166</b>步频</span>
+      <span class="stat"><b>67.7</b>效率</span></div>
+  </header>
+
+  <div class="grid">
+
+    <div class="col">
+
+      <section class="card">
+        <div class="hd"><span class="t">逐公里配速与心率</span><span class="x">FIG. 01</span></div>
+        <div class="bd"><div class="figbox"><canvas id="c1"></canvas></div></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><span class="t">分段明细</span><span class="x">LAP / 1KM</span></div>
+        <div class="bd">
+          <table>
+            <thead><tr><th>段</th><th>距离</th><th>配速</th><th>心率</th><th>步频</th><th>功率</th><th>最高</th><th>爬升</th></tr></thead>
+            <tbody><tr class=""><td>1 km</td><td>1.00</td><td>6:22</td><td>119</td><td>169</td><td>178</td><td>136</td><td>1</td></tr>
+            <tr class=""><td>2 km</td><td>1.00</td><td>6:19</td><td>136</td><td>171</td><td>180</td><td>145</td><td>4</td></tr>
+            <tr class="hl"><td>3 km</td><td>1.00</td><td>5:39</td><td>144</td><td>174</td><td>196</td><td>157</td><td>0</td></tr>
+            <tr class=""><td>4 km</td><td>1.00</td><td>5:52</td><td>146</td><td>173</td><td>192</td><td>152</td><td>2</td></tr>
+            <tr class="anom"><td>5 km</td><td>1.00</td><td>7:52</td><td>131</td><td>136</td><td>146</td><td>150</td><td>3</td></tr>
+            <tr class=""><td>6 km</td><td>1.00</td><td>6:08</td><td>144</td><td>174</td><td>180</td><td>156</td><td>5</td></tr>
+            <tr class=""><td>7 km</td><td>1.00</td><td>5:47</td><td>145</td><td>175</td><td>195</td><td>149</td><td>2</td></tr>
+            <tr class=""><td>8 km</td><td>1.00</td><td>5:51</td><td>147</td><td>174</td><td>193</td><td>150</td><td>4</td></tr>
+            <tr class=""><td>9 km</td><td>1.00</td><td>5:46</td><td>148</td><td>174</td><td>193</td><td>154</td><td>5</td></tr>
+            <tr class=""><td>10 km</td><td>1.00</td><td>5:56</td><td>147</td><td>175</td><td>190</td><td>150</td><td>1</td></tr>
+            <tr class=""><td>11 km</td><td>1.00</td><td>5:42</td><td>150</td><td>173</td><td>196</td><td>159</td><td>6</td></tr>
+            <tr class="anom"><td>12 km</td><td>1.00</td><td>7:17</td><td>146</td><td>142</td><td>156</td><td>161</td><td>4</td></tr>
+            <tr class="hl"><td>尾段</td><td>0.40</td><td>5:39</td><td>153</td><td>176</td><td>202</td><td>158</td><td>0</td></tr></tbody>
+          </table>
+          <div class="note-s">绿底行 = 本课最快整公里 · <b>橙字行</b> = 停顿段（配速与步频同时塌陷）· † = 伪心率段（配速加快而心率骤降 &gt;15 bpm，已从有效段剔除）· 有效段取第 3–11 公里</div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><span class="t">同配速心率配对</span><span class="x">PACE-MATCHED</span></div>
+        <div class="bd"><table>
+              <thead><tr><th>课次</th><th>有效段配速</th><th>有效段心率</th><th>气温</th><th>折算同配速同温度</th></tr></thead>
+              <tbody>
+                <tr><td>09/19 基准</td><td>5:46</td>
+                  <td>132</td><td>27.0 °C</td><td>125</td></tr>
+                <tr class="hl"><td>11/22 本次</td><td>5:50</td>
+                  <td>146</td><td>16.0 °C</td><td>146</td></tr>
+                <tr class="sum"><td>差值</td><td>—</td><td>—</td><td>—</td>
+                  <td>+22 bpm</td></tr>
+              </tbody></table>
+              <div class="note-s">按 0.45 bpm/(s·km⁻¹)、0.5 bpm/°C 折算 · 基准为近 60 天内配速最接近且已进入稳态的课次 · <b>正数表示本次心率更高</b></div></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><span class="t">近 14 天训练负荷</span><span class="x">FIG. 02</span></div>
+        <div class="bd">
+          <div class="figbox sm"><canvas id="c2"></canvas></div>
+          <div class="note-s">柱 = 当日训练负荷 TL · 虚线 = 慢性负荷 CTI · 灰柱 = 休息日</div>
+        </div>
+      </section>
+
     </div>
-    <h1>长距离 12.40 km</h1>
-    <p class="lede">均配 <b>6:12</b> · 均心 <b>142</b> · 有效段 <b>5:50</b> @ 146，判定为 <em>E</em> 强度</p>
-  </div>
 
-  <div class="rail">
-    <div class="kpi">      <div><div class="l">AVG PACE</div><div class="v">6:12</div><div class="s m2">有效段 5:50</div></div>
-      <div><div class="l">AVG HR</div><div class="v">142</div><div class="s m2">峰值 161</div></div>
-      <div><div class="l">POWER</div><div class="v">182</div><div class="s m2">W · 估算值</div></div>
-      <div><div class="l">LOAD</div><div class="v">137</div><div class="s m2">2.4× CTI 57</div></div>
-      <div><div class="l">CADENCE</div><div class="v">166</div><div class="s">步幅 0.96 m</div></div>
-      <div><div class="l">EFFICIENCY</div><div class="v">67.7</div><div class="s">W ÷ m/s</div></div></div>
-    <div class="load">
-      <div class="h"><span>心率区间分布（按每公里均值）</span><span>80:29</span></div>
-      <div class="track"><i style="width:18.5%;background:#3A464B"></i><i style="width:78.6%;background:#2BC4AE"></i><i style="width:2.9%;background:#F0A03C"></i></div>
-      <div class="legend"><span><em style="background:#3A464B"></em>≤134 18.5%</span><span><em style="background:#2BC4AE"></em>135–152 78.6%</span><span><em style="background:#F0A03C"></em>153–161 2.9%</span></div>
-    </div>
-    <div class="mini"><div class="h">恢复状态 · 20261122 晨</div><div class="it"><span class="k">HRV</span><span class="v wn">64 ms</span></div><div class="it"><span class="k">HRV 基线 / 下沿</span><span class="v ">70 / 53</span></div><div class="it"><span class="k">晨脉</span><span class="v ">46</span></div><div class="it"><span class="k">短期 / 长期负荷</span><span class="v ">31 / 57</span></div><div class="it"><span class="k">疲劳度</span><span class="v ok">-26</span></div><div class="it"><span class="k">最大摄氧量</span><span class="v ">55</span></div></div>
-    <div class="mini"><div class="h">本课关键指标</div><div class="it"><span class="k">有效段配速</span><span class="v ">5:50</span></div><div class="it"><span class="k">有效段心率</span><span class="v wn">146</span></div><div class="it"><span class="k">平均心率</span><span class="v ">142</span></div><div class="it"><span class="k">单课负荷 ÷ CTI</span><span class="v ok">2.40×</span></div><div class="it"><span class="k">爬升</span><span class="v ">37 m</span></div><div class="it"><span class="k">气温 / 湿度</span><span class="v ">16 °C / 30%</span></div></div>
-  </div>
+    <div class="col">
 
-  <div class="tbl">
-    <h2>分段明细 <span class="tag">LAP / 1KM</span></h2>
-    <table>
-      <thead><tr><th>段</th><th class="md-up">距离</th><th>配速</th><th>心率</th>
-      <th class="md-up">步频</th><th class="xl-up">功率</th><th class="xl-up">最高</th><th class="xl-up">爬升</th></tr></thead>
-      <tbody><tr class=""><td>1 km</td><td class="md-up">1.00</td><td>6:22</td><td>119</td><td class="md-up">169</td><td class="xl-up">178</td><td class="xl-up">136</td><td class="xl-up">1</td></tr>
-        <tr class=""><td>2 km</td><td class="md-up">1.00</td><td>6:19</td><td>136</td><td class="md-up">171</td><td class="xl-up">180</td><td class="xl-up">145</td><td class="xl-up">4</td></tr>
-        <tr class="hl"><td>3 km</td><td class="md-up">1.00</td><td>5:39</td><td>144</td><td class="md-up">174</td><td class="xl-up">196</td><td class="xl-up">157</td><td class="xl-up">0</td></tr>
-        <tr class=""><td>4 km</td><td class="md-up">1.00</td><td>5:52</td><td>146</td><td class="md-up">173</td><td class="xl-up">192</td><td class="xl-up">152</td><td class="xl-up">2</td></tr>
-        <tr class="anom"><td>5 km</td><td class="md-up">1.00</td><td>7:52</td><td>131</td><td class="md-up">136</td><td class="xl-up">146</td><td class="xl-up">150</td><td class="xl-up">3</td></tr>
-        <tr class=""><td>6 km</td><td class="md-up">1.00</td><td>6:08</td><td>144</td><td class="md-up">174</td><td class="xl-up">180</td><td class="xl-up">156</td><td class="xl-up">5</td></tr>
-        <tr class=""><td>7 km</td><td class="md-up">1.00</td><td>5:47</td><td>145</td><td class="md-up">175</td><td class="xl-up">195</td><td class="xl-up">149</td><td class="xl-up">2</td></tr>
-        <tr class=""><td>8 km</td><td class="md-up">1.00</td><td>5:51</td><td>147</td><td class="md-up">174</td><td class="xl-up">193</td><td class="xl-up">150</td><td class="xl-up">4</td></tr>
-        <tr class=""><td>9 km</td><td class="md-up">1.00</td><td>5:46</td><td>148</td><td class="md-up">174</td><td class="xl-up">193</td><td class="xl-up">154</td><td class="xl-up">5</td></tr>
-        <tr class=""><td>10 km</td><td class="md-up">1.00</td><td>5:56</td><td>147</td><td class="md-up">175</td><td class="xl-up">190</td><td class="xl-up">150</td><td class="xl-up">1</td></tr>
-        <tr class=""><td>11 km</td><td class="md-up">1.00</td><td>5:42</td><td>150</td><td class="md-up">173</td><td class="xl-up">196</td><td class="xl-up">159</td><td class="xl-up">6</td></tr>
-        <tr class="anom"><td>12 km</td><td class="md-up">1.00</td><td>7:17</td><td>146</td><td class="md-up">142</td><td class="xl-up">156</td><td class="xl-up">161</td><td class="xl-up">4</td></tr>
-        <tr class="hl"><td>尾段</td><td class="md-up">0.40</td><td>5:39</td><td>153</td><td class="md-up">176</td><td class="xl-up">202</td><td class="xl-up">158</td><td class="xl-up">0</td></tr></tbody>
-    </table>
-    <div class="note-s">绿底行 = 本课最快整公里 · 橙字行 = 停顿段（配速与步频同时塌陷）· † = 伪心率段（配速加快而心率骤降 >15 bpm，已从有效段统计中剔除）· 有效段取第 3–11 公里，剔除热身与停顿 · 配速为移动配速</div>
-    
-    <h2>同配速心率配对 <span class="tag">PACE-MATCHED</span></h2>
-    <table>
-      <thead><tr><th>课次</th><th class="md-up">有效段配速</th><th>有效段心率</th><th>气温</th><th>折算同配速同温度</th></tr></thead>
-      <tbody>
-        <tr><td>09/19 基准</td><td class="md-up">5:46</td>
-          <td>132</td><td>27.0 °C</td><td>125</td></tr>
-        <tr class="hl"><td>11/22 本次</td><td class="md-up">5:50</td>
-          <td>146</td><td>16.0 °C</td><td>146</td></tr>
-        <tr class="sum"><td>差值</td><td class="md-up">—</td><td>—</td><td>—</td>
-          <td>+22 bpm</td></tr>
-      </tbody>
-    </table>
-    <div class="note-s">按 0.45 bpm/(s·km⁻¹)、0.5 bpm/°C 折算 · 基准为近 60 天内配速最接近且已进入稳态的课次 · 正数表示本次心率更高</div>
-  </div>
+      <section class="card">
+        <div class="hd"><span class="t">心率区间分布</span><span class="x">80:29</span></div>
+        <div class="bd">
+          <div class="bandbar"><i style="width:18.5%;background:#cfc6b4"></i><i style="width:78.6%;background:#d99a2b"></i><i style="width:2.9%;background:#b03a2e"></i></div>
+          <div class="bandtags"><span><em style="background:#cfc6b4"></em>≤134 18.5%</span><span><em style="background:#d99a2b"></em>135–152 78.6%</span><span><em style="background:#b03a2e"></em>153–161 2.9%</span></div>
+        </div>
+      </section>
 
-  <div class="fig">
-    <h2>逐公里配速与心率 <span class="tag">FIG. 01</span></h2>
-    <div class="figbox"><canvas id="c1"></canvas></div>
-    <h2>近 14 天训练负荷 <span class="tag">FIG. 02</span></h2>
-    <div class="figbox"><canvas id="c2"></canvas></div>
-    <div class="note-s">柱 = 当日训练负荷 TL · 虚线 = 慢性负荷 CTI · 空白柱 = 休息日</div>
-  </div>
+      <section class="card">
+        <div class="hd"><span class="t">恢复状态</span><span class="x">11/22 晨</span></div>
+        <div class="bd"><div class="rows"><div class="row"><span class="k">HRV</span><span class="v wn">64 ms</span></div>
+<div class="row"><span class="k">HRV 基线 / 下沿</span><span class="v ">70 / 53</span></div>
+<div class="row"><span class="k">晨脉</span><span class="v ">46</span></div>
+<div class="row"><span class="k">短期 / 长期负荷</span><span class="v ">31 / 57</span></div>
+<div class="row"><span class="k">疲劳度</span><span class="v ok">-26</span></div>
+<div class="row"><span class="k">最大摄氧量</span><span class="v ">55</span></div></div></div>
+      </section>
 
-  <div class="aside">
-    <h2>判读 <span class="tag">NOTES</span></h2>
-    <div class="notes">      <div><span class="i">01</span><div><b>强度落在哪一档</b>　有效段（第 3–11 公里，共 8 公里）配速 <b>5:50</b>，心率 146 已超出 E 区上限 142。按阈值配速 4:20 折算，这属于 <b>E</b> 强度。全程均配 6:12 被热身与停顿拉慢，判强度只看有效段。</div></div>
-      <div><span class="i">02</span><div><b>停顿段不算跑崩</b>　第 5 km 7:52（步频 136）、第 12 km 7:17（步频 142） 是配速与步频同时塌陷，判定为红绿灯或主动停，不是掉速。这些段把均配拉慢约 <b>22″/km</b>，所以均配数字偏保守。</div></div>
-      <div><span class="i">03</span><div><b>同配速心率配对</b>　对照 09/19（5:46 @ 132，27.0 °C），折算到同配速同温度后，本次心率<b>高 22 bpm</b>。仍在去训练化区间，有氧底盘尚未回位，建议继续压住强度、优先堆时间。</div></div>
-      <div><span class="i">04</span><div><b>机械经济性</b>　效率指数 <b>67.7</b>，在 66.5–68.0 的常规带内；步频 166、步幅 0.96 m。注意这个指数是手表按配速与步频反推的估算值，反映的是动作模式而不是心肺，不能跨强度比较，也不能用它判断体能涨跌。</div></div>
-      <div><span class="i">05</span><div><b>负荷与恢复</b>　单课 137 TL ÷ CTI 57 = <b>2.40×</b>，在 2–2.5 的安全线内。当日 HRV 64 ms、基线 70、晨脉 46。本周累计 <b>25.0 km / 234 TL</b>（上周 0.0 km）。</div></div></div>
-    <div class="call">
-      <b>本课结论</b><br>
-      有效段 5:50 落在 <b>E</b> 区间，单课负荷 137 TL。
-      强度偏高，下一课建议降级为纯 E 跑，先把心率压回 142 以下。
+      <section class="card">
+        <div class="hd"><span class="t">本课关键指标</span><span class="x">SESSION</span></div>
+        <div class="bd"><div class="rows"><div class="row"><span class="k">有效段配速</span><span class="v ">5:50</span></div>
+<div class="row"><span class="k">有效段心率</span><span class="v wn">146</span></div>
+<div class="row"><span class="k">平均心率</span><span class="v ">142</span></div>
+<div class="row"><span class="k">单课负荷 ÷ CTI</span><span class="v ok">2.40×</span></div>
+<div class="row"><span class="k">爬升</span><span class="v ">37 m</span></div>
+<div class="row"><span class="k">气温 / 湿度</span><span class="v ">16 °C / 30%</span></div></div></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><span class="t">判读</span><span class="x">NOTES</span></div>
+        <div class="bd"><div class="notes"><div class="note hot"><span class="no">01</span><div><h4>强度落在哪一档</h4><p>有效段（第 3–11 公里，共 8 公里）配速 <b>5:50</b>，心率 <b>146</b> 已超出 E 区上限 142。按阈值配速 4:20 折算，这属于 <b>E</b> 强度。全程均配 6:12 被热身与停顿拉慢，判强度只看有效段。</p></div></div>
+<div class="note "><span class="no">02</span><div><h4>停顿段不算跑崩</h4><p>第 5 km 7:52（步频 136）、第 12 km 7:17（步频 142） 是配速与步频同时塌陷，判定为红绿灯或主动停，不是掉速。这些段把均配拉慢约 <b>22″/km</b>，所以均配数字偏保守。</p></div></div>
+<div class="note hot"><span class="no">03</span><div><h4>同配速心率配对</h4><p>对照 09/19（5:46 @ 132，27.0 °C），折算到同配速同温度后，本次心率<b>高 22 bpm</b>。仍在去训练化区间，有氧底盘尚未回位，建议继续压住强度、优先堆时间。</p></div></div>
+<div class="note "><span class="no">04</span><div><h4>机械经济性</h4><p>效率指数 <b>67.7</b>，在 66.5–68.0 的常规带内；步频 166、步幅 0.96 m。注意这个指数是手表按配速与步频反推的估算值，反映动作模式而不是心肺，不能跨强度比较，也不能用它判断体能涨跌。</p></div></div>
+<div class="note "><span class="no">05</span><div><h4>负荷与恢复</h4><p>单课 137 TL ÷ CTI 57 = <b>2.40×</b>，在 2–2.5 的安全线内。当日HRV 64 ms、基线 70、晨脉 46。本周累计 <b>25.0 km / 234 TL</b>（上周 0.0 km）。</p></div></div></div></div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><span class="t">本课结论</span><span class="x">VERDICT</span></div>
+        <div class="bd"><div class="concl">有效段 5:50 落在 <b>E</b> 区间，单课负荷 <b>137 TL</b>（2.40× CTI）。强度偏高，下一课建议降级为纯 E 跑，先把心率压回 142 以下。</div></div>
+      </section>
+
     </div>
   </div>
 
-  <div class="foot">
+  <footer>
     数据源 COROS APEX 4 · LabelId  · Training Hub 活动详情 + 日度指标<br>
-    效率指数 = 平均功率 ÷ 移动速度 · 越低越省力 · 功率为手表估算值，非实测<br>
+    效率指数 = 平均功率 ÷ 移动速度 · 越低越省力 · <b>功率为手表按配速与步频反推的估算值，非实测</b><br>
+    有效段 = 剔除前 2 km 热身、停顿段与伪心率段后的分段 · 心率取中位数<br>
     气温/湿度取手表记录的活动实时值 · 负荷比 = 训练负荷 ÷ 当日 CTI<br>
-    <span class="flag">复盘模板 v3</span> 自动生成 · 遥测风 · 三档响应式 · 判读右栏
-  </div>
+    <span class="sig">AUTO REVIEW</span> 自动生成 · 暖纸旅行志版式 · 每日 10:00 运行
+  </footer>
+
 </div>
-</div>
+
 <script>
-const PACE=[382, 379, 339, 352, 472, 368, 347, 351, 346, 356, 342, 437, 339], HR=[119.0, 136.0, 144.0, 146.0, 131.0, 144.0, 145.0, 147.0, 148.0, 147.0, 150.0, 146.0, 153.0], LBL=["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "尾"];
-const D14={"labels": ["11/09", "11/10", "11/11", "11/12", "11/13", "11/14", "11/15", "11/16", "11/17", "11/18", "11/19", "11/20", "11/21", "11/22"], "tl": [0, 0, 0, 0, 0, 0, 0, 48.0, 0, 0, 49.0, 0, 0, 137.0], "cti": [57.0, 55.0, 54.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 57.0], "colors": ["#2A3236", "#2A3236", "#2A3236", "#2A3236", "#2A3236", "#2A3236", "#2A3236", "#F0A03C", "#2A3236", "#2A3236", "#F0A03C", "#2A3236", "#2A3236", "#2BC4AE"]};
+const PACE = [382, 379, 339, 352, 472, 368, 347, 351, 346, 356, 342, 437, 339], HR = [119.0, 136.0, 144.0, 146.0, 131.0, 144.0, 145.0, 147.0, 148.0, 147.0, 150.0, 146.0, 153.0], LBL = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "尾"];
+const D14 = {"labels": ["11/09", "11/10", "11/11", "11/12", "11/13", "11/14", "11/15", "11/16", "11/17", "11/18", "11/19", "11/20", "11/21", "11/22"], "tl": [0, 0, 0, 0, 0, 0, 0, 48.0, 0, 0, 49.0, 0, 0, 137.0], "cti": [57.0, 55.0, 54.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 53.0, 57.0], "colors": ["#e4ded1", "#e4ded1", "#e4ded1", "#e4ded1", "#e4ded1", "#e4ded1", "#e4ded1", "#d99a2b", "#e4ded1", "#e4ded1", "#d99a2b", "#e4ded1", "#e4ded1", "#b03a2e"]};
+const INK='#2b2722', INK2='#6b6355', INK3='#9a8f7c',
+      BLOOD='#b03a2e', HONEY='#d99a2b', BLUE='#2f6f9f', GRID='rgba(43,39,34,.09)';
+
 function paceText(s){s=Math.round(s);return Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
-new Chart(document.getElementById('c1'),{type:'line',data:{labels:LBL,datasets:[
- {label:'配速 /km',data:PACE.map(v=>-v/60),borderColor:'#2BC4AE',backgroundColor:'rgba(43,196,174,.10)',
-  fill:true,borderWidth:2,pointRadius:3,pointBackgroundColor:'#2BC4AE',pointBorderColor:'#2BC4AE',tension:.25,yAxisID:'y'},
- {label:'心率 bpm',data:HR,borderColor:'#F0A03C',borderWidth:1.5,borderDash:[4,3],pointRadius:0,tension:.25,yAxisID:'y1'}]},
- options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
- plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:14,boxHeight:2,font:{size:10},color:'#9BA9A5',usePointStyle:false}},
- tooltip:{backgroundColor:'#E7EDEA',titleColor:'#12171A',bodyColor:'#12171A',padding:8,cornerRadius:3,
- titleFont:{size:11},bodyFont:{size:11,family:'SF Mono, monospace'},
- callbacks:{label:function(c){return c.datasetIndex===0?'配速　'+paceText(-c.parsed.y*60):'心率　'+c.parsed.y+' bpm';}}}},
- scales:{x:{grid:{display:false},ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470',maxRotation:0,autoSkip:false}},
- y:{position:'left',min:-8.00,max:-5.60,grid:{color:'rgba(231,237,234,.08)'},
-  ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470',stepSize:0.4,callback:function(v){return paceText(-v*60);}}},
- y1:{position:'right',min:90,max:180,grid:{display:false},
-  ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470',stepSize:20}}}}});
 
-new Chart(document.getElementById('c2'),{type:'bar',data:{labels:D14.labels,datasets:[
- {label:'每日 TL',data:D14.tl,type:'bar',backgroundColor:D14.colors,borderWidth:0,borderRadius:1,barPercentage:.62,yAxisID:'y',order:2},
- {label:'CTI',data:D14.cti,type:'line',borderColor:'#F0A03C',borderWidth:1.5,borderDash:[5,4],pointRadius:0,fill:false,yAxisID:'y1',order:1}]},
- options:{responsive:true,maintainAspectRatio:false,animation:false,interaction:{mode:'index',intersect:false},
- plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:14,boxHeight:2,font:{size:10},color:'#9BA9A5',usePointStyle:false}},
- tooltip:{backgroundColor:'#E7EDEA',titleColor:'#12171A',bodyColor:'#12171A',padding:8,cornerRadius:3,
- titleFont:{size:11},bodyFont:{size:11,family:'SF Mono, monospace'}}},
- scales:{x:{grid:{display:false},ticks:{font:{size:9.5,family:'SF Mono, monospace'},color:'#647470',maxRotation:0,autoSkip:false}},
- y:{position:'left',min:0,beginAtZero:true,grid:{color:'rgba(231,237,234,.08)'},
-  ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470'}},
- y1:{position:'right',grid:{display:false},ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470'}}}}});
+/* CTI 轴：按实际区间收紧，避免整条线贴在顶端 */
+const _cti = D14.cti.filter(v=>v>0);
+const _lo = _cti.length ? Math.min(..._cti) : 40, _hi = _cti.length ? Math.max(..._cti) : 60;
+const CTI_MIN = Math.floor((_lo-4)/5)*5, CTI_MAX = Math.ceil((_hi+4)/5)*5;
 
-function setVp(){const w=window.innerWidth;
- document.documentElement.setAttribute('data-vp',w<720?'sm':(w<1280?'md':'xl'));}
-setVp();window.addEventListener('resize',setVp);
+new Chart(document.getElementById('c1'),{
+  type:'line',
+  data:{labels:LBL,datasets:[
+    {label:'配速 /km',data:PACE.map(v=>-v/60),borderColor:BLOOD,
+     backgroundColor:'rgba(176,58,46,.07)',fill:true,borderWidth:2.2,
+     pointRadius:3.2,pointBackgroundColor:'#fff',pointBorderColor:BLOOD,pointBorderWidth:2,
+     tension:.25,yAxisID:'y'},
+    {label:'心率 bpm',data:HR,borderColor:BLUE,borderWidth:1.6,borderDash:[5,4],
+     pointRadius:0,tension:.25,yAxisID:'y1'}]},
+  options:{responsive:true,maintainAspectRatio:false,animation:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:true,position:'bottom',
+        labels:{boxWidth:12,boxHeight:2,font:{size:11,family:'-apple-system,PingFang SC,sans-serif'},
+                color:INK2,usePointStyle:false,padding:14}},
+      tooltip:{backgroundColor:INK,titleColor:'#fbf8f2',bodyColor:'#fbf8f2',
+        padding:9,cornerRadius:8,borderColor:'rgba(255,255,255,.1)',borderWidth:1,
+        titleFont:{size:12},bodyFont:{size:12},
+        callbacks:{
+          title:function(it){return it[0].label==='尾'?'尾段':it[0].label+' km';},
+          label:function(c){return c.datasetIndex===0
+            ? '配速　'+paceText(-c.parsed.y*60)
+            : '心率　'+c.parsed.y+' bpm';}}}},
+    scales:{
+      x:{grid:{display:false},border:{color:'#ddd5c6'},
+        ticks:{font:{size:11},color:INK3,maxRotation:0,autoSkip:false}},
+      y:{position:'left',min:-8.00,max:-5.60,grid:{color:GRID,drawTicks:false},
+        border:{display:false},
+        ticks:{font:{size:11},color:INK3,stepSize:0.4,padding:8,
+          callback:function(v){return paceText(-v*60);}}},
+      y1:{position:'right',min:80,max:180,grid:{display:false},
+        border:{display:false},
+        ticks:{font:{size:11},color:BLUE,stepSize:20,padding:8}}}}});
+
+new Chart(document.getElementById('c2'),{
+  type:'bar',
+  data:{labels:D14.labels,datasets:[
+    {label:'每日 TL',data:D14.tl,type:'bar',backgroundColor:D14.colors,
+     borderWidth:0,borderRadius:4,barPercentage:.58,yAxisID:'y',order:2},
+    {label:'CTI',data:D14.cti,type:'line',borderColor:BLUE,borderWidth:1.6,
+     borderDash:[5,4],pointRadius:0,fill:false,yAxisID:'y1',order:1}]},
+  options:{responsive:true,maintainAspectRatio:false,animation:false,
+    interaction:{mode:'index',intersect:false},
+    plugins:{
+      legend:{display:true,position:'bottom',
+        labels:{boxWidth:12,boxHeight:2,font:{size:11},color:INK2,usePointStyle:false,padding:14}},
+      tooltip:{backgroundColor:INK,titleColor:'#fbf8f2',bodyColor:'#fbf8f2',
+        padding:9,cornerRadius:8,titleFont:{size:12},bodyFont:{size:12}}},
+    scales:{
+      x:{grid:{display:false},border:{color:'#ddd5c6'},
+        ticks:{font:{size:10},color:INK3,maxRotation:0,autoSkip:false}},
+      y:{position:'left',min:0,beginAtZero:true,grid:{color:GRID,drawTicks:false},
+        border:{display:false},ticks:{font:{size:11},color:INK3,padding:8}},
+      y1:{position:'right',grid:{display:false},border:{display:false},
+        min:CTI_MIN,max:CTI_MAX,
+        ticks:{font:{size:11},color:BLUE,padding:8,stepSize:5}}}}});
 </script>
 </body>
 </html>
