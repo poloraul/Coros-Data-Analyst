@@ -238,7 +238,7 @@ new Chart(document.getElementById('c1'),{type:'line',data:{labels:LBL,datasets:[
  titleFont:{size:11},bodyFont:{size:11,family:'SF Mono, monospace'},
  callbacks:{label:function(c){return c.datasetIndex===0?'配速　'+paceText(-c.parsed.y*60):'心率　'+c.parsed.y+' bpm';}}}},
  scales:{x:{grid:{display:false},ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470',maxRotation:0,autoSkip:false}},
- y:{position:'left',min:-7.20,max:-4.80,grid:{color:'rgba(231,237,234,.08)'},
+ y:{position:'left',min:-6.80,max:-5.20,grid:{color:'rgba(231,237,234,.08)'},
   ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470',stepSize:0.4,callback:function(v){return paceText(-v*60);}}},
  y1:{position:'right',min:90,max:160,grid:{display:false},
   ticks:{font:{size:10,family:'SF Mono, monospace'},color:'#647470',stepSize:20}}}}});
